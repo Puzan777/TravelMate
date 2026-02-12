@@ -5,7 +5,7 @@ class CustomUser(AbstractUser):
     def __str__(self):
         return self.username
     
-# Create your models here.
+
 
 class Destination(models.Model):
     name = models.CharField(max_length=150)

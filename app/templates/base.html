@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="en">
 <head>
@@ -7,51 +8,134 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
   <title>Travel Mate</title>
+  <style>
+.hero-section {
+  height: 90vh;
+  background: url('/static/image/hero.jpg') center center / cover no-repeat;
+  position: relative;
+}
+
+.hero-overlay {
+  background: rgba(0, 0, 0, 0.5);
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+</style>
+
 </head>
 <body>
 
-<nav class="navbar navbar-expand-lg bg-light">
-  <div class="container-fluid">
-    <a class="Travel Mate " href="#">Travel Mate</a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent">
+<nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
+  <div class="container">
+
+    <!-- Brand -->
+    <a class="navbar-brand fw-bold" href="{% url 'home' %}">
+      Strange Land Tours & Travels
+    </a>
+
+    <!-- Mobile toggle -->
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar">
       <span class="navbar-toggler-icon"></span>
     </button>
 
-    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+    <!-- Navbar content -->
+    <div class="collapse navbar-collapse" id="mainNavbar">
+
+      <!-- Left menu -->
       <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-        <li class="nav-item">
-          <a class="nav-link active" href="{% url 'login' %}">Login</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{% url 'signup' %}">Signup</a>
-        </li>
 
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
-            Dropdown
-          </a>
-          <ul class="dropdown-menu">
-            <li><a class="dropdown-item" href="#">Action</a></li>
-            <li><a class="dropdown-item" href="#">Another action</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="#">Something else</a></li>
-          </ul>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'home' %}">Home</a>
         </li>
 
         <li class="nav-item">
-          <a class="nav-link disabled">Disabled</a>
+          <a class="nav-link" href="{% url 'destination_list' %}">Destinations</a>
         </li>
+
+        <li class="nav-item">
+          <a class="nav-link" href="#">Luxury Packages</a>
+        </li>
+
+        <li class="nav-item">
+          <a class="nav-link" href="#">Trekking</a>
+        </li>
+
+        <li class="nav-item">
+          <a class="nav-link" href="#">Heli Tours</a>
+        </li>
+
       </ul>
 
-      <form class="d-flex">
-        <input class="form-control me-2" type="search" placeholder="Search">
-        <button class="btn btn-outline-success" type="submit">Search</button>
-      </form>
+      <!-- Right menu (Auth) -->
+      <ul class="navbar-nav ms-auto">
+
+        {% if user.is_authenticated %}
+          <li class="nav-item">
+            <a class="nav-link text-danger" href="{% url 'logout' %}">
+              Logout
+            </a>
+          </li>
+        {% else %}
+          <li class="nav-item">
+            <a class="nav-link btn btn-outline-primary px-3 ms-2"
+               href="{% url 'login' %}">
+              Login
+            </a>
+          </li>
+        {% endif %}
+
+      </ul>
+
     </div>
   </div>
 </nav>
 {% block content %}
 {% endblock %}
+
+
+<!-- ================= FOOTER ================= -->
+<footer class="bg-dark text-light mt-auto pt-4 pb-3">
+  <div class="container">
+    <div class="row text-center text-md-start">
+
+      <!-- Brand -->
+      <div class="col-md-4 mb-3">
+        <h5 class="fw-bold">Travel Mate</h5>
+        <p class="small">
+          We welcome strangers in our beautiful land.
+          Discover destinations, adventures, and unforgettable journeys.
+        </p>
+      </div>
+
+      <!-- Quick Links -->
+      <div class="col-md-4 mb-3">
+        <h6 class="fw-bold">Quick Links</h6>
+        <ul class="list-unstyled small">
+          <li><a href="{% url 'home' %}" class="text-light text-decoration-none">Home</a></li>
+          <li><a href="{% url 'destination_list' %}" class="text-light text-decoration-none">Destinations</a></li>
+          <li><a href="{% url 'login' %}" class="text-light text-decoration-none">Login</a></li>
+          <li><a href="{% url 'signup' %}" class="text-light text-decoration-none">Signup</a></li>
+        </ul>
+      </div>
+
+      <!-- Info -->
+      <div class="col-md-4 mb-3">
+        <h6 class="fw-bold">Contact</h6>
+        <p class="small mb-1">📧 info@travelmate.com</p>
+        <p class="small">📍 Pokhara, Nepal</p>
+      </div>
+
+    </div>
+
+    <hr class="border-secondary">
+
+    <div class="text-center small">
+      © {{ year|default:2025 }} Travel Mate. All rights reserved.
+    </div>
+  </div>
+</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
