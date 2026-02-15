@@ -1,0 +1,12 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# Virtual environment
+.myenv/
+.venv/
+venv/
+env/
+git add .gitignore
+git commit -m "Add .gitignore"
+git push

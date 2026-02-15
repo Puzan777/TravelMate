@@ -1,6 +1,7 @@
 
 # Create your views here.
 from django.shortcuts import render, redirect
+from django.shortcuts import get_object_or_404
 from django.contrib.auth import login, logout
 from .forms import SignUpForm, LoginForm
 from .models import Destination
@@ -49,7 +50,7 @@ def destination_list(request):
     })
 
 def destination_detail(request, pk):
-    destination = Destination.objects.get(pk=pk)
+    destination = get_object_or_404(Destination, pk=pk, is_active=True)
     return render(request, 'destination_detail.html', {
         'destination': destination
     })

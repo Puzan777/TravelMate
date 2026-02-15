@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container my-5">
+  <div class="row g-4">
+    <div class="col-md-6">
+      {% if destination.image %}
+        <img src="{{ destination.image.url }}" class="img-fluid rounded shadow-sm" alt="{{ destination.name }}">
+      {% else %}
+        <div class="bg-light border rounded d-flex align-items-center justify-content-center" style="height: 320px;">
+          <span class="text-muted">No image</span>
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="col-md-6">
+      <h1 class="h2 fw-bold">{{ destination.name }}</h1>
+      <p class="text-muted mb-2">
+        {{ destination.city }}{% if destination.city and destination.country %}, {% endif %}{{ destination.country }}
+      </p>
+      <p class="fs-5 fw-bold mb-3">Rs. {{ destination.price }}</p>
+
+      <div class="mb-4">
+        <h2 class="h5">About this package</h2>
+        <p class="mb-0">{{ destination.description }}</p>
+      </div>
+
+      <a class="btn btn-outline-primary" href="{% url 'destination_list' %}">Back to destinations</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

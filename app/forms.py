@@ -20,12 +20,6 @@ class LoginForm(AuthenticationForm):
         super().__init__(*args, **kwargs)
         for f in self.fields.values():
             f.widget.attrs["class"] = "form-control"
-            
-class LoginForm(AuthenticationForm):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        for f in self.fields.values():
-            f.widget.attrs["class"] = "form-control"
         
 # class Bookform(forms.ModelForm):
     
