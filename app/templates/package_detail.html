@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row">
+    <div class="col-lg-8">
+      {% if package.image %}
+        <img src="{{ package.image.url }}" class="img-fluid rounded mb-4" style="width:100%; height:450px; object-fit:cover;" alt="{{ package.title }}">
+      {% endif %}
+
+      <h1 class="h3">{{ package.title }}</h1>
+      <p class="text-success fw-bold">${{ package.price }}</p>
+
+      <div class="mb-4">
+        <h5>Info</h5>
+        <ul class="list-group list-group-flush">
+          <li class="list-group-item"><strong>Duration:</strong> {{ package.duration }}</li>
+          {% if package.destination %}
+            <li class="list-group-item"><strong>Destination:</strong> {{ package.destination.name }}</li>
+          {% endif %}
+          {% if package.difficulty %}<li class="list-group-item"><strong>Difficulty:</strong> {{ package.difficulty }}</li>{% endif %}
+          {% if package.max_people %}<li class="list-group-item"><strong>Max people:</strong> {{ package.max_people }}</li>{% endif %}
+          {% if package.trip_difficulty %}<li class="list-group-item"><strong>Trip difficulty:</strong> {{ package.trip_difficulty }}</li>{% endif %}
+          {% if package.activity %}<li class="list-group-item"><strong>Activity:</strong> {{ package.activity }}</li>{% endif %}
+          {% if package.max_elevation %}<li class="list-group-item"><strong>Max elevation:</strong> {{ package.max_elevation }} m</li>{% endif %}
+          {% if package.accommodation %}<li class="list-group-item"><strong>Accommodation:</strong> {{ package.accommodation }}</li>{% endif %}
+          {% if package.meal %}<li class="list-group-item"><strong>Meal:</strong> {{ package.meal }}</li>{% endif %}
+          {% if package.vehicle %}<li class="list-group-item"><strong>Vehicle:</strong> {{ package.vehicle }}</li>{% endif %}
+        </ul>
+      </div>
+
+      <div class="mb-4">
+        <h5>About</h5>
+        <p class="small">{{ package.description|linebreaks }}</p>
+      </div>
+
+      {% if package.major_highlights %}
+        <div class="mb-4">
+          <h5>Major Highlights</h5>
+          <p class="small">{{ package.major_highlights|linebreaks }}</p>
+        </div>
+      {% endif %}
+
+      {% if package.itinerary %}
+        <div class="mb-4">
+          <h5>Itinerary</h5>
+          <div class="small">{{ package.itinerary|linebreaks }}</div>
+        </div>
+      {% endif %}
+
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card sticky-top" style="top:20px">
+        <div class="card-body">
+          <h5 class="card-title">Book this trip</h5>
+          <p class="card-text mb-1"><strong>Price:</strong> ${{ package.price }}</p>
+          <p class="card-text small mb-3">Duration: {{ package.duration }}</p>
+          <a href="#" class="btn btn-success w-100">Enquire / Book</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,10 +1,9 @@
-
 # Create your views here.
-from django.shortcuts import render, redirect
-from django.shortcuts import get_object_or_404
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout
 from .forms import SignUpForm, LoginForm
-from .models import Destination
+from .models import Destination, Package
+
 
 def signup_view(request):
     if request.method == "POST":
@@ -33,6 +32,7 @@ def logout_view(request):
     logout(request)
     return redirect("login")
 
+
 def home(request):
     featured_destinations = Destination.objects.filter(
         is_featured=True,
@@ -43,14 +43,43 @@ def home(request):
         "featured_destinations": featured_destinations
     })
 
+
 def destination_list(request):
     destinations = Destination.objects.filter(is_active=True)
     return render(request, 'destination_list.html', {
         'destinations': destinations
     })
 
+
 def destination_detail(request, pk):
     destination = get_object_or_404(Destination, pk=pk, is_active=True)
     return render(request, 'destination_detail.html', {
         'destination': destination
+    })
+
+
+# ----------------- Package views -----------------
+def package_list(request, category=None, hot_sales=False):
+    qs = Package.objects.filter(is_active=True)
+    title = 'Packages'
+
+    if hot_sales:
+        qs = qs.filter(is_hot_sale=True)
+        title = 'Hot Sales'
+    elif category:
+        qs = qs.filter(category=category)
+        title = dict(Package.Category.choices).get(category, category.title())
+
+    return render(request, 'packages_list.html', {
+        'packages': qs,
+        'category': category,
+        'hot_sales': hot_sales,
+        'title': title,
+    })
+
+
+def package_detail(request, pk):
+    package = get_object_or_404(Package, pk=pk, is_active=True)
+    return render(request, 'package_detail.html', {
+        'package': package
     })
