@@ -21,7 +21,7 @@ urlpatterns = [
     path('packages/hot-sales/', views.package_list, {'hot_sales': True}, name='packages_hot_sales'),
 
     # package detail must come last (after specific package pages)
-    path('packages/<int:pk>/', views.package_detail, name='package_detail'),
+    path('packages/<slug:slug>/', views.package_detail, name='package_detail'),
 ]
 
 

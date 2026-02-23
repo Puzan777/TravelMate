@@ -78,8 +78,8 @@ def package_list(request, category=None, hot_sales=False):
     })
 
 
-def package_detail(request, pk):
-    package = get_object_or_404(Package, pk=pk, is_active=True)
+def package_detail(request, slug):
+    package = get_object_or_404(Package, slug=slug, is_active=True)
     return render(request, 'package_detail.html', {
         'package': package
     })

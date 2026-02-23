@@ -41,6 +41,8 @@ class Package(models.Model):
         HELI = 'HELI', 'Heli'
 
     title = models.CharField(max_length=200)
+    # optional slug for pretty URLs; generated automatically if blank
+    slug = models.SlugField(max_length=200, unique=True, blank=True, null=True)
     category = models.CharField(max_length=20, choices=Category.choices)
     image = models.ImageField(upload_to='packages/')
     price = models.DecimalField(max_digits=10, decimal_places=2)
@@ -77,6 +79,20 @@ class Package(models.Model):
     def __str__(self):
         return self.title
 
+    def save(self, *args, **kwargs):
+        # auto-populate slug from title if not specified
+        from django.utils.text import slugify
+
+        if not self.slug:
+            base = slugify(self.title)
+            slug = base
+            counter = 1
+            # ensure uniqueness across existing packages
+            while Package.objects.filter(slug=slug).exclude(pk=self.pk).exists():
+                slug = f"{base}-{counter}"
+                counter += 1
+            self.slug = slug
+        super().save(*args, **kwargs)
+
     def get_absolute_url(self):
-        # detail view now uses primary key instead of slug
-        return reverse('package_detail', args=[self.pk])
+        return reverse('package_detail', args=[self.slug])
