@@ -86,3 +86,16 @@ class Package(models.Model):
 
     def get_absolute_url(self):
         return reverse('package_detail', args=[self.slug])
+
+
+class Booking(models.Model):
+    package = models.ForeignKey(Package, on_delete=models.CASCADE, related_name='bookings')
+    user = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='bookings')
+    travel_date = models.DateField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.package.title} - {self.travel_date}"

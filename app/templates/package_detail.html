@@ -56,7 +56,27 @@
           <h5 class="card-title">Book this trip</h5>
           <p class="card-text mb-1"><strong>Price:</strong> ${{ package.price }}</p>
           <p class="card-text small mb-3">Duration: {{ package.duration }}</p>
-          <a href="#" class="btn btn-success w-100">Enquire / Book</a>
+
+          {% if messages %}
+            {% for message in messages %}
+              <div class="alert alert-success py-2" role="alert">{{ message }}</div>
+            {% endfor %}
+          {% endif %}
+
+          <form method="post" class="d-grid gap-2">
+            {% csrf_token %}
+            <label for="id_travel_date" class="form-label mb-1">Choose travel date</label>
+            {{ booking_form.travel_date }}
+            {% if booking_form.travel_date.errors %}
+              <div class="text-danger small">{{ booking_form.travel_date.errors|striptags }}</div>
+            {% endif %}
+
+            {% if user.is_authenticated %}
+              <button type="submit" class="btn btn-success w-100">Book Now</button>
+            {% else %}
+              <a href="{% url 'login' %}" class="btn btn-outline-primary w-100">Login to Book</a>
+            {% endif %}
+          </form>
         </div>
       </div>
     </div>

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import CustomUser, Destination, Package
+from .models import CustomUser, Destination, Package, Booking
 
 
 @admin.register(CustomUser)
@@ -30,3 +30,11 @@ class PackageAdmin(admin.ModelAdmin):
         ('Optional', {'fields': ('major_highlights', 'itinerary')}),
         ('Status', {'fields': ('is_hot_sale', 'is_active')}),
     )
+
+
+@admin.register(Booking)
+class BookingAdmin(admin.ModelAdmin):
+    list_display = ('package', 'user', 'travel_date', 'created_at')
+    list_filter = ('travel_date', 'created_at')
+    search_fields = ('package__title', 'user__username')
+    readonly_fields = ('created_at',)

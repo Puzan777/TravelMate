@@ -1,8 +1,10 @@
 # Create your views here.
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout
-from .forms import SignUpForm, LoginForm
-from .models import Destination, Package
+from django.contrib import messages
+from django.utils import timezone
+from .forms import SignUpForm, LoginForm, BookingForm
+from .models import Destination, Package, Booking
 
 
 def signup_view(request):
@@ -91,6 +93,23 @@ def package_list(request, category=None, hot_sales=False):
 
 def package_detail(request, slug):
     package = get_object_or_404(Package, slug=slug, is_active=True)
+
+    if request.method == 'POST':
+        if not request.user.is_authenticated:
+            return redirect('login')
+
+        form = BookingForm(request.POST)
+        if form.is_valid():
+            booking = form.save(commit=False)
+            booking.package = package
+            booking.user = request.user
+            booking.save()
+            messages.success(request, 'Your booking request has been submitted successfully.')
+            return redirect('package_detail', slug=slug)
+    else:
+        form = BookingForm(initial={'travel_date': timezone.localdate()})
+
     return render(request, 'package_detail.html', {
-        'package': package
+        'package': package,
+        'booking_form': form,
     })
