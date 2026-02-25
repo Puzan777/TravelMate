@@ -1,40 +1,40 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="container my-5">
-  <div class="d-flex align-items-center justify-content-between mb-4">
-    <h1 class="h3 mb-0">Available Destinations</h1>
-  </div>
+<div class="container py-5">
+  <h1 class="h2 mb-5 text-center">Explore Countries & Packages</h1>
 
-  <div class="row">
-    {% for destination in destinations %}
-      <div class="col-md-4 mb-4">
-        <div class="card shadow-sm h-100">
-          {% if destination.image %}
-            <img src="{{ destination.image.url }}" class="card-img-top" alt="{{ destination.name }}">
-          {% endif %}
+  <style>
+    .country-card {
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      min-height: 180px;
+    }
+    .country-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+    }
+  </style>
 
-          <div class="card-body">
-            <div class="d-flex align-items-start justify-content-between">
-              <h5 class="card-title mb-1">{{ destination.name }}</h5>
-              {% if destination.is_featured %}
-                <span class="badge text-bg-success">Featured</span>
-              {% endif %}
+  {% if destinations %}
+    <div class="row g-4">
+      {% for destination in destinations %}
+        <div class="col-sm-6 col-md-4 col-lg-3">
+          <a href="{% url 'destination_detail' destination.id %}" class="text-decoration-none">
+            <div class="card country-card h-100 shadow-sm">
+              <div class="card-body d-flex align-items-center justify-content-center">
+                <div class="text-center">
+                  <h5 class="card-title mb-2">{{ destination.name }}</h5>
+                  <small class="text-muted">{{ destination.packages.count }} package{{ destination.packages.count|pluralize }}</small>
+                </div>
+              </div>
             </div>
-
-            <p class="text-muted mb-2">
-              {{ destination.city }}{% if destination.city and destination.country %}, {% endif %}{{ destination.country }}
-            </p>
-
-            <p class="card-text">{{ destination.description|truncatewords:20 }}</p>
-            <p class="fw-bold mb-3">Rs. {{ destination.price }}</p>
-
-            <a class="btn btn-primary w-100" href="{% url 'destination_detail' destination.id %}">View Package</a>
-          </div>
+          </a>
         </div>
-      </div>
-    {% empty %}
-      <p class="text-center">No destinations available.</p>
-    {% endfor %}
-  </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="alert alert-info text-center" role="alert">
+      No countries available yet.
+    </div>
+  {% endif %}
 </div>
 {% endblock %}

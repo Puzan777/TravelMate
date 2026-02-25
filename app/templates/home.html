@@ -13,34 +13,38 @@
     </div>
   </div>
 </section>
-<!-- BEST SELLING PACKAGES -->
+
+<!-- FEATURED COUNTRIES -->
 <section class="container my-5">
-  <h2 class="text-center mb-4">Best Selling Packages</h2>
+  <h2 class="text-center mb-4">Explore Popular Destinations</h2>
 
-  <div class="row">
+  <style>
+    .country-card {
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      min-height: 150px;
+    }
+    .country-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+    }
+  </style>
+
+  <div class="row g-4">
     {% for destination in featured_destinations %}
-    <div class="col-md-4 mb-4">
-      <div class="card shadow-sm h-100">
-        {% if destination.image %}
-        <img src="{{ destination.image.url }}" class="card-img-top" alt="{{ destination.name }}">
-        {% endif %}
-
-        <div class="card-body">
-          <h5 class="card-title">{{ destination.name }}</h5>
-          <p class="card-text">
-            {{ destination.city }}, {{ destination.country }}
-          </p>
-          <p class="fw-bold">Rs. {{ destination.price }}</p>
-
-          <a href="{% url 'destination_detail' destination.id %}"
-             class="btn btn-primary w-100">
-            View Package
-          </a>
-        </div>
+      <div class="col-sm-6 col-md-4 col-lg-3">
+        <a href="{% url 'destination_detail' destination.id %}" class="text-decoration-none">
+          <div class="card country-card h-100 shadow-sm">
+            <div class="card-body d-flex align-items-center justify-content-center">
+              <div class="text-center">
+                <h5 class="card-title mb-2">{{ destination.name }}</h5>
+                <small class="text-muted">{{ destination.packages.count }} package{{ destination.packages.count|pluralize }}</small>
+              </div>
+            </div>
+          </div>
+        </a>
       </div>
-    </div>
     {% empty %}
-    <p class="text-center">No featured packages available.</p>
+      <p class="text-center col-12">No destinations available yet.</p>
     {% endfor %}
   </div>
 </section>

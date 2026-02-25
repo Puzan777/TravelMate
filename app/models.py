@@ -11,24 +11,15 @@ class CustomUser(AbstractUser):
 
 
 class Destination(models.Model):
-    name = models.CharField(max_length=150)
-    description = models.TextField()
-    country = models.CharField(max_length=100)
-    city = models.CharField(max_length=100, blank=True, null=True)
-
-    image = models.ImageField(upload_to='destinations/', blank=True, null=True)
-
-    price = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        help_text="Estimated cost or package price"
-    )
-
-    is_featured = models.BooleanField(default=False)
+    """Represents a country/region where packages are available."""
+    name = models.CharField(max_length=150, unique=True, help_text="Country name (e.g., Nepal, Thailand)")
+    
     is_active = models.BooleanField(default=True)
-
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['name']
 
     def __str__(self):
         return self.name
@@ -50,8 +41,8 @@ class Package(models.Model):
     # single description field rather than short/full
     description = models.TextField()
 
-    # link to Destination (optional)
-    destination = models.ForeignKey(Destination, on_delete=models.SET_NULL, blank=True, null=True)
+    # link to Destination (country selection - optional for backwards compatibility)
+    destination = models.ForeignKey(Destination, on_delete=models.PROTECT, blank=True, null=True, related_name='packages')
 
     duration = models.CharField(max_length=100)
     max_people = models.PositiveIntegerField(blank=True, null=True)

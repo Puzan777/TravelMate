@@ -9,9 +9,11 @@ class CustomUserAdmin(admin.ModelAdmin):
 
 @admin.register(Destination)
 class DestinationAdmin(admin.ModelAdmin):
-    list_display = ('name', 'country', 'city', 'price', 'is_featured', 'is_active')
-    search_fields = ('name', 'country', 'city')
-    list_filter = ('is_featured', 'is_active')
+    list_display = ('name', 'is_active', 'created_at')
+    search_fields = ('name',)
+    list_filter = ('is_active',)
+    list_editable = ('is_active',)
+    readonly_fields = ('created_at', 'updated_at')
 
 
 @admin.register(Package)

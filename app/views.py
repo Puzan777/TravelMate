@@ -34,13 +34,13 @@ def logout_view(request):
 
 
 def home(request):
-    featured_destinations = Destination.objects.filter(
-        is_featured=True,
+    # Show active destinations (countries)
+    destinations = Destination.objects.filter(
         is_active=True
     )[:6]  # limit to 6
 
     return render(request, "home.html", {
-        "featured_destinations": featured_destinations
+        "featured_destinations": destinations
     })
 
 
@@ -53,8 +53,15 @@ def destination_list(request):
 
 def destination_detail(request, pk):
     destination = get_object_or_404(Destination, pk=pk, is_active=True)
+    # Get all packages for this destination (country)
+    packages = Package.objects.filter(
+        destination=destination,
+        is_active=True
+    ).order_by('-created_at')
+    
     return render(request, 'destination_detail.html', {
-        'destination': destination
+        'destination': destination,
+        'packages': packages
     })
 
 
