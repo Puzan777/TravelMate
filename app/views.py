@@ -34,26 +34,30 @@ def logout_view(request):
 
 
 def home(request):
-    # Show active destinations (countries)
-    destinations = Destination.objects.filter(
-        is_active=True
-    )[:6]  # limit to 6
+    # Show all destinations (countries)
+    destinations = Destination.objects.all()[:6]  # limit to 6
+    
+    # Show active packages (best packages)
+    packages = Package.objects.filter(is_active=True)[:6]  # limit to 6
 
     return render(request, "home.html", {
-        "featured_destinations": destinations
+        "featured_destinations": destinations,
+        "featured_packages": packages
     })
 
 
 def destination_list(request):
-    destinations = Destination.objects.filter(is_active=True)
+    # Show all destinations (countries)
+    destinations = Destination.objects.all()
     return render(request, 'destination_list.html', {
         'destinations': destinations
     })
 
 
 def destination_detail(request, pk):
-    destination = get_object_or_404(Destination, pk=pk, is_active=True)
-    # Get all packages for this destination (country)
+    # Get destination regardless of active status
+    destination = get_object_or_404(Destination, pk=pk)
+    # Get only active packages for this destination (country)
     packages = Package.objects.filter(
         destination=destination,
         is_active=True

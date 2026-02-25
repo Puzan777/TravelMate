@@ -14,7 +14,6 @@ class Destination(models.Model):
     """Represents a country/region where packages are available."""
     name = models.CharField(max_length=150, unique=True, help_text="Country name (e.g., Nepal, Thailand)")
     
-    is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
