@@ -3,6 +3,41 @@
 <div class="container py-5">
   <h1 class="h2 mb-4">Packages in {{ destination.name }}</h1>
 
+  {% if destination.hero_image %}
+    <img src="{{ destination.hero_image.url }}" class="img-fluid rounded mb-4" style="width:100%; height:320px; object-fit:cover;" alt="{{ destination.name }}">
+  {% endif %}
+
+  {% if destination.short_description %}
+    <p class="text-muted mb-4">{{ destination.short_description }}</p>
+  {% endif %}
+
+  <div class="row g-3 mb-4">
+    {% if destination.best_season %}
+      <div class="col-md-4">
+        <div class="border rounded p-3 h-100">
+          <h6 class="mb-1">Best Season</h6>
+          <p class="mb-0 small">{{ destination.best_season }}</p>
+        </div>
+      </div>
+    {% endif %}
+    {% if destination.visa_info %}
+      <div class="col-md-4">
+        <div class="border rounded p-3 h-100">
+          <h6 class="mb-1">Visa Info</h6>
+          <p class="mb-0 small">{{ destination.visa_info }}</p>
+        </div>
+      </div>
+    {% endif %}
+    {% if destination.safety_note %}
+      <div class="col-md-4">
+        <div class="border rounded p-3 h-100">
+          <h6 class="mb-1">Safety Note</h6>
+          <p class="mb-0 small">{{ destination.safety_note }}</p>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+
   <style>
     .package-img { height: 180px; width: 100%; object-fit: cover; }
     .line-clamp { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }

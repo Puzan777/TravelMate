@@ -9,9 +9,14 @@ class CustomUserAdmin(admin.ModelAdmin):
 
 @admin.register(Destination)
 class DestinationAdmin(admin.ModelAdmin):
-    list_display = ('name', 'created_at')
-    search_fields = ('name',)
+    list_display = ('name', 'best_season', 'created_at')
+    search_fields = ('name', 'short_description', 'visa_info', 'safety_note')
     readonly_fields = ('created_at', 'updated_at')
+    fieldsets = (
+        (None, {'fields': ('name', 'hero_image', 'short_description')}),
+        ('Travel Info', {'fields': ('best_season', 'visa_info', 'safety_note')}),
+        ('System', {'fields': ('created_at', 'updated_at')}),
+    )
 
 
 @admin.register(Package)
