@@ -1,0 +1,170 @@
+{% extends "admin/base_site.html" %}
+{% load i18n dashboard_tags %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+  .dashboard-layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 18px;
+    align-items: start;
+  }
+  .admin-sidebar {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 14px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  }
+  .sidebar-section {
+    margin-bottom: 14px;
+  }
+  .sidebar-section:last-child {
+    margin-bottom: 0;
+  }
+  .sidebar-heading {
+    margin: 0 0 8px;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #6b7280;
+    font-weight: 700;
+  }
+  .sidebar-links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .sidebar-links li {
+    margin-bottom: 6px;
+  }
+  .sidebar-links li:last-child {
+    margin-bottom: 0;
+  }
+  .sidebar-links a {
+    display: block;
+    padding: 8px 10px;
+    border-radius: 8px;
+    text-decoration: none;
+    color: #1f2937;
+    border: 1px solid transparent;
+  }
+  .sidebar-links a:hover {
+    background: #f9fafb;
+    border-color: #e5e7eb;
+  }
+  .dashboard-main {
+    min-width: 0;
+  }
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    margin: 0 0 20px;
+  }
+  .dashboard-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 16px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  }
+  .dashboard-title {
+    margin: 0 0 8px;
+    font-size: 0.9rem;
+    color: #6b7280;
+  }
+  .dashboard-value {
+    margin: 0;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #111827;
+  }
+  .dashboard-link {
+    display: inline-block;
+    margin-top: 10px;
+    font-size: 0.85rem;
+    text-decoration: none;
+  }
+  @media (max-width: 1024px) {
+    .dashboard-layout {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+  <h1 style="margin-bottom: 14px;">TravelMate Admin Dashboard</h1>
+
+  <div class="dashboard-layout">
+    <aside class="admin-sidebar">
+      <div class="sidebar-section">
+        <h3 class="sidebar-heading">Catalog</h3>
+        <ul class="sidebar-links">
+          <li><a href="{% url 'admin:app_destination_changelist' %}">Destinations</a></li>
+          <li><a href="{% url 'admin:app_package_changelist' %}">Packages</a></li>
+        </ul>
+      </div>
+
+      <div class="sidebar-section">
+        <h3 class="sidebar-heading">Sales</h3>
+        <ul class="sidebar-links">
+          <li><a href="{% url 'admin:app_booking_changelist' %}">Bookings</a></li>
+          <li><a href="{% url 'admin:app_package_changelist' %}?is_hot_sale__exact=1">Hot Sale Packages</a></li>
+          <li><a href="{% url 'admin:app_package_changelist' %}?is_active__exact=1">Active Packages</a></li>
+        </ul>
+      </div>
+
+      <div class="sidebar-section">
+        <h3 class="sidebar-heading">Accounts</h3>
+        <ul class="sidebar-links">
+          <li><a href="{% url 'admin:app_customuser_changelist' %}">Users</a></li>
+        </ul>
+      </div>
+    </aside>
+
+    <div class="dashboard-main">
+      <div class="dashboard-grid">
+    <div class="dashboard-card">
+      <p class="dashboard-title">Total Packages</p>
+      <p class="dashboard-value">{% dashboard_package_count %}</p>
+      <a class="dashboard-link" href="{% url 'admin:app_package_changelist' %}">Manage packages</a>
+    </div>
+
+    <div class="dashboard-card">
+      <p class="dashboard-title">Active Packages</p>
+      <p class="dashboard-value">{% dashboard_active_package_count %}</p>
+      <a class="dashboard-link" href="{% url 'admin:app_package_changelist' %}?is_active__exact=1">View active</a>
+    </div>
+
+    <div class="dashboard-card">
+      <p class="dashboard-title">Total Bookings</p>
+      <p class="dashboard-value">{% dashboard_booking_count %}</p>
+      <a class="dashboard-link" href="{% url 'admin:app_booking_changelist' %}">Manage bookings</a>
+    </div>
+
+    <div class="dashboard-card">
+      <p class="dashboard-title">Destinations</p>
+      <p class="dashboard-value">{% dashboard_destination_count %}</p>
+      <a class="dashboard-link" href="{% url 'admin:app_destination_changelist' %}">Manage destinations</a>
+    </div>
+
+    <div class="dashboard-card">
+      <p class="dashboard-title">Users</p>
+      <p class="dashboard-value">{% dashboard_user_count %}</p>
+      <a class="dashboard-link" href="{% url 'admin:app_customuser_changelist' %}">Manage users</a>
+    </div>
+      </div>
+
+      {% if app_list %}
+        {% include "admin/app_list.html" with app_list=app_list show_changelinks=True %}
+      {% else %}
+        <p>{% trans "You don’t have permission to view or edit anything." %}</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
