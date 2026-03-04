@@ -46,29 +46,37 @@
       <!-- Left menu -->
       <ul class="navbar-nav me-auto mb-2 mb-lg-0">
 
+        {% if user.is_authenticated and user.is_staff %}
+        <li class="nav-item">
+          <a class="nav-link" href="/admin/">Admin Dashboard</a>
+        </li>
+        {% endif %}
+
         <li class="nav-item">
           <a class="nav-link" href="{% url 'home' %}">Home</a>
         </li>
 
-        <li class="nav-item">
-          <a class="nav-link" href="{% url 'destination_list' %}">Destinations</a>
-        </li>
+        {% if not user.is_authenticated or not user.is_staff %}
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'destination_list' %}">Destinations</a>
+          </li>
 
-        <li class="nav-item">
-          <a class="nav-link" href="{% url 'packages_luxury' %}">Luxury Packages</a>
-        </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'packages_luxury' %}">Luxury Packages</a>
+          </li>
 
-        <li class="nav-item">
-          <a class="nav-link" href="{% url 'packages_trekking' %}">Trekking</a>
-        </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'packages_trekking' %}">Trekking</a>
+          </li>
 
-        <li class="nav-item">
-          <a class="nav-link" href="{% url 'packages_heli' %}">Heli Tours</a>
-        </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'packages_heli' %}">Heli Tours</a>
+          </li>
 
-        <li class="nav-item">
-          <a class="nav-link" href="{% url 'packages_hot_sales' %}">Hot Sales</a>
-        </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'packages_hot_sales' %}">Hot Sales</a>
+          </li>
+        {% endif %}
 
       </ul>
 
@@ -76,6 +84,11 @@
       <ul class="navbar-nav ms-auto">
 
         {% if user.is_authenticated %}
+          {% if user.is_staff %}
+          <li class="nav-item">
+            <a class="nav-link" href="/admin/">Go to Admin</a>
+          </li>
+          {% endif %}
           <li class="nav-item">
             <a class="nav-link text-danger" href="{% url 'logout' %}">
               Logout

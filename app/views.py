@@ -13,6 +13,8 @@ def signup_view(request):
         if form.is_valid():
             user = form.save()      #  password hashed automatically
             login(request, user)    #  auto login after signup
+            if user.is_staff or user.is_superuser:
+                return redirect("/admin/")
             return redirect("home")
     else:
         form = SignUpForm()
@@ -20,10 +22,18 @@ def signup_view(request):
 
 
 def login_view(request):
+    if request.user.is_authenticated:
+        if request.user.is_staff or request.user.is_superuser:
+            return redirect('/admin/')
+        return redirect('home')
+
     if request.method == "POST":
         form = LoginForm(request, data=request.POST)
         if form.is_valid():
-            login(request, form.get_user())
+            user = form.get_user()
+            login(request, user)
+            if user.is_staff or user.is_superuser:
+                return redirect('/admin/')
             return redirect("home")
     else:
         form = LoginForm()
