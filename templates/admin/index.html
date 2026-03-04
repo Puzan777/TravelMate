@@ -87,6 +87,41 @@
     font-size: 0.85rem;
     text-decoration: none;
   }
+  .dashboard-panel {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 16px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    margin-bottom: 16px;
+  }
+  .dashboard-panel h2 {
+    margin: 0 0 12px;
+    font-size: 1rem;
+  }
+  .admin-table-wrap {
+    overflow-x: auto;
+  }
+  .admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+  }
+  .admin-table th,
+  .admin-table td {
+    border-bottom: 1px solid #e5e7eb;
+    padding: 10px 8px;
+    text-align: left;
+    white-space: nowrap;
+  }
+  .admin-table th {
+    font-weight: 600;
+    color: #374151;
+    background: #f9fafb;
+  }
+  .admin-table tr:last-child td {
+    border-bottom: none;
+  }
   @media (max-width: 1024px) {
     .dashboard-layout {
       grid-template-columns: 1fr;
@@ -158,6 +193,41 @@
       <a class="dashboard-link" href="{% url 'admin:app_customuser_changelist' %}">Manage users</a>
     </div>
       </div>
+
+      <section class="dashboard-panel">
+        <h2>Recent Bookings</h2>
+        {% dashboard_recent_bookings 8 as recent_bookings %}
+
+        {% if recent_bookings %}
+          <div class="admin-table-wrap">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Package</th>
+                  <th>User</th>
+                  <th>Travel Date</th>
+                  <th>Booked At</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for booking in recent_bookings %}
+                  <tr>
+                    <td>
+                      <a href="{% url 'admin:app_booking_change' booking.id %}">{{ booking.package.title }}</a>
+                    </td>
+                    <td>{% if booking.user %}{{ booking.user.username }}{% else %}-{% endif %}</td>
+                    <td>{{ booking.travel_date }}</td>
+                    <td>{{ booking.created_at|date:"Y-m-d H:i" }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          <a class="dashboard-link" href="{% url 'admin:app_booking_changelist' %}">View all bookings</a>
+        {% else %}
+          <p class="dashboard-title">No bookings yet.</p>
+        {% endif %}
+      </section>
 
       {% if app_list %}
         {% include "admin/app_list.html" with app_list=app_list show_changelinks=True %}
