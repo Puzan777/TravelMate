@@ -275,6 +275,39 @@
         </div>
       </section>
 
+      {% dashboard_hot_sale_packages 8 as hot_sale_packages %}
+      <section class="dashboard-section">
+        <h2>Hot Sale Packages</h2>
+        {% if hot_sale_packages %}
+          <table class="simple-table">
+            <thead>
+              <tr>
+                <th>Package</th>
+                <th>Destination</th>
+                <th>Price</th>
+                <th>Active</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for package in hot_sale_packages %}
+                <tr>
+                  <td>{{ package.title }}</td>
+                  <td>{% if package.destination %}{{ package.destination.name }}{% else %}-{% endif %}</td>
+                  <td>{{ package.price }}</td>
+                  <td>{% if package.is_active %}Yes{% else %}No{% endif %}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <p>No hot sale packages yet.</p>
+        {% endif %}
+        <div class="section-actions">
+          <a href="{% url 'admin:app_package_changelist' %}?is_hot_sale__exact=1">View Hot Sales</a>
+          <a href="{% url 'admin:app_package_changelist' %}">Manage Packages</a>
+        </div>
+      </section>
+
       {% if app_list %}
         {% include "admin/app_list.html" with app_list=app_list show_changelinks=True %}
       {% else %}
