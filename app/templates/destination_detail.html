@@ -41,6 +41,26 @@
   <style>
     .package-img { height: 180px; width: 100%; object-fit: cover; }
     .line-clamp { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+    .rating-row { display: flex; align-items: center; gap: 8px; }
+    .rating-stars {
+      --rating: 0;
+      position: relative;
+      display: inline-block;
+      font-size: 0.9rem;
+      line-height: 1;
+      letter-spacing: 1px;
+      color: #d1d5db;
+    }
+    .rating-stars::before { content: "★★★★★"; }
+    .rating-stars::after {
+      content: "★★★★★";
+      position: absolute;
+      inset: 0;
+      width: calc((var(--rating) / 5) * 100%);
+      overflow: hidden;
+      color: #f59e0b;
+      white-space: nowrap;
+    }
   </style>
 
   {% if packages %}
@@ -61,7 +81,10 @@
               </div>
 
               <p class="text-success fw-semibold mt-2 mb-2">${{ package.price }}</p>
-              <p class="small text-muted mb-2">Rating: {{ package.rating|floatformat:1 }}/5</p>
+              <div class="rating-row small text-muted mb-2">
+                <span class="rating-stars" style="--rating: {{ package.rating|floatformat:1 }};" aria-hidden="true"></span>
+                <span>{{ package.rating|floatformat:1 }}/5</span>
+              </div>
 
               <p class="card-text small line-clamp mb-3">{{ package.description }}</p>
 

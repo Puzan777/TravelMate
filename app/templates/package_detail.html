@@ -2,6 +2,29 @@
 
 {% block content %}
 <div class="container py-5">
+  <style>
+    .rating-row { display: flex; align-items: center; gap: 8px; }
+    .rating-stars {
+      --rating: 0;
+      position: relative;
+      display: inline-block;
+      font-size: 0.95rem;
+      line-height: 1;
+      letter-spacing: 1px;
+      color: #d1d5db;
+    }
+    .rating-stars::before { content: "★★★★★"; }
+    .rating-stars::after {
+      content: "★★★★★";
+      position: absolute;
+      inset: 0;
+      width: calc((var(--rating) / 5) * 100%);
+      overflow: hidden;
+      color: #f59e0b;
+      white-space: nowrap;
+    }
+  </style>
+
   <div class="row">
     <div class="col-lg-8">
       {% if package.image %}
@@ -10,7 +33,10 @@
 
       <h1 class="h3">{{ package.title }}</h1>
       <p class="text-success fw-bold">${{ package.price }}</p>
-      <p class="text-muted small">Rating: {{ package.rating|floatformat:1 }}/5</p>
+      <div class="rating-row text-muted small mb-2">
+        <span class="rating-stars" style="--rating: {{ package.rating|floatformat:1 }};" aria-hidden="true"></span>
+        <span>{{ package.rating|floatformat:1 }}/5</span>
+      </div>
 
       <div class="mb-4">
         <h5>Info</h5>
@@ -56,7 +82,13 @@
         <div class="card-body">
           <h5 class="card-title">Book this trip</h5>
           <p class="card-text mb-1"><strong>Price:</strong> ${{ package.price }}</p>
-          <p class="card-text mb-1"><strong>Rating:</strong> {{ package.rating|floatformat:1 }}/5</p>
+          <div class="card-text mb-1">
+            <strong>Rating:</strong>
+            <span class="rating-row d-inline-flex align-items-center ms-1">
+              <span class="rating-stars" style="--rating: {{ package.rating|floatformat:1 }};" aria-hidden="true"></span>
+              <span class="small text-muted">{{ package.rating|floatformat:1 }}/5</span>
+            </span>
+          </div>
           <p class="card-text small mb-3">Duration: {{ package.duration }}</p>
 
           {% if messages %}
