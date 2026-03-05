@@ -452,11 +452,6 @@
         </div>
       </section>
 
-      {% if app_list %}
-        {% include "admin/app_list.html" with app_list=app_list show_changelinks=True %}
-      {% else %}
-        <p>{% trans "You don’t have permission to view or edit anything." %}</p>
-      {% endif %}
     </div>
   </div>
 </div>

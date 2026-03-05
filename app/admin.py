@@ -1,6 +1,9 @@
 from django.contrib import admin
 from .models import CustomUser, Destination, Package, Booking
 
+# Hide default Django admin nav sidebar; custom dashboard provides navigation.
+admin.site.enable_nav_sidebar = False
+
 
 @admin.register(CustomUser)
 class CustomUserAdmin(admin.ModelAdmin):
