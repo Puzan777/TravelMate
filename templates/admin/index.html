@@ -4,6 +4,58 @@
 {% block extrastyle %}
 {{ block.super }}
 <style>
+  :root {
+    --bg-page: #f3f6fb;
+    --bg-surface: #ffffff;
+    --text-main: #0f172a;
+    --text-muted: #5b6475;
+    --line: #dbe2ec;
+    --line-soft: #e9eef5;
+    --brand: #0a4f8a;
+    --brand-soft: #e7f1fb;
+    --success-soft: #eaf9ef;
+    --shadow-soft: 0 10px 24px rgba(17, 24, 39, 0.06);
+  }
+
+  #content-main {
+    background: var(--bg-page);
+    border: 1px solid var(--line-soft);
+    border-radius: 14px;
+    padding: 18px;
+  }
+
+  .dashboard-hero {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 14px;
+    background: linear-gradient(120deg, #0b3d69, #0a4f8a 45%, #0e6bb7);
+    color: #ffffff;
+    border-radius: 14px;
+    padding: 18px 20px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow-soft);
+  }
+  .dashboard-hero h1 {
+    margin: 0;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #ffffff;
+  }
+  .dashboard-hero p {
+    margin: 5px 0 0;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.9);
+  }
+  .hero-badge {
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    border-radius: 999px;
+    padding: 6px 11px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    background: rgba(255, 255, 255, 0.12);
+  }
+
   .dashboard-layout {
     display: grid;
     grid-template-columns: 280px 1fr;
@@ -11,24 +63,24 @@
     align-items: start;
   }
   .admin-sidebar {
-    background: #fff;
-    border: 1px solid #e5e7eb;
-    border-radius: 10px;
+    background: var(--bg-surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
     padding: 14px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    box-shadow: var(--shadow-soft);
   }
   .sidebar-section {
-    margin-bottom: 14px;
+    margin-bottom: 16px;
   }
   .sidebar-section:last-child {
     margin-bottom: 0;
   }
   .sidebar-heading {
-    margin: 0 0 8px;
-    font-size: 0.78rem;
+    margin: 0 0 9px;
+    font-size: 0.76rem;
     text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: #6b7280;
+    letter-spacing: 0.08em;
+    color: #708099;
     font-weight: 700;
   }
   .sidebar-links {
@@ -44,16 +96,19 @@
   }
   .sidebar-links a {
     display: block;
-    padding: 8px 10px;
+    padding: 9px 10px;
     border-radius: 8px;
     text-decoration: none;
-    color: #1f2937;
+    color: #172336;
     border: 1px solid transparent;
+    font-size: 0.9rem;
   }
   .sidebar-links a:hover {
-    background: #f9fafb;
-    border-color: #e5e7eb;
+    background: var(--brand-soft);
+    border-color: #c3d8ec;
+    color: #0c4d86;
   }
+
   .dashboard-main {
     min-width: 0;
   }
@@ -64,41 +119,52 @@
     margin: 0 0 20px;
   }
   .dashboard-card {
-    background: #fff;
-    border: 1px solid #e5e7eb;
-    border-radius: 10px;
+    background: var(--bg-surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
     padding: 16px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    box-shadow: var(--shadow-soft);
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+  }
+  .dashboard-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 28px rgba(17, 24, 39, 0.1);
   }
   .dashboard-title {
-    margin: 0 0 8px;
-    font-size: 0.9rem;
-    color: #6b7280;
+    margin: 0 0 7px;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #74839b;
+    font-weight: 700;
   }
   .dashboard-value {
     margin: 0;
-    font-size: 1.8rem;
+    font-size: 1.95rem;
     font-weight: 700;
-    color: #111827;
+    color: var(--text-main);
   }
   .dashboard-link {
     display: inline-block;
-    margin-top: 10px;
+    margin-top: 11px;
     font-size: 0.85rem;
     text-decoration: none;
+    color: var(--brand);
+    font-weight: 600;
   }
+
   .quick-actions {
-    background: #fff;
-    border: 1px solid #e5e7eb;
-    border-radius: 10px;
+    background: var(--bg-surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
     padding: 16px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    box-shadow: var(--shadow-soft);
     margin-bottom: 20px;
   }
   .quick-actions h2 {
     margin: 0 0 12px;
-    font-size: 1rem;
-    color: #111827;
+    font-size: 1.02rem;
+    color: var(--text-main);
   }
   .quick-actions-grid {
     display: grid;
@@ -108,47 +174,61 @@
   .quick-action-link {
     display: block;
     padding: 10px 12px;
-    border: 1px solid #dbe1ea;
+    border: 1px solid #cdd9e8;
     border-radius: 8px;
     text-decoration: none;
-    color: #1f2937;
+    color: #112036;
     font-size: 0.9rem;
-    background: #f9fafb;
+    font-weight: 600;
+    background: #f8fbff;
   }
   .quick-action-link:hover {
-    border-color: #9ca3af;
-    background: #f3f4f6;
+    border-color: #9dc0de;
+    background: var(--brand-soft);
+    color: #0d4f88;
   }
+
   .dashboard-section {
-    background: #fff;
-    border: 1px solid #e5e7eb;
-    border-radius: 10px;
+    background: var(--bg-surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
     padding: 16px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    box-shadow: var(--shadow-soft);
     margin-bottom: 20px;
   }
   .dashboard-section h2 {
     margin: 0 0 10px;
-    font-size: 1rem;
-    color: #111827;
+    font-size: 1.02rem;
+    color: var(--text-main);
+  }
+  .table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--line-soft);
+    border-radius: 10px;
   }
   .simple-table {
     width: 100%;
     border-collapse: collapse;
+    min-width: 520px;
+    background: #ffffff;
   }
   .simple-table th,
   .simple-table td {
     padding: 8px 10px;
-    border-bottom: 1px solid #e5e7eb;
+    border-bottom: 1px solid var(--line-soft);
     text-align: left;
     font-size: 0.9rem;
   }
+  .simple-table tbody tr:hover {
+    background: #f8fbff;
+  }
   .simple-table th {
-    color: #6b7280;
+    color: var(--text-muted);
     font-weight: 600;
     font-size: 0.82rem;
     text-transform: uppercase;
     letter-spacing: 0.03em;
+    background: #f8fafc;
   }
   .section-actions {
     margin-top: 10px;
@@ -159,10 +239,29 @@
   .section-actions a {
     font-size: 0.86rem;
     text-decoration: none;
+    color: var(--brand);
+    font-weight: 600;
+    background: var(--brand-soft);
+    border: 1px solid #c8def2;
+    border-radius: 7px;
+    padding: 5px 9px;
   }
+  .section-actions a:hover {
+    background: #d8eafb;
+  }
+
   @media (max-width: 1024px) {
     .dashboard-layout {
       grid-template-columns: 1fr;
+    }
+  }
+  @media (max-width: 640px) {
+    #content-main {
+      padding: 12px;
+    }
+    .dashboard-hero {
+      flex-direction: column;
+      align-items: flex-start;
     }
   }
 </style>
@@ -170,7 +269,13 @@
 
 {% block content %}
 <div id="content-main">
-  <h1 style="margin-bottom: 14px;">TravelMate Admin Dashboard</h1>
+  <section class="dashboard-hero">
+    <div>
+      <h1>TravelMate Admin Dashboard</h1>
+      <p>Control bookings, packages, destinations, and users from one place.</p>
+    </div>
+    <div class="hero-badge">Operations Center</div>
+  </section>
 
   <div class="dashboard-layout">
     <aside class="admin-sidebar">
@@ -248,24 +353,26 @@
       <section class="dashboard-section">
         <h2>Recent Users</h2>
         {% if recent_users %}
-          <table class="simple-table">
-            <thead>
-              <tr>
-                <th>Username</th>
-                <th>Email</th>
-                <th>Date Joined</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for user in recent_users %}
+          <div class="table-wrap">
+            <table class="simple-table">
+              <thead>
                 <tr>
-                  <td>{{ user.username }}</td>
-                  <td>{{ user.email|default:"-" }}</td>
-                  <td>{{ user.date_joined|date:"M d, Y" }}</td>
+                  <th>Username</th>
+                  <th>Email</th>
+                  <th>Date Joined</th>
                 </tr>
-              {% endfor %}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {% for user in recent_users %}
+                  <tr>
+                    <td>{{ user.username }}</td>
+                    <td>{{ user.email|default:"-" }}</td>
+                    <td>{{ user.date_joined|date:"M d, Y" }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
         {% else %}
           <p>No users yet.</p>
         {% endif %}
@@ -279,26 +386,28 @@
       <section class="dashboard-section">
         <h2>Hot Sale Packages</h2>
         {% if hot_sale_packages %}
-          <table class="simple-table">
-            <thead>
-              <tr>
-                <th>Package</th>
-                <th>Destination</th>
-                <th>Price</th>
-                <th>Active</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for package in hot_sale_packages %}
+          <div class="table-wrap">
+            <table class="simple-table">
+              <thead>
                 <tr>
-                  <td>{{ package.title }}</td>
-                  <td>{% if package.destination %}{{ package.destination.name }}{% else %}-{% endif %}</td>
-                  <td>{{ package.price }}</td>
-                  <td>{% if package.is_active %}Yes{% else %}No{% endif %}</td>
+                  <th>Package</th>
+                  <th>Destination</th>
+                  <th>Price</th>
+                  <th>Active</th>
                 </tr>
-              {% endfor %}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {% for package in hot_sale_packages %}
+                  <tr>
+                    <td>{{ package.title }}</td>
+                    <td>{% if package.destination %}{{ package.destination.name }}{% else %}-{% endif %}</td>
+                    <td>{{ package.price }}</td>
+                    <td>{% if package.is_active %}Yes{% else %}No{% endif %}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
         {% else %}
           <p>No hot sale packages yet.</p>
         {% endif %}
@@ -312,26 +421,28 @@
       <section class="dashboard-section">
         <h2>Manage Bookings</h2>
         {% if recent_bookings %}
-          <table class="simple-table">
-            <thead>
-              <tr>
-                <th>Package</th>
-                <th>User</th>
-                <th>Travel Date</th>
-                <th>Booked On</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for booking in recent_bookings %}
+          <div class="table-wrap">
+            <table class="simple-table">
+              <thead>
                 <tr>
-                  <td>{{ booking.package.title }}</td>
-                  <td>{% if booking.user %}{{ booking.user.username }}{% else %}Guest{% endif %}</td>
-                  <td>{{ booking.travel_date|date:"M d, Y" }}</td>
-                  <td>{{ booking.created_at|date:"M d, Y" }}</td>
+                  <th>Package</th>
+                  <th>User</th>
+                  <th>Travel Date</th>
+                  <th>Booked On</th>
                 </tr>
-              {% endfor %}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {% for booking in recent_bookings %}
+                  <tr>
+                    <td>{{ booking.package.title }}</td>
+                    <td>{% if booking.user %}{{ booking.user.username }}{% else %}Guest{% endif %}</td>
+                    <td>{{ booking.travel_date|date:"M d, Y" }}</td>
+                    <td>{{ booking.created_at|date:"M d, Y" }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
         {% else %}
           <p>No bookings yet.</p>
         {% endif %}
