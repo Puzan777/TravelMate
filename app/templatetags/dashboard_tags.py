@@ -32,3 +32,8 @@ def dashboard_user_count():
 @register.simple_tag
 def dashboard_recent_bookings(limit=5):
     return Booking.objects.select_related('package', 'user').order_by('-created_at')[:limit]
+
+
+@register.simple_tag
+def dashboard_recent_users(limit=5):
+    return CustomUser.objects.order_by('-date_joined')[:limit]

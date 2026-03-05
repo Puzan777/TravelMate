@@ -119,6 +119,47 @@
     border-color: #9ca3af;
     background: #f3f4f6;
   }
+  .dashboard-section {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 16px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    margin-bottom: 20px;
+  }
+  .dashboard-section h2 {
+    margin: 0 0 10px;
+    font-size: 1rem;
+    color: #111827;
+  }
+  .simple-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .simple-table th,
+  .simple-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid #e5e7eb;
+    text-align: left;
+    font-size: 0.9rem;
+  }
+  .simple-table th {
+    color: #6b7280;
+    font-weight: 600;
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  .section-actions {
+    margin-top: 10px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .section-actions a {
+    font-size: 0.86rem;
+    text-decoration: none;
+  }
   @media (max-width: 1024px) {
     .dashboard-layout {
       grid-template-columns: 1fr;
@@ -202,6 +243,37 @@
       <a class="dashboard-link" href="{% url 'admin:app_customuser_changelist' %}">Manage users</a>
     </div>
       </div>
+
+      {% dashboard_recent_users 6 as recent_users %}
+      <section class="dashboard-section">
+        <h2>Recent Users</h2>
+        {% if recent_users %}
+          <table class="simple-table">
+            <thead>
+              <tr>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Date Joined</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for user in recent_users %}
+                <tr>
+                  <td>{{ user.username }}</td>
+                  <td>{{ user.email|default:"-" }}</td>
+                  <td>{{ user.date_joined|date:"M d, Y" }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <p>No users yet.</p>
+        {% endif %}
+        <div class="section-actions">
+          <a href="{% url 'admin:app_customuser_add' %}">+ Add User</a>
+          <a href="{% url 'admin:app_customuser_changelist' %}">Manage Users</a>
+        </div>
+      </section>
 
       {% if app_list %}
         {% include "admin/app_list.html" with app_list=app_list show_changelinks=True %}
