@@ -41,6 +41,7 @@
               </div>
 
               <p class="text-success fw-semibold mt-2 mb-2">${{ package.price }}</p>
+              <p class="small text-muted mb-2">Rating: {{ package.rating|floatformat:1 }}/5</p>
 
               <p class="card-text small line-clamp mb-3">{{ package.description }}</p>
 

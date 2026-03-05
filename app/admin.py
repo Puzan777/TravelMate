@@ -24,7 +24,7 @@ class DestinationAdmin(admin.ModelAdmin):
 
 @admin.register(Package)
 class PackageAdmin(admin.ModelAdmin):
-    list_display = ('title', 'category', 'price', 'is_hot_sale', 'is_active', 'created_at')
+    list_display = ('title', 'category', 'price', 'rating', 'is_hot_sale', 'is_active', 'created_at')
     list_filter = ('category', 'is_hot_sale', 'is_active')
     search_fields = ('title', 'slug', 'destination__name', 'description')
     prepopulated_fields = {'slug': ('title',)}
@@ -32,7 +32,7 @@ class PackageAdmin(admin.ModelAdmin):
     list_editable = ('is_hot_sale', 'is_active')
 
     fieldsets = (
-        (None, {'fields': ('title', 'slug', 'category', 'image', 'price', 'description', 'destination')}),
+        (None, {'fields': ('title', 'slug', 'category', 'image', 'price', 'rating', 'description', 'destination')}),
         ('Trip info', {'fields': ('duration', 'max_people', 'trip_difficulty', 'activity', 'max_elevation')}),
         ('Logistics', {'fields': ('accommodation', 'meal', 'vehicle')}),
         ('Optional', {'fields': ('major_highlights', 'itinerary')}),

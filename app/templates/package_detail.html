@@ -10,6 +10,7 @@
 
       <h1 class="h3">{{ package.title }}</h1>
       <p class="text-success fw-bold">${{ package.price }}</p>
+      <p class="text-muted small">Rating: {{ package.rating|floatformat:1 }}/5</p>
 
       <div class="mb-4">
         <h5>Info</h5>
@@ -55,6 +56,7 @@
         <div class="card-body">
           <h5 class="card-title">Book this trip</h5>
           <p class="card-text mb-1"><strong>Price:</strong> ${{ package.price }}</p>
+          <p class="card-text mb-1"><strong>Rating:</strong> {{ package.rating|floatformat:1 }}/5</p>
           <p class="card-text small mb-3">Duration: {{ package.duration }}</p>
 
           {% if messages %}

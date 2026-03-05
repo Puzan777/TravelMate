@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.urls import reverse
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 
 class CustomUser(AbstractUser):
@@ -41,6 +42,13 @@ class Package(models.Model):
     category = models.CharField(max_length=20, choices=Category.choices)
     image = models.ImageField(upload_to='packages/')
     price = models.DecimalField(max_digits=10, decimal_places=2)
+    rating = models.DecimalField(
+        max_digits=2,
+        decimal_places=1,
+        default=0.0,
+        validators=[MinValueValidator(0.0), MaxValueValidator(5.0)],
+        help_text='Package rating from 0.0 to 5.0'
+    )
 
     # single description field rather than short/full
     description = models.TextField()
