@@ -56,6 +56,27 @@
       font-weight: 600;
       line-height: 1.35;
     }
+    .content-card {
+      background: #ffffff;
+      border: 1px solid #e3ecf6;
+      border-radius: 12px;
+      padding: 14px;
+      box-shadow: 0 4px 10px rgba(15, 23, 42, 0.04);
+    }
+    .content-title {
+      margin: 0 0 8px;
+      font-size: 1rem;
+      color: #10253d;
+      font-weight: 700;
+    }
+    .content-body {
+      font-size: 0.92rem;
+      color: #2b3f54;
+      line-height: 1.65;
+    }
+    .content-body p:last-child {
+      margin-bottom: 0;
+    }
     @media (max-width: 576px) {
       .info-grid { grid-template-columns: 1fr; }
     }
@@ -142,22 +163,22 @@
         </div>
       </div>
 
-      <div class="mb-4">
-        <h5>About</h5>
-        <p class="small">{{ package.description|linebreaks }}</p>
+      <div class="mb-4 content-card">
+        <h5 class="content-title">About This Package</h5>
+        <div class="content-body">{{ package.description|linebreaks }}</div>
       </div>
 
       {% if package.major_highlights %}
-        <div class="mb-4">
-          <h5>Major Highlights</h5>
-          <p class="small">{{ package.major_highlights|linebreaks }}</p>
+        <div class="mb-4 content-card">
+          <h5 class="content-title">Major Highlights</h5>
+          <div class="content-body">{{ package.major_highlights|linebreaks }}</div>
         </div>
       {% endif %}
 
       {% if package.itinerary %}
-        <div class="mb-4">
-          <h5>Itinerary</h5>
-          <div class="small">{{ package.itinerary|linebreaks }}</div>
+        <div class="mb-4 content-card">
+          <h5 class="content-title">Itinerary</h5>
+          <div class="content-body">{{ package.itinerary|linebreaks }}</div>
         </div>
       {% endif %}
 
