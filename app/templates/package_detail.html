@@ -23,6 +23,42 @@
       color: #f59e0b;
       white-space: nowrap;
     }
+    .info-panel {
+      background: #f8fbff;
+      border: 1px solid #dbe6f2;
+      border-radius: 12px;
+      padding: 14px;
+    }
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .info-item {
+      background: #ffffff;
+      border: 1px solid #e5edf6;
+      border-radius: 10px;
+      padding: 10px 12px;
+      min-height: 76px;
+    }
+    .info-label {
+      margin: 0;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #60738b;
+      font-weight: 700;
+    }
+    .info-value {
+      margin: 4px 0 0;
+      font-size: 0.95rem;
+      color: #1f2d3d;
+      font-weight: 600;
+      line-height: 1.35;
+    }
+    @media (max-width: 576px) {
+      .info-grid { grid-template-columns: 1fr; }
+    }
   </style>
 
   <div class="row">
@@ -39,21 +75,71 @@
       </div>
 
       <div class="mb-4">
-        <h5>Info</h5>
-        <ul class="list-group list-group-flush">
-          <li class="list-group-item"><strong>Duration:</strong> {{ package.duration }}</li>
-          {% if package.destination %}
-            <li class="list-group-item"><strong>Destination:</strong> {{ package.destination.name }}</li>
-          {% endif %}
-          {% if package.difficulty %}<li class="list-group-item"><strong>Difficulty:</strong> {{ package.difficulty }}</li>{% endif %}
-          {% if package.max_people %}<li class="list-group-item"><strong>Max people:</strong> {{ package.max_people }}</li>{% endif %}
-          {% if package.trip_difficulty %}<li class="list-group-item"><strong>Trip difficulty:</strong> {{ package.trip_difficulty }}</li>{% endif %}
-          {% if package.activity %}<li class="list-group-item"><strong>Activity:</strong> {{ package.activity }}</li>{% endif %}
-          {% if package.max_elevation %}<li class="list-group-item"><strong>Max elevation:</strong> {{ package.max_elevation }} m</li>{% endif %}
-          {% if package.accommodation %}<li class="list-group-item"><strong>Accommodation:</strong> {{ package.accommodation }}</li>{% endif %}
-          {% if package.meal %}<li class="list-group-item"><strong>Meal:</strong> {{ package.meal }}</li>{% endif %}
-          {% if package.vehicle %}<li class="list-group-item"><strong>Vehicle:</strong> {{ package.vehicle }}</li>{% endif %}
-        </ul>
+        <h5 class="mb-3">Package Info</h5>
+        <div class="info-panel">
+          <div class="info-grid">
+            <div class="info-item">
+              <p class="info-label">Duration</p>
+              <p class="info-value">{{ package.duration }}</p>
+            </div>
+
+            {% if package.destination %}
+              <div class="info-item">
+                <p class="info-label">Destination</p>
+                <p class="info-value">{{ package.destination.name }}</p>
+              </div>
+            {% endif %}
+
+            {% if package.max_people %}
+              <div class="info-item">
+                <p class="info-label">Max People</p>
+                <p class="info-value">{{ package.max_people }}</p>
+              </div>
+            {% endif %}
+
+            {% if package.trip_difficulty %}
+              <div class="info-item">
+                <p class="info-label">Trip Difficulty</p>
+                <p class="info-value">{{ package.trip_difficulty }}</p>
+              </div>
+            {% endif %}
+
+            {% if package.activity %}
+              <div class="info-item">
+                <p class="info-label">Activity</p>
+                <p class="info-value">{{ package.activity }}</p>
+              </div>
+            {% endif %}
+
+            {% if package.max_elevation %}
+              <div class="info-item">
+                <p class="info-label">Max Elevation</p>
+                <p class="info-value">{{ package.max_elevation }} m</p>
+              </div>
+            {% endif %}
+
+            {% if package.accommodation %}
+              <div class="info-item">
+                <p class="info-label">Accommodation</p>
+                <p class="info-value">{{ package.accommodation }}</p>
+              </div>
+            {% endif %}
+
+            {% if package.meal %}
+              <div class="info-item">
+                <p class="info-label">Meal</p>
+                <p class="info-value">{{ package.meal }}</p>
+              </div>
+            {% endif %}
+
+            {% if package.vehicle %}
+              <div class="info-item">
+                <p class="info-label">Vehicle</p>
+                <p class="info-value">{{ package.vehicle }}</p>
+              </div>
+            {% endif %}
+          </div>
+        </div>
       </div>
 
       <div class="mb-4">
