@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container py-5">
+  <h1 class="h3 mb-4">My Profile</h1>
+
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+          <h2 class="h5 mb-3">Booking History & Details</h2>
+
+          {% if bookings %}
+            <div class="table-responsive">
+              <table class="table table-sm align-middle">
+                <thead>
+                  <tr>
+                    <th>Package</th>
+                    <th>Destination</th>
+                    <th>Travel Date</th>
+                    <th>Booked On</th>
+                    <th>Price</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for booking in bookings %}
+                    <tr>
+                      <td>
+                        <a href="{{ booking.package.get_absolute_url }}" class="text-decoration-none fw-semibold">
+                          {{ booking.package.title }}
+                        </a>
+                        <div class="small text-muted">{{ booking.package.duration }}</div>
+                      </td>
+                      <td>
+                        {% if booking.package.destination %}
+                          {{ booking.package.destination.name }}
+                        {% else %}
+                          -
+                        {% endif %}
+                      </td>
+                      <td>{{ booking.travel_date|date:'M d, Y' }}</td>
+                      <td>{{ booking.created_at|date:'M d, Y' }}</td>
+                      <td>${{ booking.package.price }}</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <p class="text-muted mb-0">You have no bookings yet.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h2 class="h5 mb-3">Favorite Packages</h2>
+
+          {% if favorite_packages %}
+            <div class="d-grid gap-2">
+              {% for package in favorite_packages %}
+                <div class="border rounded p-2">
+                  <a href="{{ package.get_absolute_url }}" class="text-decoration-none fw-semibold d-block mb-1">
+                    {{ package.title }}
+                  </a>
+                  <div class="small text-muted mb-2">
+                    {% if package.destination %}{{ package.destination.name }}{% else %}{{ package.get_category_display }}{% endif %}
+                    | ${{ package.price }}
+                  </div>
+
+                  <form method="post" action="{% url 'toggle_favorite_package' package.slug %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="profile">
+                    <button type="submit" class="btn btn-sm btn-outline-danger w-100">Remove</button>
+                  </form>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p class="text-muted mb-0">No favorite packages yet.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
