@@ -5,6 +5,11 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 
 
 class CustomUser(AbstractUser):
+    favorite_packages = models.ManyToManyField(
+        'Package',
+        blank=True,
+        related_name='favorited_by'
+    )
     
     def __str__(self):
         return self.username
