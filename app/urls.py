@@ -8,6 +8,7 @@ urlpatterns = [
     path("signup/", signup_view, name="signup"),
     path("login/", login_view, name="login"),
     path("logout/", logout_view, name="logout"),
+    path('profile/', views.profile_view, name='profile'),
     path("", views.home, name='home'),
 
     # Destinations
@@ -21,6 +22,7 @@ urlpatterns = [
     path('packages/hot-sales/', views.package_list, {'hot_sales': True}, name='packages_hot_sales'),
 
     # package detail must come last (after specific package pages)
+    path('packages/<slug:slug>/favorite/', views.toggle_favorite_package, name='toggle_favorite_package'),
     path('packages/<slug:slug>/', views.package_detail, name='package_detail'),
 ]
 

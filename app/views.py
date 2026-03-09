@@ -3,6 +3,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout
 from django.contrib import messages
 from django.utils import timezone
+from django.contrib.auth.decorators import login_required
 from .forms import SignUpForm, LoginForm, BookingForm
 from .models import Destination, Package, Booking
 
@@ -103,6 +104,10 @@ def package_list(request, category=None, hot_sales=False):
 
 def package_detail(request, slug):
     package = get_object_or_404(Package, slug=slug, is_active=True)
+    is_favorite = False
+
+    if request.user.is_authenticated:
+        is_favorite = request.user.favorite_packages.filter(pk=package.pk).exists()
 
     if request.method == 'POST':
         if not request.user.is_authenticated:
@@ -122,4 +127,35 @@ def package_detail(request, slug):
     return render(request, 'package_detail.html', {
         'package': package,
         'booking_form': form,
+        'is_favorite': is_favorite,
     })
+
+
+@login_required
+def profile_view(request):
+    bookings = Booking.objects.filter(user=request.user).select_related('package', 'package__destination').order_by('-created_at')
+    favorite_packages = request.user.favorite_packages.filter(is_active=True).select_related('destination').order_by('-updated_at')
+
+    return render(request, 'profile.html', {
+        'bookings': bookings,
+        'favorite_packages': favorite_packages,
+    })
+
+
+@login_required
+def toggle_favorite_package(request, slug):
+    if request.method != 'POST':
+        return redirect('package_detail', slug=slug)
+
+    package = get_object_or_404(Package, slug=slug, is_active=True)
+    if request.user.favorite_packages.filter(pk=package.pk).exists():
+        request.user.favorite_packages.remove(package)
+        messages.info(request, 'Removed from favorites.')
+    else:
+        request.user.favorite_packages.add(package)
+        messages.success(request, 'Added to favorites.')
+
+    next_url = request.POST.get('next')
+    if next_url == 'profile':
+        return redirect('profile')
+    return redirect('package_detail', slug=slug)
