@@ -97,6 +97,7 @@
                     <th>Email</th>
                     <th>Phone</th>
                     <th>Message</th>
+                    <th>Reply</th>
                     <th>Submitted On</th>
                   </tr>
                 </thead>
@@ -111,6 +112,14 @@
                       <td>{{ inquiry.email }}</td>
                       <td>{% if inquiry.phone %}{{ inquiry.phone }}{% else %}-{% endif %}</td>
                       <td class="small" style="max-width: 280px;">{{ inquiry.message|truncatechars:90 }}</td>
+                      <td class="small" style="max-width: 280px;">
+                        {% if inquiry.admin_reply %}
+                          <span class="text-success fw-semibold d-block">Replied</span>
+                          {{ inquiry.admin_reply|truncatechars:100 }}
+                        {% else %}
+                          <span class="text-muted">Pending</span>
+                        {% endif %}
+                      </td>
                       <td>{{ inquiry.created_at|date:'M d, Y' }}</td>
                     </tr>
                   {% endfor %}
