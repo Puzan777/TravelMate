@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import CustomUser, Destination, Package, Booking
+from .models import CustomUser, Destination, Package, Booking, Inquiry
 
 # Hide default Django admin nav sidebar; custom dashboard provides navigation.
 admin.site.enable_nav_sidebar = False
@@ -45,4 +45,12 @@ class BookingAdmin(admin.ModelAdmin):
     list_display = ('package', 'user', 'travel_date', 'created_at')
     list_filter = ('travel_date', 'created_at')
     search_fields = ('package__title', 'user__username')
+    readonly_fields = ('created_at',)
+
+
+@admin.register(Inquiry)
+class InquiryAdmin(admin.ModelAdmin):
+    list_display = ('package', 'full_name', 'email', 'phone', 'user', 'created_at')
+    list_filter = ('created_at',)
+    search_fields = ('package__title', 'full_name', 'email', 'phone', 'message')
     readonly_fields = ('created_at',)
