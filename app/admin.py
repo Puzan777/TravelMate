@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.utils import timezone
 from .models import CustomUser, Destination, Package, Booking, Inquiry
 
 # Hide default Django admin nav sidebar; custom dashboard provides navigation.
@@ -50,7 +51,20 @@ class BookingAdmin(admin.ModelAdmin):
 
 @admin.register(Inquiry)
 class InquiryAdmin(admin.ModelAdmin):
-    list_display = ('package', 'full_name', 'email', 'phone', 'user', 'created_at')
-    list_filter = ('created_at',)
+    list_display = ('package', 'full_name', 'email', 'phone', 'user', 'created_at', 'replied_at')
+    list_filter = ('created_at', 'replied_at')
     search_fields = ('package__title', 'full_name', 'email', 'phone', 'message')
-    readonly_fields = ('created_at',)
+    readonly_fields = ('created_at', 'replied_at')
+    fieldsets = (
+        ('Inquiry', {'fields': ('package', 'user', 'full_name', 'email', 'phone', 'message')}),
+        ('Reply', {'fields': ('admin_reply', 'replied_at')}),
+        ('System', {'fields': ('created_at',)}),
+    )
+
+    def save_model(self, request, obj, form, change):
+        # Set reply timestamp when admin adds a reply for the first time.
+        if obj.admin_reply and obj.replied_at is None:
+            obj.replied_at = timezone.now()
+        if not obj.admin_reply:
+            obj.replied_at = None
+        super().save_model(request, obj, form, change)
