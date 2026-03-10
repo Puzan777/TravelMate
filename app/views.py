@@ -4,7 +4,7 @@ from django.contrib.auth import login, logout
 from django.contrib import messages
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
-from .forms import SignUpForm, LoginForm, BookingForm
+from .forms import SignUpForm, LoginForm, BookingForm, InquiryForm
 from .models import Destination, Package, Booking
 
 
@@ -109,24 +109,52 @@ def package_detail(request, slug):
     if request.user.is_authenticated:
         is_favorite = request.user.favorite_packages.filter(pk=package.pk).exists()
 
-    if request.method == 'POST':
-        if not request.user.is_authenticated:
-            return redirect('login')
+    booking_initial = {'travel_date': timezone.localdate()}
+    inquiry_initial = {}
+    if request.user.is_authenticated:
+        inquiry_initial = {
+            'full_name': request.user.get_full_name() or request.user.username,
+            'email': request.user.email,
+        }
 
-        form = BookingForm(request.POST)
-        if form.is_valid():
-            booking = form.save(commit=False)
-            booking.package = package
-            booking.user = request.user
-            booking.save()
-            messages.success(request, 'Your booking request has been submitted successfully.')
-            return redirect('package_detail', slug=slug)
+    if request.method == 'POST':
+        form_type = request.POST.get('form_type')
+
+        if form_type == 'booking':
+            if not request.user.is_authenticated:
+                return redirect('login')
+
+            booking_form = BookingForm(request.POST)
+            inquiry_form = InquiryForm(initial=inquiry_initial)
+            if booking_form.is_valid():
+                booking = booking_form.save(commit=False)
+                booking.package = package
+                booking.user = request.user
+                booking.save()
+                messages.success(request, 'Your booking request has been submitted successfully.')
+                return redirect('package_detail', slug=slug)
+        elif form_type == 'inquiry':
+            booking_form = BookingForm(initial=booking_initial)
+            inquiry_form = InquiryForm(request.POST)
+            if inquiry_form.is_valid():
+                inquiry = inquiry_form.save(commit=False)
+                inquiry.package = package
+                if request.user.is_authenticated:
+                    inquiry.user = request.user
+                inquiry.save()
+                messages.success(request, 'Your inquiry has been sent. Our team will contact you soon.')
+                return redirect('package_detail', slug=slug)
+        else:
+            booking_form = BookingForm(initial=booking_initial)
+            inquiry_form = InquiryForm(initial=inquiry_initial)
     else:
-        form = BookingForm(initial={'travel_date': timezone.localdate()})
+        booking_form = BookingForm(initial=booking_initial)
+        inquiry_form = InquiryForm(initial=inquiry_initial)
 
     return render(request, 'package_detail.html', {
         'package': package,
-        'booking_form': form,
+        'booking_form': booking_form,
+        'inquiry_form': inquiry_form,
         'is_favorite': is_favorite,
     })
 

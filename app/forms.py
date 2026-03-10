@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.utils import timezone
-from .models import CustomUser, Booking
+from .models import CustomUser, Booking, Inquiry
 
 class SignUpForm(UserCreationForm):
     email = forms.EmailField(required=True)
@@ -36,3 +36,15 @@ class BookingForm(forms.ModelForm):
         if travel_date < timezone.localdate():
             raise forms.ValidationError("Please choose today or a future date.")
         return travel_date
+
+
+class InquiryForm(forms.ModelForm):
+    class Meta:
+        model = Inquiry
+        fields = ("full_name", "email", "phone", "message")
+        widgets = {
+            "full_name": forms.TextInput(attrs={"class": "form-control", "placeholder": "Your full name"}),
+            "email": forms.EmailInput(attrs={"class": "form-control", "placeholder": "Your email"}),
+            "phone": forms.TextInput(attrs={"class": "form-control", "placeholder": "Phone (optional)"}),
+            "message": forms.Textarea(attrs={"class": "form-control", "rows": 4, "placeholder": "Tell us what you need"}),
+        }
