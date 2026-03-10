@@ -155,6 +155,14 @@
       color: #10253d;
       font-weight: 700;
     }
+    .sub-form-title {
+      margin: 14px 0 10px;
+      padding-top: 12px;
+      border-top: 1px solid #e6edf5;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #17314a;
+    }
     @media (max-width: 576px) {
       .info-grid { grid-template-columns: 1fr; }
       .title-row { flex-direction: column; }
@@ -305,12 +313,13 @@
 
           {% if messages %}
             {% for message in messages %}
-              <div class="alert alert-success py-2" role="alert">{{ message }}</div>
+              <div class="alert alert-{{ message.tags|default:'info' }} py-2" role="alert">{{ message }}</div>
             {% endfor %}
           {% endif %}
 
           <form method="post" class="d-grid gap-2">
             {% csrf_token %}
+            <input type="hidden" name="form_type" value="booking">
             <label for="id_travel_date" class="form-label mb-1">Choose travel date</label>
             {{ booking_form.travel_date }}
             {% if booking_form.travel_date.errors %}
@@ -322,6 +331,38 @@
             {% else %}
               <a href="{% url 'login' %}" class="btn btn-outline-primary w-100">Login to Book</a>
             {% endif %}
+          </form>
+
+          <h6 class="sub-form-title">Quick Inquiry</h6>
+          <form method="post" class="d-grid gap-2">
+            {% csrf_token %}
+            <input type="hidden" name="form_type" value="inquiry">
+
+            <label for="id_full_name" class="form-label mb-1">Full name</label>
+            {{ inquiry_form.full_name }}
+            {% if inquiry_form.full_name.errors %}
+              <div class="text-danger small">{{ inquiry_form.full_name.errors|striptags }}</div>
+            {% endif %}
+
+            <label for="id_email" class="form-label mb-1">Email</label>
+            {{ inquiry_form.email }}
+            {% if inquiry_form.email.errors %}
+              <div class="text-danger small">{{ inquiry_form.email.errors|striptags }}</div>
+            {% endif %}
+
+            <label for="id_phone" class="form-label mb-1">Phone (optional)</label>
+            {{ inquiry_form.phone }}
+            {% if inquiry_form.phone.errors %}
+              <div class="text-danger small">{{ inquiry_form.phone.errors|striptags }}</div>
+            {% endif %}
+
+            <label for="id_message" class="form-label mb-1">Inquiry message</label>
+            {{ inquiry_form.message }}
+            {% if inquiry_form.message.errors %}
+              <div class="text-danger small">{{ inquiry_form.message.errors|striptags }}</div>
+            {% endif %}
+
+            <button type="submit" class="btn btn-outline-dark w-100">Send Inquiry</button>
           </form>
         </div>
       </div>
