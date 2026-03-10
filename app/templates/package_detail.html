@@ -3,6 +3,51 @@
 {% block content %}
 <div class="container py-5">
   <style>
+    .detail-shell {
+      background: linear-gradient(180deg, #f7fbff 0%, #ffffff 220px);
+      border: 1px solid #e4edf6;
+      border-radius: 16px;
+      padding: 18px;
+    }
+    .cover-frame {
+      position: relative;
+      overflow: hidden;
+      border-radius: 14px;
+      border: 1px solid #dbe6f2;
+      box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+      margin-bottom: 16px;
+    }
+    .cover-frame img {
+      width: 100%;
+      height: 430px;
+      object-fit: cover;
+      display: block;
+    }
+    .title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 14px;
+      margin-bottom: 12px;
+    }
+    .title-meta {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      margin-top: 6px;
+    }
+    .price-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 11px;
+      border-radius: 999px;
+      background: #eaf8ee;
+      color: #17643f;
+      border: 1px solid #cdeed9;
+      font-weight: 700;
+      font-size: 0.92rem;
+    }
     .rating-row { display: flex; align-items: center; gap: 8px; }
     .rating-stars {
       --rating: 0;
@@ -77,26 +122,70 @@
     .content-body p:last-child {
       margin-bottom: 0;
     }
+    .book-card {
+      border: 1px solid #dce7f2;
+      border-radius: 14px;
+      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+    }
+    .book-head {
+      border-bottom: 1px solid #e7eef6;
+      padding-bottom: 10px;
+      margin-bottom: 12px;
+    }
+    .book-stats {
+      background: #f8fbff;
+      border: 1px solid #e1ebf6;
+      border-radius: 10px;
+      padding: 10px;
+      margin-bottom: 12px;
+    }
+    .book-stats p {
+      margin: 0 0 6px;
+      font-size: 0.9rem;
+    }
+    .book-stats p:last-child {
+      margin-bottom: 0;
+    }
+    .favorite-btn {
+      font-weight: 600;
+    }
+    .section-heading {
+      margin: 0 0 10px;
+      font-size: 1rem;
+      color: #10253d;
+      font-weight: 700;
+    }
     @media (max-width: 576px) {
       .info-grid { grid-template-columns: 1fr; }
+      .title-row { flex-direction: column; }
+      .cover-frame img { height: 280px; }
     }
   </style>
 
-  <div class="row">
+  <div class="detail-shell">
+  <div class="row g-4">
     <div class="col-lg-8">
       {% if package.image %}
-        <img src="{{ package.image.url }}" class="img-fluid rounded mb-4" style="width:100%; height:450px; object-fit:cover;" alt="{{ package.title }}">
+        <div class="cover-frame">
+          <img src="{{ package.image.url }}" alt="{{ package.title }}">
+        </div>
       {% endif %}
 
-      <h1 class="h3">{{ package.title }}</h1>
-      <p class="text-success fw-bold">${{ package.price }}</p>
-      <div class="rating-row text-muted small mb-2">
-        <span class="rating-stars" style="--rating: {{ package.rating|floatformat:1 }};" aria-hidden="true"></span>
-        <span>{{ package.rating|floatformat:1 }}/5</span>
+      <div class="title-row">
+        <div>
+          <h1 class="h3 mb-0">{{ package.title }}</h1>
+          <div class="title-meta">
+            <span class="price-pill">${{ package.price }}</span>
+            <div class="rating-row text-muted small">
+              <span class="rating-stars" style="--rating: {{ package.rating|floatformat:1 }};" aria-hidden="true"></span>
+              <span>{{ package.rating|floatformat:1 }}/5</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div class="mb-4">
-        <h5 class="mb-3">Package Info</h5>
+        <h5 class="section-heading">Package Info</h5>
         <div class="info-panel">
           <div class="info-grid">
             <div class="info-item">
@@ -185,18 +274,34 @@
     </div>
 
     <div class="col-lg-4">
-      <div class="card sticky-top" style="top:20px">
+      <div class="card book-card sticky-top" style="top:20px">
         <div class="card-body">
-          <h5 class="card-title">Book this trip</h5>
-          <p class="card-text mb-1"><strong>Price:</strong> ${{ package.price }}</p>
-          <div class="card-text mb-1">
-            <strong>Rating:</strong>
-            <span class="rating-row d-inline-flex align-items-center ms-1">
-              <span class="rating-stars" style="--rating: {{ package.rating|floatformat:1 }};" aria-hidden="true"></span>
-              <span class="small text-muted">{{ package.rating|floatformat:1 }}/5</span>
-            </span>
+          <div class="book-head">
+            <h5 class="card-title mb-0">Book this trip</h5>
           </div>
-          <p class="card-text small mb-3">Duration: {{ package.duration }}</p>
+
+          <div class="book-stats">
+            <p><strong>Price:</strong> ${{ package.price }}</p>
+            <p>
+              <strong>Rating:</strong>
+              <span class="rating-row d-inline-flex align-items-center ms-1">
+                <span class="rating-stars" style="--rating: {{ package.rating|floatformat:1 }};" aria-hidden="true"></span>
+                <span class="small text-muted">{{ package.rating|floatformat:1 }}/5</span>
+              </span>
+            </p>
+            <p><strong>Duration:</strong> {{ package.duration }}</p>
+          </div>
+
+          {% if user.is_authenticated %}
+            <form method="post" action="{% url 'toggle_favorite_package' package.slug %}" class="mb-3">
+              {% csrf_token %}
+              {% if is_favorite %}
+                <button type="submit" class="btn btn-outline-danger w-100 favorite-btn">Remove from Favorites</button>
+              {% else %}
+                <button type="submit" class="btn btn-outline-primary w-100 favorite-btn">Add to Favorites</button>
+              {% endif %}
+            </form>
+          {% endif %}
 
           {% if messages %}
             {% for message in messages %}
@@ -221,6 +326,7 @@
         </div>
       </div>
     </div>
+  </div>
   </div>
 </div>
 {% endblock %}
