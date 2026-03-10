@@ -117,3 +117,19 @@ class Booking(models.Model):
 
     def __str__(self):
         return f"{self.package.title} - {self.travel_date}"
+
+
+class Inquiry(models.Model):
+    package = models.ForeignKey(Package, on_delete=models.CASCADE, related_name='inquiries')
+    user = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='inquiries')
+    full_name = models.CharField(max_length=120)
+    email = models.EmailField()
+    phone = models.CharField(max_length=30, blank=True)
+    message = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Inquiry: {self.package.title} ({self.full_name})"
