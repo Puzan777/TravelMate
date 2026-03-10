@@ -5,7 +5,7 @@ from django.contrib import messages
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 from .forms import SignUpForm, LoginForm, BookingForm, InquiryForm
-from .models import Destination, Package, Booking
+from .models import Destination, Package, Booking, Inquiry
 
 
 def signup_view(request):
@@ -162,10 +162,12 @@ def package_detail(request, slug):
 @login_required
 def profile_view(request):
     bookings = Booking.objects.filter(user=request.user).select_related('package', 'package__destination').order_by('-created_at')
+    inquiries = Inquiry.objects.filter(user=request.user).select_related('package').order_by('-created_at')
     favorite_packages = request.user.favorite_packages.filter(is_active=True).select_related('destination').order_by('-updated_at')
 
     return render(request, 'profile.html', {
         'bookings': bookings,
+        'inquiries': inquiries,
         'favorite_packages': favorite_packages,
     })
 
