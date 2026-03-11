@@ -48,10 +48,28 @@ class BookingAdmin(admin.ModelAdmin):
     readonly_fields = ('created_at',)
 
 
+class InquiryReplyStatusFilter(admin.SimpleListFilter):
+    title = 'reply status'
+    parameter_name = 'reply_status'
+
+    def lookups(self, request, model_admin):
+        return (
+            ('replied', 'Replied'),
+            ('unreplied', 'Unreplied'),
+        )
+
+    def queryset(self, request, queryset):
+        if self.value() == 'replied':
+            return queryset.filter(replied_at__isnull=False)
+        if self.value() == 'unreplied':
+            return queryset.filter(replied_at__isnull=True)
+        return queryset
+
+
 @admin.register(Inquiry)
 class InquiryAdmin(admin.ModelAdmin):
     list_display = ('package', 'full_name', 'email', 'phone', 'admin_reply', 'user', 'created_at', 'replied_at')
-    list_filter = ('created_at', 'replied_at')
+    list_filter = (InquiryReplyStatusFilter, 'created_at', 'replied_at')
     search_fields = ('package__title', 'full_name', 'email', 'phone', 'message')
     readonly_fields = ('created_at', 'replied_at')
     list_editable = ('admin_reply',)
