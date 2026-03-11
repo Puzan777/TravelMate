@@ -163,6 +163,36 @@
       font-weight: 700;
       color: #17314a;
     }
+    .inquiry-panel {
+      border: 1px solid #dfe9f4;
+      background: linear-gradient(180deg, #fbfdff 0%, #ffffff 100%);
+      border-radius: 12px;
+      padding: 12px;
+      box-shadow: inset 0 1px 0 #ffffff;
+    }
+    .inquiry-tip {
+      margin: 0 0 10px;
+      font-size: 0.8rem;
+      color: #5f738a;
+    }
+    .book-card .form-label {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #24415d;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .book-card .form-control {
+      border-color: #d8e6f2;
+      border-radius: 10px;
+      padding: 0.55rem 0.65rem;
+      font-size: 0.9rem;
+      color: #1f3449;
+    }
+    .book-card .form-control:focus {
+      border-color: #9ec3e8;
+      box-shadow: 0 0 0 0.2rem rgba(94, 147, 199, 0.16);
+    }
     @media (max-width: 576px) {
       .info-grid { grid-template-columns: 1fr; }
       .title-row { flex-direction: column; }
@@ -334,36 +364,39 @@
           </form>
 
           <h6 class="sub-form-title">Quick Inquiry</h6>
-          <form method="post" class="d-grid gap-2">
-            {% csrf_token %}
-            <input type="hidden" name="form_type" value="inquiry">
+          <div class="inquiry-panel">
+            <p class="inquiry-tip">Share your requirements and our team will get back to you quickly.</p>
+            <form method="post" class="d-grid gap-2">
+              {% csrf_token %}
+              <input type="hidden" name="form_type" value="inquiry">
 
-            <label for="id_full_name" class="form-label mb-1">Full name</label>
-            {{ inquiry_form.full_name }}
-            {% if inquiry_form.full_name.errors %}
-              <div class="text-danger small">{{ inquiry_form.full_name.errors|striptags }}</div>
-            {% endif %}
+              <label for="id_full_name" class="form-label mb-1">Full name</label>
+              {{ inquiry_form.full_name }}
+              {% if inquiry_form.full_name.errors %}
+                <div class="text-danger small">{{ inquiry_form.full_name.errors|striptags }}</div>
+              {% endif %}
 
-            <label for="id_email" class="form-label mb-1">Email</label>
-            {{ inquiry_form.email }}
-            {% if inquiry_form.email.errors %}
-              <div class="text-danger small">{{ inquiry_form.email.errors|striptags }}</div>
-            {% endif %}
+              <label for="id_email" class="form-label mb-1">Email</label>
+              {{ inquiry_form.email }}
+              {% if inquiry_form.email.errors %}
+                <div class="text-danger small">{{ inquiry_form.email.errors|striptags }}</div>
+              {% endif %}
 
-            <label for="id_phone" class="form-label mb-1">Phone (optional)</label>
-            {{ inquiry_form.phone }}
-            {% if inquiry_form.phone.errors %}
-              <div class="text-danger small">{{ inquiry_form.phone.errors|striptags }}</div>
-            {% endif %}
+              <label for="id_phone" class="form-label mb-1">Phone (optional)</label>
+              {{ inquiry_form.phone }}
+              {% if inquiry_form.phone.errors %}
+                <div class="text-danger small">{{ inquiry_form.phone.errors|striptags }}</div>
+              {% endif %}
 
-            <label for="id_message" class="form-label mb-1">Inquiry message</label>
-            {{ inquiry_form.message }}
-            {% if inquiry_form.message.errors %}
-              <div class="text-danger small">{{ inquiry_form.message.errors|striptags }}</div>
-            {% endif %}
+              <label for="id_message" class="form-label mb-1">Inquiry message</label>
+              {{ inquiry_form.message }}
+              {% if inquiry_form.message.errors %}
+                <div class="text-danger small">{{ inquiry_form.message.errors|striptags }}</div>
+              {% endif %}
 
-            <button type="submit" class="btn btn-outline-dark w-100">Send Inquiry</button>
-          </form>
+              <button type="submit" class="btn btn-dark w-100">Send Inquiry</button>
+            </form>
+          </div>
         </div>
       </div>
     </div>
