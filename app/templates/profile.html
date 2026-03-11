@@ -3,164 +3,347 @@
 {% block content %}
 <div class="container py-5">
   <style>
+    .profile-shell {
+      --ink: #0f2640;
+      --muted: #5f7389;
+      --line: #d7e3f0;
+      --soft: #f4f8fc;
+      font-family: "Segoe UI", "Trebuchet MS", sans-serif;
+    }
+    .profile-hero {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 18px;
+      background:
+        radial-gradient(circle at 90% 8%, #d9ecff 0, #d9ecff 16%, transparent 17%),
+        linear-gradient(115deg, #f8fbff 0%, #eef5ff 40%, #f5fbff 100%);
+      box-shadow: 0 12px 24px rgba(11, 42, 73, 0.08);
+      margin-bottom: 16px;
+    }
+    .identity {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .avatar-chip {
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      color: #0c3558;
+      background: linear-gradient(135deg, #d4eaff, #bddfff);
+      border: 1px solid #a9d1f8;
+    }
+    .welcome {
+      margin: 0;
+      color: var(--ink);
+      font-size: 1.05rem;
+      font-weight: 700;
+    }
+    .welcome-sub {
+      margin: 2px 0 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .metric {
+      border: 1px solid #d8e7f6;
+      background: rgba(255, 255, 255, 0.88);
+      border-radius: 12px;
+      padding: 10px 12px;
+    }
+    .metric p {
+      margin: 0;
+    }
+    .metric-label {
+      font-size: 0.78rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #5b7087;
+      font-weight: 700;
+    }
+    .metric-value {
+      margin-top: 2px;
+      color: #102a45;
+      font-size: 1.25rem;
+      font-weight: 800;
+      line-height: 1.2;
+    }
+    .profile-tabs {
+      padding: 4px;
+      border: 1px solid var(--line);
+      background: #f6faff;
+      border-radius: 12px;
+      display: inline-flex;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
     .profile-tabs .nav-link {
-      font-weight: 600;
-      color: #35516e;
+      border-radius: 8px;
+      color: #37516f;
       border: 1px solid transparent;
-      border-radius: 10px;
+      font-weight: 700;
+      padding: 8px 14px;
     }
     .profile-tabs .nav-link.active {
-      color: #0e2d4d;
-      background: #f0f6fd;
-      border-color: #d8e6f6;
+      color: #10304f;
+      background: #ffffff;
+      border-color: #d3e3f4;
+      box-shadow: 0 3px 8px rgba(20, 54, 89, 0.08);
     }
     .profile-tab-card {
-      border: 1px solid #dfe9f5;
-      border-radius: 12px;
-      box-shadow: 0 6px 16px rgba(15, 23, 42, 0.05);
+      border: 1px solid #dce8f5;
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 10px 20px rgba(15, 34, 56, 0.05);
+    }
+    .profile-tab-card .card-body {
+      padding: 16px;
+    }
+    .section-title {
+      margin: 0 0 12px;
+      font-size: 1rem;
+      font-weight: 800;
+      color: var(--ink);
+    }
+    .table-wrap {
+      border: 1px solid #e2ecf7;
+      border-radius: 10px;
+      overflow: hidden;
+      background: #fff;
+    }
+    .table-wrap thead th {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #5f748b;
+      background: #f6faff;
+      border-bottom-color: #dfeaf5;
+    }
+    .table-wrap td {
+      color: #20364c;
+      vertical-align: middle;
+    }
+    .empty-state {
+      border: 1px dashed #cbdcec;
+      border-radius: 10px;
+      padding: 16px;
+      color: #5f7389;
+      background: #f8fbff;
+      margin: 0;
+    }
+    .fav-item {
+      border: 1px solid #deebf7;
+      border-radius: 10px;
+      padding: 10px;
+      background: #ffffff;
+    }
+    .reply-chip {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+      border: 1px solid;
+    }
+    .reply-chip.ok {
+      color: #0c6a3d;
+      border-color: #bfe9d2;
+      background: #ebf9f1;
+    }
+    .reply-chip.pending {
+      color: #7a5b08;
+      border-color: #f2e0ab;
+      background: #fff7df;
+    }
+    @media (max-width: 767px) {
+      .metrics-grid {
+        grid-template-columns: 1fr;
+      }
+      .profile-tabs {
+        width: 100%;
+        overflow-x: auto;
+      }
+      .profile-tabs .nav-link {
+        white-space: nowrap;
+      }
     }
   </style>
-  <h1 class="h3 mb-4">My Profile</h1>
 
-  <ul class="nav nav-pills profile-tabs gap-2 mb-3" id="profileTab" role="tablist">
-    <li class="nav-item" role="presentation">
-      <button class="nav-link active" id="bookings-tab" data-bs-toggle="pill" data-bs-target="#bookings-pane" type="button" role="tab" aria-controls="bookings-pane" aria-selected="true">Bookings</button>
-    </li>
-    <li class="nav-item" role="presentation">
-      <button class="nav-link" id="inquiries-tab" data-bs-toggle="pill" data-bs-target="#inquiries-pane" type="button" role="tab" aria-controls="inquiries-pane" aria-selected="false">Inquiries</button>
-    </li>
-    <li class="nav-item" role="presentation">
-      <button class="nav-link" id="favorites-tab" data-bs-toggle="pill" data-bs-target="#favorites-pane" type="button" role="tab" aria-controls="favorites-pane" aria-selected="false">Favorites</button>
-    </li>
-  </ul>
+  <div class="profile-shell">
+    <div class="profile-hero">
+      <div class="identity">
+        <div class="avatar-chip">{{ user.username|slice:":1"|upper }}</div>
+        <div>
+          <p class="welcome">Welcome, {{ user.get_full_name|default:user.username }}</p>
+          <p class="welcome-sub">Track your trips, inquiries, and saved packages in one place.</p>
+        </div>
+      </div>
 
-  <div class="tab-content" id="profileTabContent">
-    <div class="tab-pane fade show active" id="bookings-pane" role="tabpanel" aria-labelledby="bookings-tab" tabindex="0">
-      <div class="card profile-tab-card mb-4">
-        <div class="card-body">
-          <h2 class="h5 mb-3">Booking History & Details</h2>
-
-          {% if bookings %}
-            <div class="table-responsive">
-              <table class="table table-sm align-middle">
-                <thead>
-                  <tr>
-                    <th>Package</th>
-                    <th>Destination</th>
-                    <th>Travel Date</th>
-                    <th>Booked On</th>
-                    <th>Price</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for booking in bookings %}
-                    <tr>
-                      <td>
-                        <a href="{{ booking.package.get_absolute_url }}" class="text-decoration-none fw-semibold">
-                          {{ booking.package.title }}
-                        </a>
-                        <div class="small text-muted">{{ booking.package.duration }}</div>
-                      </td>
-                      <td>
-                        {% if booking.package.destination %}
-                          {{ booking.package.destination.name }}
-                        {% else %}
-                          -
-                        {% endif %}
-                      </td>
-                      <td>{{ booking.travel_date|date:'M d, Y' }}</td>
-                      <td>{{ booking.created_at|date:'M d, Y' }}</td>
-                      <td>${{ booking.package.price }}</td>
-                    </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
-          {% else %}
-            <p class="text-muted mb-0">You have no bookings yet.</p>
-          {% endif %}
+      <div class="metrics-grid">
+        <div class="metric">
+          <p class="metric-label">Bookings</p>
+          <p class="metric-value">{{ bookings|length }}</p>
+        </div>
+        <div class="metric">
+          <p class="metric-label">Inquiries</p>
+          <p class="metric-value">{{ inquiries|length }}</p>
+        </div>
+        <div class="metric">
+          <p class="metric-label">Favorites</p>
+          <p class="metric-value">{{ favorite_packages|length }}</p>
         </div>
       </div>
     </div>
 
-    <div class="tab-pane fade" id="inquiries-pane" role="tabpanel" aria-labelledby="inquiries-tab" tabindex="0">
-      <div class="card profile-tab-card mb-4">
-        <div class="card-body">
-          <h2 class="h5 mb-3">My Inquiries</h2>
+    <ul class="nav nav-pills profile-tabs" id="profileTab" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="bookings-tab" data-bs-toggle="pill" data-bs-target="#bookings-pane" type="button" role="tab" aria-controls="bookings-pane" aria-selected="true">Bookings</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="inquiries-tab" data-bs-toggle="pill" data-bs-target="#inquiries-pane" type="button" role="tab" aria-controls="inquiries-pane" aria-selected="false">Inquiries</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="favorites-tab" data-bs-toggle="pill" data-bs-target="#favorites-pane" type="button" role="tab" aria-controls="favorites-pane" aria-selected="false">Favorites</button>
+      </li>
+    </ul>
 
-          {% if inquiries %}
-            <div class="table-responsive">
-              <table class="table table-sm align-middle">
-                <thead>
-                  <tr>
-                    <th>Package</th>
-                    <th>Email</th>
-                    <th>Phone</th>
-                    <th>Message</th>
-                    <th>Reply</th>
-                    <th>Submitted On</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for inquiry in inquiries %}
+    <div class="tab-content" id="profileTabContent">
+      <div class="tab-pane fade show active" id="bookings-pane" role="tabpanel" aria-labelledby="bookings-tab" tabindex="0">
+        <div class="card profile-tab-card mb-4">
+          <div class="card-body">
+            <h2 class="section-title">Booking History</h2>
+
+            {% if bookings %}
+              <div class="table-responsive table-wrap">
+                <table class="table table-sm align-middle mb-0">
+                  <thead>
                     <tr>
-                      <td>
-                        <a href="{{ inquiry.package.get_absolute_url }}" class="text-decoration-none fw-semibold">
-                          {{ inquiry.package.title }}
-                        </a>
-                      </td>
-                      <td>{{ inquiry.email }}</td>
-                      <td>{% if inquiry.phone %}{{ inquiry.phone }}{% else %}-{% endif %}</td>
-                      <td class="small" style="max-width: 280px;">{{ inquiry.message|truncatechars:90 }}</td>
-                      <td class="small" style="max-width: 280px;">
-                        {% if inquiry.admin_reply %}
-                          <span class="text-success fw-semibold d-block">Replied</span>
-                          {{ inquiry.admin_reply|truncatechars:100 }}
-                        {% else %}
-                          <span class="text-muted">Pending</span>
-                        {% endif %}
-                      </td>
-                      <td>{{ inquiry.created_at|date:'M d, Y' }}</td>
+                      <th>Package</th>
+                      <th>Destination</th>
+                      <th>Travel Date</th>
+                      <th>Booked On</th>
+                      <th>Price</th>
                     </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
-          {% else %}
-            <p class="text-muted mb-0">You have not submitted any inquiries yet.</p>
-          {% endif %}
+                  </thead>
+                  <tbody>
+                    {% for booking in bookings %}
+                      <tr>
+                        <td>
+                          <a href="{{ booking.package.get_absolute_url }}" class="text-decoration-none fw-semibold">
+                            {{ booking.package.title }}
+                          </a>
+                          <div class="small text-muted">{{ booking.package.duration }}</div>
+                        </td>
+                        <td>
+                          {% if booking.package.destination %}
+                            {{ booking.package.destination.name }}
+                          {% else %}
+                            -
+                          {% endif %}
+                        </td>
+                        <td>{{ booking.travel_date|date:'M d, Y' }}</td>
+                        <td>{{ booking.created_at|date:'M d, Y' }}</td>
+                        <td>${{ booking.package.price }}</td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            {% else %}
+              <p class="empty-state">You have no bookings yet.</p>
+            {% endif %}
+          </div>
         </div>
       </div>
-    </div>
 
-    <div class="tab-pane fade" id="favorites-pane" role="tabpanel" aria-labelledby="favorites-tab" tabindex="0">
-      <div class="card profile-tab-card">
-        <div class="card-body">
-          <h2 class="h5 mb-3">Favorite Packages</h2>
+      <div class="tab-pane fade" id="inquiries-pane" role="tabpanel" aria-labelledby="inquiries-tab" tabindex="0">
+        <div class="card profile-tab-card mb-4">
+          <div class="card-body">
+            <h2 class="section-title">My Inquiries</h2>
 
-          {% if favorite_packages %}
-            <div class="d-grid gap-2">
-              {% for package in favorite_packages %}
-                <div class="border rounded p-2">
-                  <a href="{{ package.get_absolute_url }}" class="text-decoration-none fw-semibold d-block mb-1">
-                    {{ package.title }}
-                  </a>
-                  <div class="small text-muted mb-2">
-                    {% if package.destination %}{{ package.destination.name }}{% else %}{{ package.get_category_display }}{% endif %}
-                    | ${{ package.price }}
+            {% if inquiries %}
+              <div class="table-responsive table-wrap">
+                <table class="table table-sm align-middle mb-0">
+                  <thead>
+                    <tr>
+                      <th>Package</th>
+                      <th>Email</th>
+                      <th>Phone</th>
+                      <th>Message</th>
+                      <th>Reply</th>
+                      <th>Submitted On</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for inquiry in inquiries %}
+                      <tr>
+                        <td>
+                          <a href="{{ inquiry.package.get_absolute_url }}" class="text-decoration-none fw-semibold">
+                            {{ inquiry.package.title }}
+                          </a>
+                        </td>
+                        <td>{{ inquiry.email }}</td>
+                        <td>{% if inquiry.phone %}{{ inquiry.phone }}{% else %}-{% endif %}</td>
+                        <td class="small" style="max-width: 280px;">{{ inquiry.message|truncatechars:90 }}</td>
+                        <td class="small" style="max-width: 280px;">
+                          {% if inquiry.admin_reply %}
+                            <span class="reply-chip ok">Replied</span>
+                            {{ inquiry.admin_reply|truncatechars:100 }}
+                          {% else %}
+                            <span class="reply-chip pending">Pending</span>
+                          {% endif %}
+                        </td>
+                        <td>{{ inquiry.created_at|date:'M d, Y' }}</td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            {% else %}
+              <p class="empty-state">You have not submitted any inquiries yet.</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-pane fade" id="favorites-pane" role="tabpanel" aria-labelledby="favorites-tab" tabindex="0">
+        <div class="card profile-tab-card">
+          <div class="card-body">
+            <h2 class="section-title">Favorite Packages</h2>
+
+            {% if favorite_packages %}
+              <div class="d-grid gap-2">
+                {% for package in favorite_packages %}
+                  <div class="fav-item">
+                    <a href="{{ package.get_absolute_url }}" class="text-decoration-none fw-semibold d-block mb-1">
+                      {{ package.title }}
+                    </a>
+                    <div class="small text-muted mb-2">
+                      {% if package.destination %}{{ package.destination.name }}{% else %}{{ package.get_category_display }}{% endif %}
+                      | ${{ package.price }}
+                    </div>
+
+                    <form method="post" action="{% url 'toggle_favorite_package' package.slug %}">
+                      {% csrf_token %}
+                      <input type="hidden" name="next" value="profile">
+                      <button type="submit" class="btn btn-sm btn-outline-danger w-100">Remove</button>
+                    </form>
                   </div>
-
-                  <form method="post" action="{% url 'toggle_favorite_package' package.slug %}">
-                    {% csrf_token %}
-                    <input type="hidden" name="next" value="profile">
-                    <button type="submit" class="btn btn-sm btn-outline-danger w-100">Remove</button>
-                  </form>
-                </div>
-              {% endfor %}
-            </div>
-          {% else %}
-            <p class="text-muted mb-0">No favorite packages yet.</p>
-          {% endif %}
+                {% endfor %}
+              </div>
+            {% else %}
+              <p class="empty-state">No favorite packages yet.</p>
+            {% endif %}
+          </div>
         </div>
       </div>
     </div>
