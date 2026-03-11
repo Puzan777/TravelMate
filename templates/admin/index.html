@@ -291,6 +291,7 @@
         <h3 class="sidebar-heading">Sales</h3>
         <ul class="sidebar-links">
           <li><a href="{% url 'admin:app_booking_changelist' %}">Bookings</a></li>
+          <li><a href="{% url 'admin:app_inquiry_changelist' %}">Inquiries</a></li>
           <li><a href="{% url 'admin:app_package_changelist' %}?is_hot_sale__exact=1">Hot Sale Packages</a></li>
           <li><a href="{% url 'admin:app_package_changelist' %}?is_active__exact=1">Active Packages</a></li>
         </ul>
@@ -311,6 +312,7 @@
           <a class="quick-action-link" href="{% url 'admin:app_package_add' %}">+ Add Package</a>
           <a class="quick-action-link" href="{% url 'admin:app_destination_add' %}">+ Add Destination</a>
           <a class="quick-action-link" href="{% url 'admin:app_booking_add' %}">+ Add Booking</a>
+          <a class="quick-action-link" href="{% url 'admin:app_inquiry_changelist' %}">Manage Inquiries</a>
           <a class="quick-action-link" href="{% url 'admin:app_customuser_add' %}">+ Add User</a>
           <a class="quick-action-link" href="{% url 'admin:app_package_changelist' %}?is_hot_sale__exact=1">View Hot Sales</a>
           <a class="quick-action-link" href="{% url 'admin:app_booking_changelist' %}">Manage Bookings</a>
@@ -334,6 +336,12 @@
       <p class="dashboard-title">Total Bookings</p>
       <p class="dashboard-value">{% dashboard_booking_count %}</p>
       <a class="dashboard-link" href="{% url 'admin:app_booking_changelist' %}">Manage bookings</a>
+    </div>
+
+    <div class="dashboard-card">
+      <p class="dashboard-title">Inquiries</p>
+      <p class="dashboard-value">{% dashboard_inquiry_count %}</p>
+      <a class="dashboard-link" href="{% url 'admin:app_inquiry_changelist' %}">Manage inquiries</a>
     </div>
 
     <div class="dashboard-card">
@@ -449,6 +457,42 @@
         <div class="section-actions">
           <a href="{% url 'admin:app_booking_changelist' %}">Manage Bookings</a>
           <a href="{% url 'admin:app_booking_add' %}">+ Add Booking</a>
+        </div>
+      </section>
+
+      {% dashboard_recent_inquiries 10 as recent_inquiries %}
+      <section class="dashboard-section">
+        <h2>Recent Inquiries</h2>
+        {% if recent_inquiries %}
+          <div class="table-wrap">
+            <table class="simple-table">
+              <thead>
+                <tr>
+                  <th>Package</th>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Replied</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for inquiry in recent_inquiries %}
+                  <tr>
+                    <td>{{ inquiry.package.title }}</td>
+                    <td>{{ inquiry.full_name }}</td>
+                    <td>{{ inquiry.email }}</td>
+                    <td>{% if inquiry.admin_reply %}Yes{% else %}No{% endif %}</td>
+                    <td>{{ inquiry.created_at|date:"M d, Y" }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <p>No inquiries yet.</p>
+        {% endif %}
+        <div class="section-actions">
+          <a href="{% url 'admin:app_inquiry_changelist' %}">Manage Inquiries</a>
         </div>
       </section>
 

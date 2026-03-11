@@ -133,5 +133,14 @@ class Inquiry(models.Model):
     class Meta:
         ordering = ['-created_at']
 
+    def save(self, *args, **kwargs):
+        from django.utils import timezone
+
+        if self.admin_reply and self.replied_at is None:
+            self.replied_at = timezone.now()
+        if not self.admin_reply:
+            self.replied_at = None
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"Inquiry: {self.package.title} ({self.full_name})"
