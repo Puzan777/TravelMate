@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.urls import reverse
+from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, MaxValueValidator
 
 
@@ -104,6 +105,33 @@ class Package(models.Model):
 
     def get_absolute_url(self):
         return reverse('package_detail', args=[self.slug])
+
+
+class HotSale(models.Model):
+    package = models.ForeignKey(Package, on_delete=models.CASCADE, related_name='hot_sale_entries')
+    sale_price = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)])
+    note = models.TextField(blank=True, help_text='Optional note shown only on the hot sale page.')
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Hot Sale'
+        verbose_name_plural = 'Hot Sales'
+
+    def __str__(self):
+        return f"{self.package.title} - {self.sale_price}"
+
+    def clean(self):
+        if self.package_id and self.sale_price is not None and self.sale_price >= self.package.price:
+            raise ValidationError({
+                'sale_price': 'Hot sale price must be lower than the original package price.'
+            })
+
+    @property
+    def savings_amount(self):
+        return self.package.price - self.sale_price
 
 
 class Booking(models.Model):
