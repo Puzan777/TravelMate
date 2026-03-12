@@ -52,8 +52,23 @@ class HotSaleAdmin(admin.ModelAdmin):
         ('System', {'fields': ('created_at', 'updated_at')}),
     )
 
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == 'package':
+            kwargs['queryset'] = Package.objects.filter(is_active=True).order_by('title')
+        formfield = super().formfield_for_foreignkey(db_field, request, **kwargs)
+        if db_field.name == 'package':
+            formfield.label = 'Search Package'
+            formfield.help_text = 'Search and select an existing active package for this hot sale.'
+            formfield.widget.can_add_related = False
+            formfield.widget.can_change_related = False
+            formfield.widget.can_delete_related = False
+            formfield.widget.can_view_related = False
+        return formfield
+
     @admin.display(description='Original Price')
     def original_price(self, obj):
+        if not obj:
+            return 'Select a package to preview the original price.'
         return obj.package.price
 
     @admin.display(description='Savings')

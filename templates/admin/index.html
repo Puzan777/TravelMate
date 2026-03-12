@@ -292,7 +292,7 @@
         <ul class="sidebar-links">
           <li><a href="{% url 'admin:app_booking_changelist' %}">Bookings</a></li>
           <li><a href="{% url 'admin:app_inquiry_changelist' %}">Inquiries</a></li>
-          <li><a href="{% url 'admin:app_package_changelist' %}?is_hot_sale__exact=1">Hot Sale Packages</a></li>
+          <li><a href="{% url 'admin:app_hotsale_changelist' %}">Hot Sales</a></li>
           <li><a href="{% url 'admin:app_package_changelist' %}?is_active__exact=1">Active Packages</a></li>
         </ul>
       </div>
@@ -310,11 +310,12 @@
         <h2>Quick Actions</h2>
         <div class="quick-actions-grid">
           <a class="quick-action-link" href="{% url 'admin:app_package_add' %}">+ Add Package</a>
+          <a class="quick-action-link" href="{% url 'admin:app_hotsale_add' %}">+ Add Hot Sale</a>
           <a class="quick-action-link" href="{% url 'admin:app_destination_add' %}">+ Add Destination</a>
           <a class="quick-action-link" href="{% url 'admin:app_booking_add' %}">+ Add Booking</a>
           <a class="quick-action-link" href="{% url 'admin:app_inquiry_changelist' %}">Manage Inquiries</a>
           <a class="quick-action-link" href="{% url 'admin:app_customuser_add' %}">+ Add User</a>
-          <a class="quick-action-link" href="{% url 'admin:app_package_changelist' %}?is_hot_sale__exact=1">View Hot Sales</a>
+          <a class="quick-action-link" href="{% url 'admin:app_hotsale_changelist' %}">View Hot Sales</a>
           <a class="quick-action-link" href="{% url 'admin:app_booking_changelist' %}">Manage Bookings</a>
         </div>
       </section>
@@ -336,6 +337,12 @@
       <p class="dashboard-title">Total Bookings</p>
       <p class="dashboard-value">{% dashboard_booking_count %}</p>
       <a class="dashboard-link" href="{% url 'admin:app_booking_changelist' %}">Manage bookings</a>
+    </div>
+
+    <div class="dashboard-card">
+      <p class="dashboard-title">Hot Sales</p>
+      <p class="dashboard-value">{% dashboard_hot_sale_count %}</p>
+      <a class="dashboard-link" href="{% url 'admin:app_hotsale_changelist' %}">Manage hot sales</a>
     </div>
 
     <div class="dashboard-card">
@@ -392,7 +399,7 @@
 
       {% dashboard_hot_sale_packages 8 as hot_sale_packages %}
       <section class="dashboard-section">
-        <h2>Hot Sale Packages</h2>
+        <h2>Hot Sales</h2>
         {% if hot_sale_packages %}
           <div class="table-wrap">
             <table class="simple-table">
@@ -400,27 +407,30 @@
                 <tr>
                   <th>Package</th>
                   <th>Destination</th>
-                  <th>Price</th>
+                  <th>Original Price</th>
+                  <th>Sale Price</th>
                   <th>Active</th>
                 </tr>
               </thead>
               <tbody>
-                {% for package in hot_sale_packages %}
+                {% for sale in hot_sale_packages %}
                   <tr>
-                    <td>{{ package.title }}</td>
-                    <td>{% if package.destination %}{{ package.destination.name }}{% else %}-{% endif %}</td>
-                    <td>{{ package.price }}</td>
-                    <td>{% if package.is_active %}Yes{% else %}No{% endif %}</td>
+                    <td>{{ sale.package.title }}</td>
+                    <td>{% if sale.package.destination %}{{ sale.package.destination.name }}{% else %}-{% endif %}</td>
+                    <td>{{ sale.package.price }}</td>
+                    <td>{{ sale.sale_price }}</td>
+                    <td>{% if sale.is_active %}Yes{% else %}No{% endif %}</td>
                   </tr>
                 {% endfor %}
               </tbody>
             </table>
           </div>
         {% else %}
-          <p>No hot sale packages yet.</p>
+          <p>No hot sales yet.</p>
         {% endif %}
         <div class="section-actions">
-          <a href="{% url 'admin:app_package_changelist' %}?is_hot_sale__exact=1">View Hot Sales</a>
+          <a href="{% url 'admin:app_hotsale_add' %}">+ Add Hot Sale</a>
+          <a href="{% url 'admin:app_hotsale_changelist' %}">View Hot Sales</a>
           <a href="{% url 'admin:app_package_changelist' %}">Manage Packages</a>
         </div>
       </section>

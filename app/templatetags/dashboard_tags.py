@@ -1,5 +1,5 @@
 from django import template
-from app.models import Package, Destination, Booking, CustomUser, Inquiry
+from app.models import Package, Destination, Booking, CustomUser, Inquiry, HotSale
 
 register = template.Library()
 
@@ -35,6 +35,11 @@ def dashboard_inquiry_count():
 
 
 @register.simple_tag
+def dashboard_hot_sale_count():
+    return HotSale.objects.count()
+
+
+@register.simple_tag
 def dashboard_recent_bookings(limit=5):
     return Booking.objects.select_related('package', 'user').order_by('-created_at')[:limit]
 
@@ -46,7 +51,7 @@ def dashboard_recent_users(limit=5):
 
 @register.simple_tag
 def dashboard_hot_sale_packages(limit=6):
-    return Package.objects.select_related('destination').filter(is_hot_sale=True).order_by('-updated_at')[:limit]
+    return HotSale.objects.select_related('package', 'package__destination').order_by('-updated_at')[:limit]
 
 
 @register.simple_tag
