@@ -3,6 +3,51 @@
 
 {% block title %}{% trans 'TravelMate Admin' %}{% endblock %}
 
-{% block branding %}{% endblock %}
+{% block extrastyle %}
+{{ block.super }}
+<style>
+	#header {
+		background: linear-gradient(120deg, #0b3d69, #0a4f8a 45%, #0e6bb7);
+		color: #ffffff;
+		border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+	}
+	#site-name a {
+		color: #ffffff;
+		text-decoration: none;
+		font-weight: 700;
+		letter-spacing: 0.02em;
+	}
+	#user-tools {
+		color: rgba(255, 255, 255, 0.92);
+		font-size: 0.85rem;
+	}
+	#user-tools a {
+		color: #ffffff;
+		text-decoration: none;
+		border: 1px solid rgba(255, 255, 255, 0.38);
+		border-radius: 999px;
+		padding: 4px 10px;
+		margin-left: 6px;
+		display: inline-block;
+	}
+	#user-tools a:hover {
+		background: rgba(255, 255, 255, 0.14);
+	}
+</style>
+{% endblock %}
+
+{% block branding %}
+<h1 id="site-name"><a href="{% url 'admin:index' %}">TravelMate Admin</a></h1>
+{% endblock %}
+
+{% block usertools %}
+{% if has_permission %}
+<div id="user-tools">
+	<a href="{% url 'admin:index' %}">Home</a>
+	<a href="{% url 'home' %}">View site</a>
+	<a href="{% url 'admin:logout' %}">Logout</a>
+</div>
+{% endif %}
+{% endblock %}
 
 {% block nav-global %}{% endblock %}
