@@ -68,19 +68,28 @@ class InquiryReplyStatusFilter(admin.SimpleListFilter):
 
 @admin.register(Inquiry)
 class InquiryAdmin(admin.ModelAdmin):
-    list_display = ('package', 'full_name', 'email', 'phone', 'inquiry_message', 'admin_reply', 'user', 'created_at', 'replied_at')
+    list_display = ('package', 'full_name', 'email', 'phone', 'inquiry_message', 'reply_status', 'user', 'created_at', 'replied_at')
     list_filter = (InquiryReplyStatusFilter, 'created_at', 'replied_at')
     search_fields = ('package__title', 'full_name', 'email', 'phone', 'message')
-    readonly_fields = ('created_at', 'replied_at')
-    list_editable = ('admin_reply',)
+    readonly_fields = (
+        'package', 'user', 'full_name', 'email', 'phone', 'message',
+        'created_at', 'replied_at',
+    )
     fieldsets = (
         ('Inquiry', {'fields': ('package', 'user', 'full_name', 'email', 'phone', 'message')}),
         ('Reply', {'fields': ('admin_reply', 'replied_at')}),
         ('System', {'fields': ('created_at',)}),
     )
 
+    def has_add_permission(self, request):
+        return False
+
     @admin.display(description='Inquiry Message')
     def inquiry_message(self, obj):
         if len(obj.message) > 80:
             return f"{obj.message[:80]}..."
         return obj.message
+
+    @admin.display(description='Reply Status')
+    def reply_status(self, obj):
+        return 'Replied' if obj.admin_reply else 'Pending'
