@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import CustomUser, Destination, Package, Booking, Inquiry
+from .models import CustomUser, Destination, Package, Booking, Inquiry, HotSale
 
 # Hide default Django admin nav sidebar; custom dashboard provides navigation.
 admin.site.enable_nav_sidebar = False
@@ -24,20 +24,41 @@ class DestinationAdmin(admin.ModelAdmin):
 
 @admin.register(Package)
 class PackageAdmin(admin.ModelAdmin):
-    list_display = ('title', 'category', 'price', 'rating', 'is_hot_sale', 'is_active', 'created_at')
-    list_filter = ('category', 'is_hot_sale', 'is_active')
+    list_display = ('title', 'category', 'price', 'rating', 'is_active', 'created_at')
+    list_filter = ('category', 'is_active')
     search_fields = ('title', 'slug', 'destination__name', 'description')
     prepopulated_fields = {'slug': ('title',)}
     readonly_fields = ('created_at', 'updated_at')
-    list_editable = ('is_hot_sale', 'is_active')
+    list_editable = ('is_active',)
 
     fieldsets = (
         (None, {'fields': ('title', 'slug', 'category', 'image', 'price', 'rating', 'description', 'destination')}),
         ('Trip info', {'fields': ('duration', 'max_people', 'trip_difficulty', 'activity', 'max_elevation')}),
         ('Logistics', {'fields': ('accommodation', 'meal', 'vehicle')}),
         ('Optional', {'fields': ('major_highlights', 'itinerary')}),
-        ('Status', {'fields': ('is_hot_sale', 'is_active')}),
+        ('Status', {'fields': ('is_active',)}),
     )
+
+
+@admin.register(HotSale)
+class HotSaleAdmin(admin.ModelAdmin):
+    list_display = ('package', 'original_price', 'sale_price', 'savings', 'is_active', 'created_at')
+    list_filter = ('is_active', 'created_at')
+    search_fields = ('package__title', 'package__slug', 'note')
+    autocomplete_fields = ('package',)
+    readonly_fields = ('original_price', 'created_at', 'updated_at')
+    fieldsets = (
+        ('Hot Sale', {'fields': ('package', 'original_price', 'sale_price', 'note', 'is_active')}),
+        ('System', {'fields': ('created_at', 'updated_at')}),
+    )
+
+    @admin.display(description='Original Price')
+    def original_price(self, obj):
+        return obj.package.price
+
+    @admin.display(description='Savings')
+    def savings(self, obj):
+        return obj.savings_amount
 
 
 @admin.register(Booking)
