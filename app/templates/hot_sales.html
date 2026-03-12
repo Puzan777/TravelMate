@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center mb-5">
+    <div class="col-xl-8 col-lg-10 text-center">
+      <span class="badge rounded-pill text-bg-danger px-3 py-2 mb-3">Limited-Time Offers</span>
+      <h1 class="display-5 fw-bold mb-3">Hot Sale Packages</h1>
+      <p class="lead text-muted mb-0">Browse discounted packages with the same trip details, original itinerary, and a separate sale note when needed.</p>
+    </div>
+  </div>
+
+  <style>
+    .sale-card {
+      border: 1px solid rgba(15, 23, 42, 0.08);
+      border-radius: 24px;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.95);
+      box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+    .sale-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 24px 60px rgba(15, 23, 42, 0.12);
+    }
+    .sale-image {
+      height: 220px;
+      width: 100%;
+      object-fit: cover;
+    }
+    .sale-price-row {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .sale-original-price {
+      color: #8b5e3c;
+      text-decoration: line-through;
+      text-decoration-thickness: 2px;
+      opacity: 0.75;
+    }
+    .sale-price {
+      color: #c2410c;
+      font-size: 1.55rem;
+      font-weight: 700;
+    }
+    .sale-note {
+      background: linear-gradient(135deg, rgba(251, 191, 36, 0.18), rgba(249, 115, 22, 0.16));
+      border: 1px solid rgba(249, 115, 22, 0.14);
+      border-radius: 18px;
+      padding: 0.9rem 1rem;
+      color: #7c2d12;
+    }
+    .sale-description {
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+  </style>
+
+  <div class="row g-4">
+    {% for sale in hot_sales %}
+      <div class="col-md-6 col-xl-4">
+        <article class="sale-card h-100">
+          {% if sale.package.image %}
+            <img src="{{ sale.package.image.url }}" class="sale-image" alt="{{ sale.package.title }}">
+          {% else %}
+            <div class="bg-secondary sale-image"></div>
+          {% endif %}
+
+          <div class="p-4 d-flex flex-column h-100">
+            <div class="d-flex align-items-start justify-content-between gap-3 mb-3">
+              <div>
+                <div class="text-uppercase small text-muted fw-semibold mb-1">{{ sale.package.get_category_display }}</div>
+                <h2 class="h4 mb-1">{{ sale.package.title }}</h2>
+                {% if sale.package.destination %}
+                  <div class="small text-muted">{{ sale.package.destination.name }}</div>
+                {% endif %}
+              </div>
+              <span class="badge rounded-pill text-bg-warning text-dark px-3 py-2">Hot Sale</span>
+            </div>
+
+            <div class="sale-price-row mb-3">
+              <span class="sale-original-price fs-5">${{ sale.package.price }}</span>
+              <span class="sale-price">${{ sale.sale_price }}</span>
+              <span class="badge rounded-pill text-bg-light border">Save ${{ sale.savings_amount }}</span>
+            </div>
+
+            <div class="small text-muted mb-3">
+              <span class="me-3"><strong>Duration:</strong> {{ sale.package.duration }}</span>
+              {% if sale.package.max_people %}
+                <span><strong>Max People:</strong> {{ sale.package.max_people }}</span>
+              {% endif %}
+            </div>
+
+            <p class="text-muted sale-description mb-3">{{ sale.package.description }}</p>
+
+            {% if sale.note %}
+              <div class="sale-note small mb-4">{{ sale.note }}</div>
+            {% endif %}
+
+            <div class="mt-auto d-flex gap-2">
+              <a href="{{ sale.package.get_absolute_url }}" class="btn btn-primary flex-grow-1">View Package</a>
+            </div>
+          </div>
+        </article>
+      </div>
+    {% empty %}
+      <div class="col-12">
+        <div class="card border-0 shadow-sm text-center p-5">
+          <h2 class="h4 mb-2">No hot sale offers right now</h2>
+          <p class="text-muted mb-0">Create a Hot Sale entry from the admin dashboard to show discounted offers here.</p>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
