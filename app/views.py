@@ -5,7 +5,7 @@ from django.contrib import messages
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 from .forms import SignUpForm, LoginForm, BookingForm, InquiryForm
-from .models import Destination, Package, Booking, Inquiry
+from .models import Destination, Package, Booking, Inquiry, HotSale
 
 
 def signup_view(request):
@@ -88,8 +88,8 @@ def package_list(request, category=None, hot_sales=False):
     title = 'Packages'
 
     if hot_sales:
-        qs = qs.filter(is_hot_sale=True)
-        title = 'Hot Sales'
+        qs = qs.none()
+        title = 'Packages'
     elif category:
         qs = qs.filter(category=category)
         title = dict(Package.Category.choices).get(category, category.title())
@@ -99,6 +99,18 @@ def package_list(request, category=None, hot_sales=False):
         'category': category,
         'hot_sales': hot_sales,
         'title': title,
+    })
+
+
+def hot_sale_list(request):
+    hot_sales = HotSale.objects.filter(
+        is_active=True,
+        package__is_active=True,
+    ).select_related('package', 'package__destination')
+
+    return render(request, 'hot_sales.html', {
+        'hot_sales': hot_sales,
+        'title': 'Hot Sales',
     })
 
 
