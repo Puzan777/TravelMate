@@ -19,7 +19,7 @@ urlpatterns = [
     path('packages/luxury/', views.package_list, {'category': 'LUXURY'}, name='packages_luxury'),
     path('packages/trekking/', views.package_list, {'category': 'TREKKING'}, name='packages_trekking'),
     path('packages/heli/', views.package_list, {'category': 'HELI'}, name='packages_heli'),
-    path('packages/hot-sales/', views.package_list, {'hot_sales': True}, name='packages_hot_sales'),
+    path('packages/hot-sales/', views.hot_sale_list, name='packages_hot_sales'),
 
     # package detail must come last (after specific package pages)
     path('packages/<slug:slug>/favorite/', views.toggle_favorite_package, name='toggle_favorite_package'),
