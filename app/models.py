@@ -19,6 +19,13 @@ class CustomUser(AbstractUser):
 
 class Destination(models.Model):
     """Represents a country/region where packages are available."""
+    vendor = models.ForeignKey(
+        'vendor.VendorProfile',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='destinations',
+    )
     name = models.CharField(max_length=150, unique=True, help_text="Country name (e.g., Nepal, Thailand)")
     short_description = models.TextField(blank=True, help_text="Short text for destination cards")
     hero_image = models.ImageField(upload_to='destinations/', blank=True, null=True)
@@ -43,6 +50,13 @@ class Package(models.Model):
         HELI = 'HELI', 'Heli'
 
     title = models.CharField(max_length=200)
+    vendor = models.ForeignKey(
+        'vendor.VendorProfile',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='packages',
+    )
     # optional slug for pretty URLs; generated automatically if blank
     slug = models.SlugField(max_length=200, unique=True, blank=True, null=True)
     category = models.CharField(max_length=20, choices=Category.choices)

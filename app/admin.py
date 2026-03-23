@@ -5,6 +5,10 @@ from .models import CustomUser, Destination, Package, Booking, Inquiry, HotSale
 admin.site.enable_nav_sidebar = False
 
 
+def _current_vendor_profile(user):
+    return getattr(user, 'vendor_profile', None)
+
+
 @admin.register(CustomUser)
 class CustomUserAdmin(admin.ModelAdmin):
     pass
@@ -12,32 +16,73 @@ class CustomUserAdmin(admin.ModelAdmin):
 
 @admin.register(Destination)
 class DestinationAdmin(admin.ModelAdmin):
-    list_display = ('name', 'best_season', 'created_at')
+    list_display = ('name', 'vendor', 'best_season', 'created_at')
     search_fields = ('name', 'short_description', 'visa_info', 'safety_note')
     readonly_fields = ('created_at', 'updated_at')
     fieldsets = (
-        (None, {'fields': ('name', 'hero_image', 'short_description')}),
+        (None, {'fields': ('vendor', 'name', 'hero_image', 'short_description')}),
         ('Travel Info', {'fields': ('best_season', 'visa_info', 'safety_note')}),
         ('System', {'fields': ('created_at', 'updated_at')}),
     )
 
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        vendor_profile = _current_vendor_profile(request.user)
+        if vendor_profile:
+            return qs.filter(vendor=vendor_profile)
+        return qs.none()
+
+    def save_model(self, request, obj, form, change):
+        if not request.user.is_superuser:
+            vendor_profile = _current_vendor_profile(request.user)
+            if vendor_profile and obj.vendor_id is None:
+                obj.vendor = vendor_profile
+        super().save_model(request, obj, form, change)
+
 
 @admin.register(Package)
 class PackageAdmin(admin.ModelAdmin):
-    list_display = ('title', 'category', 'price', 'rating', 'is_active', 'created_at')
-    list_filter = ('category', 'is_active')
+    list_display = ('title', 'vendor', 'category', 'price', 'rating', 'is_active', 'created_at')
+    list_filter = ('vendor', 'category', 'is_active')
     search_fields = ('title', 'slug', 'destination__name', 'description')
     prepopulated_fields = {'slug': ('title',)}
     readonly_fields = ('created_at', 'updated_at')
     list_editable = ('is_active',)
 
     fieldsets = (
-        (None, {'fields': ('title', 'slug', 'category', 'image', 'price', 'rating', 'description', 'destination')}),
+        (None, {'fields': ('vendor', 'title', 'slug', 'category', 'image', 'price', 'rating', 'description', 'destination')}),
         ('Trip info', {'fields': ('duration', 'max_people', 'trip_difficulty', 'activity', 'max_elevation')}),
         ('Logistics', {'fields': ('accommodation', 'meal', 'vehicle')}),
         ('Optional', {'fields': ('major_highlights', 'itinerary')}),
         ('Status', {'fields': ('is_active',)}),
     )
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        vendor_profile = _current_vendor_profile(request.user)
+        if vendor_profile:
+            return qs.filter(vendor=vendor_profile)
+        return qs.none()
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == 'destination' and not request.user.is_superuser:
+            vendor_profile = _current_vendor_profile(request.user)
+            if vendor_profile:
+                kwargs['queryset'] = Destination.objects.filter(vendor=vendor_profile).order_by('name')
+            else:
+                kwargs['queryset'] = Destination.objects.none()
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+    def save_model(self, request, obj, form, change):
+        if not request.user.is_superuser:
+            vendor_profile = _current_vendor_profile(request.user)
+            if vendor_profile and obj.vendor_id is None:
+                obj.vendor = vendor_profile
+        super().save_model(request, obj, form, change)
 
 
 @admin.register(HotSale)
@@ -54,7 +99,14 @@ class HotSaleAdmin(admin.ModelAdmin):
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == 'package':
-            kwargs['queryset'] = Package.objects.filter(is_active=True).order_by('title')
+            package_qs = Package.objects.filter(is_active=True)
+            if not request.user.is_superuser:
+                vendor_profile = _current_vendor_profile(request.user)
+                if vendor_profile:
+                    package_qs = package_qs.filter(vendor=vendor_profile)
+                else:
+                    package_qs = package_qs.none()
+            kwargs['queryset'] = package_qs.order_by('title')
         formfield = super().formfield_for_foreignkey(db_field, request, **kwargs)
         if db_field.name == 'package':
             formfield.label = 'Search Package'
@@ -75,6 +127,15 @@ class HotSaleAdmin(admin.ModelAdmin):
     def savings(self, obj):
         return obj.savings_amount
 
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        vendor_profile = _current_vendor_profile(request.user)
+        if vendor_profile:
+            return qs.filter(package__vendor=vendor_profile)
+        return qs.none()
+
 
 @admin.register(Booking)
 class BookingAdmin(admin.ModelAdmin):
@@ -82,6 +143,15 @@ class BookingAdmin(admin.ModelAdmin):
     list_filter = ('travel_date', 'created_at')
     search_fields = ('package__title', 'user__username')
     readonly_fields = ('created_at',)
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        vendor_profile = _current_vendor_profile(request.user)
+        if vendor_profile:
+            return qs.filter(package__vendor=vendor_profile)
+        return qs.none()
 
 
 class InquiryReplyStatusFilter(admin.SimpleListFilter):
@@ -116,6 +186,15 @@ class InquiryAdmin(admin.ModelAdmin):
         ('Reply', {'fields': ('admin_reply', 'replied_at')}),
         ('System', {'fields': ('created_at',)}),
     )
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        vendor_profile = _current_vendor_profile(request.user)
+        if vendor_profile:
+            return qs.filter(package__vendor=vendor_profile)
+        return qs.none()
 
     def has_add_permission(self, request):
         return False
