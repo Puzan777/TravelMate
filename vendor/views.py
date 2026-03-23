@@ -3,7 +3,28 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 
 from app.models import Booking, Inquiry, Package
+from .forms import VendorRegistrationForm
 from .models import VendorProfile
+
+
+def register(request):
+	if request.user.is_authenticated:
+		messages.info(request, 'You are already logged in. Please use another account for vendor registration.')
+		return redirect('home')
+
+	if request.method == 'POST':
+		form = VendorRegistrationForm(request.POST, request.FILES)
+		if form.is_valid():
+			form.save()
+			messages.success(
+				request,
+				'Vendor registration submitted successfully. Please wait for admin verification.',
+			)
+			return redirect('login')
+	else:
+		form = VendorRegistrationForm()
+
+	return render(request, 'vendor/register.html', {'form': form})
 
 
 @login_required
@@ -18,6 +39,13 @@ def dashboard(request):
 			'company_name': request.user.get_full_name() or request.user.username,
 		},
 	)
+
+	if request.user.role == 'VENDOR' and profile.verification_status != VendorProfile.VerificationStatus.APPROVED:
+		if profile.verification_status == VendorProfile.VerificationStatus.REJECTED and profile.rejection_reason:
+			messages.error(request, f'Your vendor account was rejected: {profile.rejection_reason}')
+		else:
+			messages.warning(request, 'Your vendor registration is pending approval. Dashboard access is blocked until approval.')
+		return redirect('home')
 
 	package_qs = Package.objects.filter(vendor=profile)
 	recent_bookings = Booking.objects.filter(package__vendor=profile).select_related('package', 'user')[:5]
