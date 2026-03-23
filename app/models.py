@@ -31,9 +31,7 @@ class Destination(models.Model):
     """Represents a country/region where packages are available."""
     vendor = models.ForeignKey(
         'vendor.VendorProfile',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
+        on_delete=models.PROTECT,
         related_name='destinations',
     )
     name = models.CharField(max_length=150, unique=True, help_text="Country name (e.g., Nepal, Thailand)")
@@ -62,9 +60,7 @@ class Package(models.Model):
     title = models.CharField(max_length=200)
     vendor = models.ForeignKey(
         'vendor.VendorProfile',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
+        on_delete=models.PROTECT,
         related_name='packages',
     )
     # optional slug for pretty URLs; generated automatically if blank
