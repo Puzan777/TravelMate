@@ -8,11 +8,20 @@ from .forms import SignUpForm, LoginForm, BookingForm, InquiryForm
 from .models import CustomUser, Destination, Package, Booking, Inquiry, HotSale
 
 
-def _redirect_after_login(user):
+def _redirect_after_login(request, user):
     if user.is_staff or user.is_superuser or user.role == CustomUser.Role.ADMIN:
         return redirect('/admin/')
     if user.role == CustomUser.Role.VENDOR:
-        return redirect('vendor:dashboard')
+        from vendor.models import VendorProfile
+
+        profile = VendorProfile.objects.filter(user=user).first()
+        if profile and profile.verification_status == VendorProfile.VerificationStatus.APPROVED:
+            return redirect('vendor:dashboard')
+        if profile and profile.verification_status == VendorProfile.VerificationStatus.REJECTED and profile.rejection_reason:
+            messages.error(request, f'Your vendor account was rejected: {profile.rejection_reason}')
+            return redirect('home')
+        messages.warning(request, 'Your vendor registration is pending approval.')
+        return redirect('home')
     return redirect('home')
 
 
@@ -31,12 +40,11 @@ def _ensure_vendor_profile(user):
 
 def signup_view(request):
     if request.method == "POST":
-        form = SignUpForm(request.POST, request.FILES)
+        form = SignUpForm(request.POST)
         if form.is_valid():
             user = form.save()      #  password hashed automatically
-            _ensure_vendor_profile(user)
             login(request, user)    #  auto login after signup
-            return _redirect_after_login(user)
+            return _redirect_after_login(request, user)
     else:
         form = SignUpForm()
     return render(request, "signup.html", {"form": form})
@@ -44,7 +52,7 @@ def signup_view(request):
 
 def login_view(request):
     if request.user.is_authenticated:
-        return _redirect_after_login(request.user)
+        return _redirect_after_login(request, request.user)
 
     if request.method == "POST":
         form = LoginForm(request, data=request.POST)
@@ -52,7 +60,7 @@ def login_view(request):
             user = form.get_user()
             login(request, user)
             _ensure_vendor_profile(user)
-            return _redirect_after_login(user)
+            return _redirect_after_login(request, user)
     else:
         form = LoginForm()
     return render(request, "login.html", {"form": form})
