@@ -96,7 +96,7 @@ class SignUpForm(UserCreationForm):
         if commit:
             user.save()
             if user.role == CustomUser.Role.VENDOR:
-                VendorProfile.objects.update_or_create(
+                profile, created = VendorProfile.objects.update_or_create(
                     user=user,
                     defaults={
                         'company_name': self.cleaned_data['company_name'].strip(),
@@ -107,8 +107,12 @@ class SignUpForm(UserCreationForm):
                         'owner_national_id': (self.cleaned_data.get('owner_national_id') or '').strip(),
                         'contact_phone': (self.cleaned_data.get('contact_phone') or '').strip(),
                         'address': (self.cleaned_data.get('address') or '').strip(),
+                        'verification_status': VendorProfile.VerificationStatus.PENDING,
                     },
                 )
+                if created and profile.submitted_at is None:
+                    profile.submitted_at = timezone.now()
+                    profile.save(update_fields=['submitted_at'])
 
         return user
 
