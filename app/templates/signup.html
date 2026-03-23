@@ -15,7 +15,7 @@
             </div>
           {% endif %}
 
-          <form method="POST" enctype="multipart/form-data">
+          <form method="POST">
             {% csrf_token %}
 
             <div class="mb-3">
@@ -28,64 +28,6 @@
               <label class="form-label">Email</label>
               {{ form.email }}
               <div class="text-danger small">{{ form.email.errors }}</div>
-            </div>
-
-            <div class="mb-3">
-              <label class="form-label">Account Type</label>
-              {{ form.role }}
-              <div class="text-danger small">{{ form.role.errors }}</div>
-            </div>
-
-            <div id="vendor-fields" class="border rounded p-3 mb-3" style="display:none;">
-              <h6 class="mb-3">Vendor Information</h6>
-
-              <div class="mb-3">
-                <label class="form-label">Company Name</label>
-                {{ form.company_name }}
-                <div class="text-danger small">{{ form.company_name.errors }}</div>
-              </div>
-
-              <div class="mb-3">
-                <label class="form-label">Owner or Authorized Person Full Name</label>
-                {{ form.owner_full_name }}
-                <div class="text-danger small">{{ form.owner_full_name.errors }}</div>
-              </div>
-
-              <div class="mb-3">
-                <label class="form-label">PAN or VAT Number</label>
-                {{ form.pan_vat_number }}
-                <div class="text-danger small">{{ form.pan_vat_number.errors }}</div>
-              </div>
-
-              <div class="mb-3">
-                <label class="form-label">Business Registration Number</label>
-                {{ form.business_registration_number }}
-                <div class="text-danger small">{{ form.business_registration_number.errors }}</div>
-              </div>
-
-              <div class="mb-3">
-                <label class="form-label">Business Registration Certificate Document</label>
-                {{ form.business_registration_certificate }}
-                <div class="text-danger small">{{ form.business_registration_certificate.errors }}</div>
-              </div>
-
-              <div class="mb-3">
-                <label class="form-label">Citizenship or National ID Number</label>
-                {{ form.owner_national_id }}
-                <div class="text-danger small">{{ form.owner_national_id.errors }}</div>
-              </div>
-
-              <div class="mb-3">
-                <label class="form-label">Business Phone</label>
-                {{ form.contact_phone }}
-                <div class="text-danger small">{{ form.contact_phone.errors }}</div>
-              </div>
-
-              <div class="mb-0">
-                <label class="form-label">Business Address</label>
-                {{ form.address }}
-                <div class="text-danger small">{{ form.address.errors }}</div>
-              </div>
             </div>
 
             <div class="mb-3">
@@ -112,21 +54,4 @@
   </div>
 </div>
 
-<script>
-  (function() {
-    const roleSelect = document.getElementById('id_role');
-    const vendorFields = document.getElementById('vendor-fields');
-
-    function toggleVendorFields() {
-      if (!roleSelect || !vendorFields) return;
-      const isVendor = roleSelect.value === 'VENDOR';
-      vendorFields.style.display = isVendor ? 'block' : 'none';
-    }
-
-    toggleVendorFields();
-    if (roleSelect) {
-      roleSelect.addEventListener('change', toggleVendorFields);
-    }
-  })();
-</script>
 {% endblock %}

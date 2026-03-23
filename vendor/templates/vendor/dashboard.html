@@ -14,12 +14,21 @@
           <div class="mb-2"><strong>Email:</strong> {{ request.user.email }}</div>
           <div class="mb-2">
             <strong>Approval Status:</strong>
-            {% if vendor_profile.is_approved %}
+            {% if vendor_profile.verification_status == 'APPROVED' %}
               <span class="badge text-bg-success">Approved</span>
+            {% elif vendor_profile.verification_status == 'REJECTED' %}
+              <span class="badge text-bg-danger">Rejected</span>
             {% else %}
               <span class="badge text-bg-warning">Pending</span>
             {% endif %}
           </div>
+
+          {% if vendor_profile.verification_status == 'REJECTED' and vendor_profile.rejection_reason %}
+            <div class="alert alert-danger mt-3 mb-0" role="alert">
+              <strong>Verification Rejected:</strong><br>
+              {{ vendor_profile.rejection_reason }}
+            </div>
+          {% endif %}
         </div>
       </div>
     </div>

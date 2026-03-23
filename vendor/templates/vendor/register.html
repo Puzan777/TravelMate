@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+
+{% block title %}Become Vendor{% endblock %}
+
+{% block content %}
+<div class="container mt-5 mb-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-7">
+      <div class="card shadow">
+        <div class="card-body p-4 p-md-5">
+          <h3 class="mb-3">Become a Vendor</h3>
+          <p class="text-muted mb-4">Complete the form below to submit your vendor registration for admin approval.</p>
+
+          {% if form.errors %}
+            <div class="alert alert-danger">Please fix the errors below.</div>
+          {% endif %}
+
+          <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <div class="mb-3">
+              <label class="form-label">Username</label>
+              {{ form.username }}
+              <div class="text-danger small">{{ form.username.errors }}</div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Email</label>
+              {{ form.email }}
+              <div class="text-danger small">{{ form.email.errors }}</div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Company Name</label>
+              {{ form.company_name }}
+              <div class="text-danger small">{{ form.company_name.errors }}</div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Owner or Authorized Person Full Name</label>
+              {{ form.owner_full_name }}
+              <div class="text-danger small">{{ form.owner_full_name.errors }}</div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">PAN or VAT Number</label>
+              {{ form.pan_vat_number }}
+              <div class="text-danger small">{{ form.pan_vat_number.errors }}</div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Business Registration Number</label>
+              {{ form.business_registration_number }}
+              <div class="text-danger small">{{ form.business_registration_number.errors }}</div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Business Registration Certificate</label>
+              {{ form.business_registration_certificate }}
+              <div class="text-danger small">{{ form.business_registration_certificate.errors }}</div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Citizenship or National ID Number</label>
+              {{ form.owner_national_id }}
+              <div class="text-danger small">{{ form.owner_national_id.errors }}</div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Business Phone</label>
+              {{ form.contact_phone }}
+              <div class="text-danger small">{{ form.contact_phone.errors }}</div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Business Address</label>
+              {{ form.address }}
+              <div class="text-danger small">{{ form.address.errors }}</div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Password</label>
+              {{ form.password1 }}
+              <div class="text-danger small">{{ form.password1.errors }}</div>
+            </div>
+
+            <div class="mb-4">
+              <label class="form-label">Confirm Password</label>
+              {{ form.password2 }}
+              <div class="text-danger small">{{ form.password2.errors }}</div>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100">Submit Vendor Registration</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

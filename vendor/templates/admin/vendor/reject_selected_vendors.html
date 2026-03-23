@@ -1,0 +1,25 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<div id="content-main">
+  <h1>Reject selected vendors</h1>
+  <p>Please provide a rejection reason. This reason will be saved for all selected vendors.</p>
+
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+
+    {% for vendor in vendors %}
+      <input type="hidden" name="_selected_action" value="{{ vendor.pk }}">
+    {% endfor %}
+
+    <input type="hidden" name="action" value="reject_selected_vendors">
+    <input type="hidden" name="apply" value="1">
+
+    <div class="submit-row">
+      <input type="submit" value="Reject selected vendors" class="default">
+      <a href="../" class="button cancel-link">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

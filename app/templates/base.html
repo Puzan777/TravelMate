@@ -130,6 +130,12 @@ body::before {
           </li>
         {% else %}
           <li class="nav-item">
+            <a class="nav-link btn btn-outline-secondary px-3 ms-2"
+               href="{% url 'vendor:register' %}">
+              Become Vendor
+            </a>
+          </li>
+          <li class="nav-item">
             <a class="nav-link btn btn-outline-primary px-3 ms-2"
                href="{% url 'login' %}">
               Login
