@@ -6,11 +6,21 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 
 
 class CustomUser(AbstractUser):
+    class Role(models.TextChoices):
+        CUSTOMER = 'CUSTOMER', 'Customer'
+        VENDOR = 'VENDOR', 'Vendor'
+        ADMIN = 'ADMIN', 'Admin'
+
+    role = models.CharField(max_length=20, choices=Role.choices, default=Role.CUSTOMER)
     favorite_packages = models.ManyToManyField(
         'Package',
         blank=True,
         related_name='favorited_by'
     )
+
+    @property
+    def is_vendor(self):
+        return self.role == self.Role.VENDOR
     
     def __str__(self):
         return self.username

@@ -1,5 +1,6 @@
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 
 from app.models import Booking, Inquiry, Package
 from .models import VendorProfile
@@ -7,6 +8,10 @@ from .models import VendorProfile
 
 @login_required
 def dashboard(request):
+	if not (request.user.is_superuser or request.user.is_staff or request.user.role == 'VENDOR'):
+		messages.error(request, 'Vendor access is required to open the vendor dashboard.')
+		return redirect('home')
+
 	profile, _ = VendorProfile.objects.get_or_create(
 		user=request.user,
 		defaults={

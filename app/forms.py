@@ -5,13 +5,18 @@ from .models import CustomUser, Booking, Inquiry
 
 class SignUpForm(UserCreationForm):
     email = forms.EmailField(required=True)
+    role = forms.ChoiceField(choices=CustomUser.Role.choices)
 
     class Meta:
         model = CustomUser
-        fields = ("username", "email", "password1", "password2")
+        fields = ("username", "email", "role", "password1", "password2")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['role'].choices = [
+            (CustomUser.Role.CUSTOMER, 'Customer'),
+            (CustomUser.Role.VENDOR, 'Vendor'),
+        ]
         for f in self.fields.values():
             f.widget.attrs["class"] = "form-control"
 

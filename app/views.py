@@ -5,7 +5,28 @@ from django.contrib import messages
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 from .forms import SignUpForm, LoginForm, BookingForm, InquiryForm
-from .models import Destination, Package, Booking, Inquiry, HotSale
+from .models import CustomUser, Destination, Package, Booking, Inquiry, HotSale
+
+
+def _redirect_after_login(user):
+    if user.is_staff or user.is_superuser or user.role == CustomUser.Role.ADMIN:
+        return redirect('/admin/')
+    if user.role == CustomUser.Role.VENDOR:
+        return redirect('vendor:dashboard')
+    return redirect('home')
+
+
+def _ensure_vendor_profile(user):
+    if user.role != CustomUser.Role.VENDOR:
+        return
+    from vendor.models import VendorProfile
+
+    VendorProfile.objects.get_or_create(
+        user=user,
+        defaults={
+            'company_name': user.get_full_name() or user.username,
+        },
+    )
 
 
 def signup_view(request):
@@ -13,10 +34,9 @@ def signup_view(request):
         form = SignUpForm(request.POST)
         if form.is_valid():
             user = form.save()      #  password hashed automatically
+            _ensure_vendor_profile(user)
             login(request, user)    #  auto login after signup
-            if user.is_staff or user.is_superuser:
-                return redirect("/admin/")
-            return redirect("home")
+            return _redirect_after_login(user)
     else:
         form = SignUpForm()
     return render(request, "signup.html", {"form": form})
@@ -24,18 +44,15 @@ def signup_view(request):
 
 def login_view(request):
     if request.user.is_authenticated:
-        if request.user.is_staff or request.user.is_superuser:
-            return redirect('/admin/')
-        return redirect('home')
+        return _redirect_after_login(request.user)
 
     if request.method == "POST":
         form = LoginForm(request, data=request.POST)
         if form.is_valid():
             user = form.get_user()
             login(request, user)
-            if user.is_staff or user.is_superuser:
-                return redirect('/admin/')
-            return redirect("home")
+            _ensure_vendor_profile(user)
+            return _redirect_after_login(user)
     else:
         form = LoginForm()
     return render(request, "login.html", {"form": form})

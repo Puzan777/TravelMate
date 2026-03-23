@@ -11,7 +11,9 @@ def _current_vendor_profile(user):
 
 @admin.register(CustomUser)
 class CustomUserAdmin(admin.ModelAdmin):
-    pass
+    list_display = ('username', 'email', 'role', 'is_staff', 'is_superuser', 'is_active')
+    list_filter = ('role', 'is_staff', 'is_superuser', 'is_active')
+    search_fields = ('username', 'email')
 
 
 @admin.register(Destination)

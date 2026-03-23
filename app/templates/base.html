@@ -72,6 +72,12 @@ body::before {
         </li>
         {% endif %}
 
+        {% if user.is_authenticated and user.role == 'VENDOR' %}
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'vendor:dashboard' %}">Vendor Dashboard</a>
+        </li>
+        {% endif %}
+
         <li class="nav-item">
           <a class="nav-link" href="{% url 'home' %}">Home</a>
         </li>
@@ -110,6 +116,11 @@ body::before {
           {% if user.is_staff %}
           <li class="nav-item">
             <a class="nav-link" href="/admin/">Go to Admin</a>
+          </li>
+          {% endif %}
+          {% if user.role == 'VENDOR' %}
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'vendor:dashboard' %}">Vendor Panel</a>
           </li>
           {% endif %}
           <li class="nav-item">
