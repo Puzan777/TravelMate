@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0">{{ page_title }}</h1>
+    <a href="{% url 'vendor:package_list' %}" class="btn btn-outline-secondary">Back to Packages</a>
+  </div>
+
+  <div class="card shadow-sm border-0">
+    <div class="card-body p-4">
+      {% if form.errors %}
+      <div class="alert alert-danger">Please fix the errors below.</div>
+      {% endif %}
+
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <div class="row g-3">
+          <div class="col-md-8">
+            <label class="form-label">Title</label>
+            {{ form.title }}
+            <div class="text-danger small">{{ form.title.errors }}</div>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label">Category</label>
+            {{ form.category }}
+            <div class="text-danger small">{{ form.category.errors }}</div>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Image</label>
+            {{ form.image }}
+            <div class="text-danger small">{{ form.image.errors }}</div>
+          </div>
+
+          <div class="col-md-3">
+            <label class="form-label">Price</label>
+            {{ form.price }}
+            <div class="text-danger small">{{ form.price.errors }}</div>
+          </div>
+
+          <div class="col-md-3">
+            <label class="form-label">Rating</label>
+            {{ form.rating }}
+            <div class="text-danger small">{{ form.rating.errors }}</div>
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">Description</label>
+            {{ form.description }}
+            <div class="text-danger small">{{ form.description.errors }}</div>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Destination</label>
+            {{ form.destination }}
+            <div class="text-danger small">{{ form.destination.errors }}</div>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Duration</label>
+            {{ form.duration }}
+            <div class="text-danger small">{{ form.duration.errors }}</div>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label">Max People</label>
+            {{ form.max_people }}
+            <div class="text-danger small">{{ form.max_people.errors }}</div>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label">Trip Difficulty</label>
+            {{ form.trip_difficulty }}
+            <div class="text-danger small">{{ form.trip_difficulty.errors }}</div>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label">Activity</label>
+            {{ form.activity }}
+            <div class="text-danger small">{{ form.activity.errors }}</div>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label">Max Elevation</label>
+            {{ form.max_elevation }}
+            <div class="text-danger small">{{ form.max_elevation.errors }}</div>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label">Accommodation</label>
+            {{ form.accommodation }}
+            <div class="text-danger small">{{ form.accommodation.errors }}</div>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label">Meal</label>
+            {{ form.meal }}
+            <div class="text-danger small">{{ form.meal.errors }}</div>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Vehicle</label>
+            {{ form.vehicle }}
+            <div class="text-danger small">{{ form.vehicle.errors }}</div>
+          </div>
+
+          <div class="col-md-6 d-flex align-items-end">
+            <div class="form-check me-4">
+              {{ form.is_hot_sale }}
+              <label class="form-check-label" for="{{ form.is_hot_sale.id_for_label }}">Hot Sale</label>
+            </div>
+            <div class="form-check">
+              {{ form.is_active }}
+              <label class="form-check-label" for="{{ form.is_active.id_for_label }}">Active</label>
+            </div>
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">Major Highlights</label>
+            {{ form.major_highlights }}
+            <div class="text-danger small">{{ form.major_highlights.errors }}</div>
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">Itinerary</label>
+            {{ form.itinerary }}
+            <div class="text-danger small">{{ form.itinerary.errors }}</div>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100 mt-4">{{ submit_label }}</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

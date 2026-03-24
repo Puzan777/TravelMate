@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block title %}Vendor Destinations{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h1 class="h3 mb-1">My Destinations</h1>
+      <p class="text-muted mb-0">Manage the destinations for your travel packages.</p>
+    </div>
+    <a href="{% url 'vendor:destination_create' %}" class="btn btn-primary">Add Destination</a>
+  </div>
+
+  <div class="card shadow-sm border-0">
+    <div class="card-body p-0">
+      {% if destinations %}
+      <div class="table-responsive">
+        <table class="table mb-0 align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>Name</th>
+              <th>Best Season</th>
+              <th>Updated</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for destination in destinations %}
+            <tr>
+              <td>
+                <div class="fw-semibold">{{ destination.name }}</div>
+                <div class="small text-muted">{{ destination.short_description|default:'No short description'|truncatechars:80 }}</div>
+              </td>
+              <td>{{ destination.best_season|default:'-' }}</td>
+              <td>{{ destination.updated_at|date:"M d, Y" }}</td>
+              <td class="text-end">
+                <a href="{% url 'vendor:destination_edit' destination.pk %}" class="btn btn-sm btn-outline-secondary">Edit</a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="p-4 text-center text-muted">No destinations yet. Add your first destination to get started.</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

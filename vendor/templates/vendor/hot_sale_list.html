@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block title %}Vendor Hot Sales{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h1 class="h3 mb-1">My Hot Sales</h1>
+      <p class="text-muted mb-0">Create and manage discounted prices for your packages.</p>
+    </div>
+    <a href="{% url 'vendor:hot_sale_create' %}" class="btn btn-primary">Add Hot Sale</a>
+  </div>
+
+  <div class="card shadow-sm border-0">
+    <div class="card-body p-0">
+      {% if hot_sales %}
+      <div class="table-responsive">
+        <table class="table mb-0 align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>Package</th>
+              <th>Original Price</th>
+              <th>Sale Price</th>
+              <th>Savings</th>
+              <th>Status</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for hot_sale in hot_sales %}
+            <tr>
+              <td class="fw-semibold">{{ hot_sale.package.title }}</td>
+              <td>Rs. {{ hot_sale.package.price }}</td>
+              <td>Rs. {{ hot_sale.sale_price }}</td>
+              <td>Rs. {{ hot_sale.savings_amount }}</td>
+              <td>
+                {% if hot_sale.is_active %}
+                <span class="badge text-bg-success">Active</span>
+                {% else %}
+                <span class="badge text-bg-secondary">Inactive</span>
+                {% endif %}
+              </td>
+              <td class="text-end">
+                <a href="{% url 'vendor:hot_sale_edit' hot_sale.pk %}" class="btn btn-sm btn-outline-secondary">Edit</a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="p-4 text-center text-muted">No hot sales yet. Add one to boost conversions.</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

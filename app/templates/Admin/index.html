@@ -309,14 +309,14 @@
       <section class="quick-actions">
         <h2>Quick Actions</h2>
         <div class="quick-actions-grid">
-          <a class="quick-action-link" href="{% url 'admin:app_package_add' %}">+ Add Package</a>
-          <a class="quick-action-link" href="{% url 'admin:app_hotsale_add' %}">+ Add Hot Sale</a>
-          <a class="quick-action-link" href="{% url 'admin:app_destination_add' %}">+ Add Destination</a>
-          <a class="quick-action-link" href="{% url 'admin:app_booking_add' %}">+ Add Booking</a>
+          <a class="quick-action-link" href="{% url 'admin:vendor_vendorprofile_changelist' %}">Review Vendor Applications</a>
+          <a class="quick-action-link" href="{% url 'admin:app_package_changelist' %}">View Packages</a>
+          <a class="quick-action-link" href="{% url 'admin:app_hotsale_changelist' %}">View Hot Sales</a>
+          <a class="quick-action-link" href="{% url 'admin:app_destination_changelist' %}">View Destinations</a>
           <a class="quick-action-link" href="{% url 'admin:app_inquiry_changelist' %}">Manage Inquiries</a>
           <a class="quick-action-link" href="{% url 'admin:app_customuser_add' %}">+ Add User</a>
-          <a class="quick-action-link" href="{% url 'admin:app_hotsale_changelist' %}">View Hot Sales</a>
           <a class="quick-action-link" href="{% url 'admin:app_booking_changelist' %}">Manage Bookings</a>
+          <a class="quick-action-link" href="{% url 'admin:vendor_vendorprofile_changelist' %}?verification_status__exact=PENDING">Pending Vendor Verifications</a>
         </div>
       </section>
 
@@ -429,9 +429,8 @@
           <p>No hot sales yet.</p>
         {% endif %}
         <div class="section-actions">
-          <a href="{% url 'admin:app_hotsale_add' %}">+ Add Hot Sale</a>
           <a href="{% url 'admin:app_hotsale_changelist' %}">View Hot Sales</a>
-          <a href="{% url 'admin:app_package_changelist' %}">Manage Packages</a>
+          <a href="{% url 'admin:app_package_changelist' %}">View Packages</a>
         </div>
       </section>
 
@@ -466,7 +465,6 @@
         {% endif %}
         <div class="section-actions">
           <a href="{% url 'admin:app_booking_changelist' %}">Manage Bookings</a>
-          <a href="{% url 'admin:app_booking_add' %}">+ Add Booking</a>
         </div>
       </section>
 

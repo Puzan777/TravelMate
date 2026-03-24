@@ -7,7 +7,7 @@
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
-  <title>Travel Mate</title>
+  <title>{% block title %}Travel Mate{% endblock %}</title>
   <style>
 html, body {
   min-height: 100%;
@@ -43,6 +43,7 @@ body::before {
   justify-content: center;
 }
 </style>
+{% block extrastyle %}{% endblock %}
 
 </head>
 <body>
@@ -116,11 +117,6 @@ body::before {
           {% if user.is_staff %}
           <li class="nav-item">
             <a class="nav-link" href="/admin/">Go to Admin</a>
-          </li>
-          {% endif %}
-          {% if user.role == 'VENDOR' %}
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'vendor:dashboard' %}">Vendor Panel</a>
           </li>
           {% endif %}
           <li class="nav-item">
