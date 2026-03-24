@@ -1,6 +1,8 @@
 from django import forms
+from django.conf import settings
 from django.contrib import admin, messages
 from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
+from django.core.mail import send_mail
 from django.template.response import TemplateResponse
 
 from .models import VendorProfile
@@ -61,17 +63,57 @@ class VendorProfileAdmin(admin.ModelAdmin):
 		}),
 	)
 
+	def _send_verification_email(self, profile, is_approved):
+		email = (profile.user.email or '').strip()
+		if not email:
+			return False
+
+		subject = 'TravelMate Vendor Application Update'
+		if is_approved:
+			message = (
+				f'Hello {profile.user.username},\n\n'
+				'Your vendor account has been approved by the admin team. '
+				'You can now log in and access your vendor dashboard.\n\n'
+				'Thank you,\n'
+				'TravelMate Team'
+			)
+		else:
+			reason = (profile.rejection_reason or '').strip()
+			reason_line = f'Reason: {reason}\n\n' if reason else ''
+			message = (
+				f'Hello {profile.user.username},\n\n'
+				'Your vendor account has been rejected by the admin team.\n\n'
+				f'{reason_line}'
+				'You can update your details and register again.\n\n'
+				'Thank you,\n'
+				'TravelMate Team'
+			)
+
+		from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', None) or settings.EMAIL_HOST_USER
+		send_mail(subject, message, from_email, [email], fail_silently=False)
+		return True
+
 	@admin.action(description='Approve selected vendors')
 	def approve_selected_vendors(self, request, queryset):
 		updated = 0
+		emails_sent = 0
 		for profile in queryset:
 			profile.verification_status = VendorProfile.VerificationStatus.APPROVED
 			profile.save()
 			updated += 1
+			try:
+				if self._send_verification_email(profile, is_approved=True):
+					emails_sent += 1
+			except Exception as exc:
+				self.message_user(
+					request,
+					f'Could not send approval email to {profile.user.email}: {exc}',
+					level=messages.ERROR,
+				)
 
 		self.message_user(
 			request,
-			f'{updated} vendor(s) approved successfully.',
+			f'{updated} vendor(s) approved successfully. {emails_sent} email(s) sent.',
 			level=messages.SUCCESS,
 		)
 
@@ -85,15 +127,25 @@ class VendorProfileAdmin(admin.ModelAdmin):
 				target_qs = VendorProfile.objects.filter(pk__in=selected_ids)
 
 				updated = 0
+				emails_sent = 0
 				for profile in target_qs:
 					profile.verification_status = VendorProfile.VerificationStatus.REJECTED
 					profile.rejection_reason = reason
 					profile.save()
 					updated += 1
+					try:
+						if self._send_verification_email(profile, is_approved=False):
+							emails_sent += 1
+					except Exception as exc:
+						self.message_user(
+							request,
+							f'Could not send rejection email to {profile.user.email}: {exc}',
+							level=messages.ERROR,
+						)
 
 				self.message_user(
 					request,
-					f'{updated} vendor(s) rejected successfully.',
+					f'{updated} vendor(s) rejected successfully. {emails_sent} email(s) sent.',
 					level=messages.WARNING,
 				)
 				return None
