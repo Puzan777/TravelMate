@@ -2,7 +2,7 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.utils import timezone
 
-from app.models import CustomUser
+from app.models import CustomUser, Destination, HotSale, Package
 from .models import VendorProfile
 
 
@@ -80,3 +80,84 @@ class VendorRegistrationForm(UserCreationForm):
                 profile.save(update_fields=['verified_at'])
 
         return user
+
+
+class VendorDestinationForm(forms.ModelForm):
+    class Meta:
+        model = Destination
+        fields = (
+            'name',
+            'short_description',
+            'hero_image',
+            'best_season',
+            'visa_info',
+            'safety_note',
+        )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.widget.attrs['class'] = 'form-control'
+
+
+class VendorPackageForm(forms.ModelForm):
+    class Meta:
+        model = Package
+        fields = (
+            'title',
+            'category',
+            'image',
+            'price',
+            'rating',
+            'description',
+            'destination',
+            'duration',
+            'max_people',
+            'trip_difficulty',
+            'activity',
+            'max_elevation',
+            'accommodation',
+            'meal',
+            'vehicle',
+            'major_highlights',
+            'itinerary',
+            'is_hot_sale',
+            'is_active',
+        )
+
+    def __init__(self, *args, vendor_profile=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.widget.attrs['class'] = 'form-control'
+
+        self.fields['is_hot_sale'].widget.attrs.pop('class', None)
+        self.fields['is_active'].widget.attrs.pop('class', None)
+
+        if vendor_profile is not None:
+            self.fields['destination'].queryset = Destination.objects.filter(vendor=vendor_profile)
+
+        self.fields['destination'].required = False
+
+
+class VendorHotSaleForm(forms.ModelForm):
+    class Meta:
+        model = HotSale
+        fields = (
+            'package',
+            'sale_price',
+            'note',
+            'is_active',
+        )
+
+    def __init__(self, *args, vendor_profile=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.widget.attrs['class'] = 'form-control'
+
+        self.fields['is_active'].widget.attrs.pop('class', None)
+
+        package_qs = Package.objects.filter(is_active=True)
+        if vendor_profile is not None:
+            package_qs = package_qs.filter(vendor=vendor_profile)
+
+        self.fields['package'].queryset = package_qs.order_by('title')
