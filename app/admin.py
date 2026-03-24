@@ -43,6 +43,18 @@ class DestinationAdmin(admin.ModelAdmin):
                 obj.vendor = vendor_profile
         super().save_model(request, obj, form, change)
 
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_view_permission(self, request, obj=None):
+        return request.user.is_active and request.user.is_staff
+
 
 @admin.register(Package)
 class PackageAdmin(admin.ModelAdmin):
@@ -85,6 +97,18 @@ class PackageAdmin(admin.ModelAdmin):
             if vendor_profile and obj.vendor_id is None:
                 obj.vendor = vendor_profile
         super().save_model(request, obj, form, change)
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_view_permission(self, request, obj=None):
+        return request.user.is_active and request.user.is_staff
 
 
 @admin.register(HotSale)
@@ -137,6 +161,18 @@ class HotSaleAdmin(admin.ModelAdmin):
         if vendor_profile:
             return qs.filter(package__vendor=vendor_profile)
         return qs.none()
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_view_permission(self, request, obj=None):
+        return request.user.is_active and request.user.is_staff
 
 
 @admin.register(Booking)
