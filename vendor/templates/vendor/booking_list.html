@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block title %}Vendor Bookings{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h1 class="h3 mb-1">Package Bookings</h1>
+      <p class="text-muted mb-0">All bookings made for your packages.</p>
+    </div>
+    <a href="{% url 'vendor:dashboard' %}" class="btn btn-outline-primary">Back to Dashboard</a>
+  </div>
+
+  <div class="card shadow-sm border-0">
+    <div class="card-body p-0">
+      {% if bookings %}
+      <div class="table-responsive">
+        <table class="table mb-0 align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>Package</th>
+              <th>Customer</th>
+              <th>Travel Date</th>
+              <th>Booked On</th>
+              <th class="text-end">Price</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for booking in bookings %}
+            <tr>
+              <td>{{ booking.package.title }}</td>
+              <td>{% if booking.user %}{{ booking.user.username }}{% else %}Guest{% endif %}</td>
+              <td>{{ booking.travel_date|date:"M d, Y" }}</td>
+              <td>{{ booking.created_at|date:"M d, Y" }}</td>
+              <td class="text-end">Rs. {{ booking.package.price }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="p-4 text-center text-muted">No bookings yet for your packages.</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block footer %}{% endblock %}

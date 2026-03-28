@@ -281,6 +281,7 @@
         <div class="sidebar-section">
           <h3 class="sidebar-heading">Catalog</h3>
           <ul class="sidebar-links">
+            <li><a href="{% url 'vendor:booking_list' %}">Bookings</a></li>
             <li><a href="{% url 'vendor:destination_list' %}">Destinations</a></li>
             <li><a href="{% url 'vendor:package_list' %}">Packages</a></li>
             <li><a href="{% url 'vendor:hot_sale_list' %}">Hot Sales</a></li>
@@ -315,6 +316,7 @@
             <a class="quick-action-link" href="{% url 'vendor:destination_list' %}">Manage Destinations</a>
             <a class="quick-action-link" href="{% url 'vendor:package_list' %}">Manage Packages</a>
             <a class="quick-action-link" href="{% url 'vendor:hot_sale_list' %}">Manage Hot Sales</a>
+            <a class="quick-action-link" href="{% url 'vendor:booking_list' %}">Manage Bookings</a>
             <a class="quick-action-link" href="{% url 'vendor:inquiry_list' %}">Manage Inquiries</a>
           </div>
         </section>
@@ -347,7 +349,7 @@
           <div class="dashboard-card">
             <p class="dashboard-title">Bookings</p>
             <p class="dashboard-value">{{ booking_count }}</p>
-            <a class="dashboard-link" href="#bookings">Recent bookings</a>
+            <a class="dashboard-link" href="{% url 'vendor:booking_list' %}">Manage bookings</a>
           </div>
 
           <div class="dashboard-card">
@@ -401,6 +403,9 @@
           {% else %}
             <p>No bookings yet.</p>
           {% endif %}
+          <div class="section-actions">
+            <a href="{% url 'vendor:booking_list' %}">Manage Bookings</a>
+          </div>
         </section>
 
         <section class="dashboard-section" id="inquiries">

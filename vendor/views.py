@@ -314,6 +314,23 @@ def inquiry_list(request):
 
 
 @login_required
+def booking_list(request):
+	vendor_profile = _get_approved_vendor_profile(request)
+	if vendor_profile is None:
+		return redirect('home')
+
+	bookings = Booking.objects.filter(package__vendor=vendor_profile).select_related('package', 'user').order_by('-created_at')
+	return render(
+		request,
+		'vendor/booking_list.html',
+		{
+			'bookings': bookings,
+			'vendor_profile': vendor_profile,
+		},
+	)
+
+
+@login_required
 def inquiry_reply(request, pk):
 	vendor_profile = _get_approved_vendor_profile(request)
 	if vendor_profile is None:
