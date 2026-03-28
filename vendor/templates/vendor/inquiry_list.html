@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block title %}Vendor Inquiries{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h1 class="h3 mb-1">Package Inquiries</h1>
+      <p class="text-muted mb-0">These inquiries are automatically routed to you from your package detail pages.</p>
+    </div>
+    <a href="{% url 'vendor:dashboard' %}" class="btn btn-outline-primary">Back to Dashboard</a>
+  </div>
+
+  <div class="card shadow-sm border-0">
+    <div class="card-body p-0">
+      {% if inquiries %}
+      <div class="table-responsive">
+        <table class="table mb-0 align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>Package</th>
+              <th>Customer</th>
+              <th>Email</th>
+              <th>Message</th>
+              <th>Status</th>
+              <th class="text-end">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for inquiry in inquiries %}
+            <tr>
+              <td>{{ inquiry.package.title }}</td>
+              <td>{{ inquiry.full_name }}</td>
+              <td>{{ inquiry.email }}</td>
+              <td>{{ inquiry.message|truncatechars:90 }}</td>
+              <td>
+                {% if inquiry.admin_reply %}
+                  <span class="badge text-bg-success">Replied</span>
+                {% else %}
+                  <span class="badge text-bg-warning">Pending</span>
+                {% endif %}
+              </td>
+              <td class="text-end">
+                <a href="{% url 'vendor:inquiry_reply' inquiry.pk %}" class="btn btn-sm btn-outline-secondary">
+                  {% if inquiry.admin_reply %}Edit Reply{% else %}Reply{% endif %}
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="p-4 text-center text-muted">No inquiries yet for your packages.</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block footer %}{% endblock %}

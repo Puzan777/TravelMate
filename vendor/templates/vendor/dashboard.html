@@ -284,6 +284,7 @@
             <li><a href="{% url 'vendor:destination_list' %}">Destinations</a></li>
             <li><a href="{% url 'vendor:package_list' %}">Packages</a></li>
             <li><a href="{% url 'vendor:hot_sale_list' %}">Hot Sales</a></li>
+            <li><a href="{% url 'vendor:inquiry_list' %}">Inquiries</a></li>
           </ul>
         </div>
 
@@ -314,6 +315,7 @@
             <a class="quick-action-link" href="{% url 'vendor:destination_list' %}">Manage Destinations</a>
             <a class="quick-action-link" href="{% url 'vendor:package_list' %}">Manage Packages</a>
             <a class="quick-action-link" href="{% url 'vendor:hot_sale_list' %}">Manage Hot Sales</a>
+            <a class="quick-action-link" href="{% url 'vendor:inquiry_list' %}">Manage Inquiries</a>
           </div>
         </section>
 
@@ -412,6 +414,7 @@
                     <th>Name</th>
                     <th>Email</th>
                     <th>Date</th>
+                    <th>Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -421,6 +424,7 @@
                       <td>{{ inquiry.full_name }}</td>
                       <td>{{ inquiry.email }}</td>
                       <td>{{ inquiry.created_at|date:"M d, Y" }}</td>
+                      <td><a href="{% url 'vendor:inquiry_reply' inquiry.pk %}">Reply</a></td>
                     </tr>
                   {% endfor %}
                 </tbody>
@@ -429,6 +433,9 @@
           {% else %}
             <p>No inquiries yet.</p>
           {% endif %}
+          <div class="section-actions">
+            <a href="{% url 'vendor:inquiry_list' %}">Manage Inquiries</a>
+          </div>
         </section>
 
         <section class="dashboard-section">
