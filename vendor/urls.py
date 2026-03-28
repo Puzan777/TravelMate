@@ -16,4 +16,6 @@ urlpatterns = [
     path('hot-sales/', views.hot_sale_list, name='hot_sale_list'),
     path('hot-sales/create/', views.hot_sale_create, name='hot_sale_create'),
     path('hot-sales/<int:pk>/edit/', views.hot_sale_edit, name='hot_sale_edit'),
+    path('inquiries/', views.inquiry_list, name='inquiry_list'),
+    path('inquiries/<int:pk>/reply/', views.inquiry_reply, name='inquiry_reply'),
 ]

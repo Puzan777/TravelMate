@@ -2,7 +2,7 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.utils import timezone
 
-from app.models import CustomUser, Destination, HotSale, Package
+from app.models import CustomUser, Destination, HotSale, Inquiry, Package
 from .models import VendorProfile
 
 
@@ -161,3 +161,17 @@ class VendorHotSaleForm(forms.ModelForm):
             package_qs = package_qs.filter(vendor=vendor_profile)
 
         self.fields['package'].queryset = package_qs.order_by('title')
+
+
+class VendorInquiryReplyForm(forms.ModelForm):
+    class Meta:
+        model = Inquiry
+        fields = ('admin_reply',)
+        widgets = {
+            'admin_reply': forms.Textarea(attrs={'rows': 5}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['admin_reply'].widget.attrs['class'] = 'form-control'
+        self.fields['admin_reply'].label = 'Reply to customer'

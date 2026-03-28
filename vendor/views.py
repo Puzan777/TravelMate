@@ -3,7 +3,13 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 
 from app.models import Booking, Destination, HotSale, Inquiry, Package
-from .forms import VendorDestinationForm, VendorHotSaleForm, VendorPackageForm, VendorRegistrationForm
+from .forms import (
+	VendorDestinationForm,
+	VendorHotSaleForm,
+	VendorInquiryReplyForm,
+	VendorPackageForm,
+	VendorRegistrationForm,
+)
 from .models import VendorProfile
 
 
@@ -286,5 +292,48 @@ def hot_sale_edit(request, pk):
 			'form': form,
 			'page_title': 'Edit Hot Sale',
 			'submit_label': 'Save Changes',
+		},
+	)
+
+
+@login_required
+def inquiry_list(request):
+	vendor_profile = _get_approved_vendor_profile(request)
+	if vendor_profile is None:
+		return redirect('home')
+
+	inquiries = Inquiry.objects.filter(package__vendor=vendor_profile).select_related('package', 'user').order_by('-created_at')
+	return render(
+		request,
+		'vendor/inquiry_list.html',
+		{
+			'inquiries': inquiries,
+			'vendor_profile': vendor_profile,
+		},
+	)
+
+
+@login_required
+def inquiry_reply(request, pk):
+	vendor_profile = _get_approved_vendor_profile(request)
+	if vendor_profile is None:
+		return redirect('home')
+
+	inquiry = get_object_or_404(Inquiry, pk=pk, package__vendor=vendor_profile)
+	if request.method == 'POST':
+		form = VendorInquiryReplyForm(request.POST, instance=inquiry)
+		if form.is_valid():
+			form.save()
+			messages.success(request, 'Inquiry reply saved successfully.')
+			return redirect('vendor:inquiry_list')
+	else:
+		form = VendorInquiryReplyForm(instance=inquiry)
+
+	return render(
+		request,
+		'vendor/inquiry_reply.html',
+		{
+			'form': form,
+			'inquiry': inquiry,
 		},
 	)
