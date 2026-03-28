@@ -43,6 +43,14 @@ class LoginForm(AuthenticationForm):
         for f in self.fields.values():
             f.widget.attrs["class"] = "form-control"
 
+    def clean_username(self):
+        identifier = (self.cleaned_data.get("username") or "").strip()
+        if "@" in identifier:
+            user = CustomUser.objects.filter(email__iexact=identifier).first()
+            if user:
+                return user.username
+        return identifier
+
 
 class BookingForm(forms.ModelForm):
     class Meta:
