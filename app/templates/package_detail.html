@@ -161,6 +161,23 @@
       font-weight: 700;
       color: #17314a;
     }
+    .booking-toggle-btn {
+      border-radius: 10px;
+      font-weight: 700;
+    }
+    .booking-panel {
+      margin-top: 10px;
+      border: 1px solid #dfe9f4;
+      background: linear-gradient(180deg, #fbfdff 0%, #ffffff 100%);
+      border-radius: 12px;
+      padding: 12px;
+      box-shadow: inset 0 1px 0 #ffffff;
+    }
+    .booking-tip {
+      margin: 0 0 10px;
+      font-size: 0.8rem;
+      color: #5f738a;
+    }
     .inquiry-toggle-btn {
       margin-top: 10px;
       border-radius: 10px;
@@ -351,21 +368,74 @@
             {% endfor %}
           {% endif %}
 
-          <form method="post" class="d-grid gap-2">
-            {% csrf_token %}
-            <input type="hidden" name="form_type" value="booking">
-            <label for="id_travel_date" class="form-label mb-1">Choose travel date</label>
-            {{ booking_form.travel_date }}
-            {% if booking_form.travel_date.errors %}
-              <div class="text-danger small">{{ booking_form.travel_date.errors|striptags }}</div>
-            {% endif %}
+          <button class="btn btn-success w-100 booking-toggle-btn" type="button" data-bs-toggle="collapse" data-bs-target="#bookingBox" aria-expanded="{% if booking_form.errors %}true{% else %}false{% endif %}" aria-controls="bookingBox">
+            Book This Trip
+          </button>
 
-            {% if user.is_authenticated %}
-              <button type="submit" class="btn btn-success w-100">Book Now</button>
-            {% else %}
-              <a href="{% url 'login' %}" class="btn btn-outline-primary w-100">Login to Book</a>
-            {% endif %}
-          </form>
+          <div id="bookingBox" class="collapse{% if booking_form.errors %} show{% endif %}">
+            <h6 class="sub-form-title">Booking Request</h6>
+            <div class="booking-panel">
+              <p class="booking-tip">Open the form only when needed, then submit your travel details for review.</p>
+              <form method="post" class="d-grid gap-2">
+                {% csrf_token %}
+                <input type="hidden" name="form_type" value="booking">
+
+                <label for="id_full_name" class="form-label mb-1">Full name</label>
+                {{ booking_form.full_name }}
+                {% if booking_form.full_name.errors %}
+                  <div class="text-danger small">{{ booking_form.full_name.errors|striptags }}</div>
+                {% endif %}
+
+                <label for="id_email" class="form-label mb-1">Email</label>
+                {{ booking_form.email }}
+                {% if booking_form.email.errors %}
+                  <div class="text-danger small">{{ booking_form.email.errors|striptags }}</div>
+                {% endif %}
+
+                <label for="id_phone" class="form-label mb-1">Phone</label>
+                {{ booking_form.phone }}
+                {% if booking_form.phone.errors %}
+                  <div class="text-danger small">{{ booking_form.phone.errors|striptags }}</div>
+                {% endif %}
+
+                <label for="id_travel_date" class="form-label mb-1">Choose travel date</label>
+                {{ booking_form.travel_date }}
+                {% if booking_form.travel_date.errors %}
+                  <div class="text-danger small">{{ booking_form.travel_date.errors|striptags }}</div>
+                {% endif %}
+
+                <label for="id_number_of_people" class="form-label mb-1">Number of people</label>
+                {{ booking_form.number_of_people }}
+                {% if booking_form.number_of_people.errors %}
+                  <div class="text-danger small">{{ booking_form.number_of_people.errors|striptags }}</div>
+                {% endif %}
+
+                <label for="id_pickup_location" class="form-label mb-1">Pickup location or departure city <span class="text-muted">(optional)</span></label>
+                {{ booking_form.pickup_location }}
+                {% if booking_form.pickup_location.errors %}
+                  <div class="text-danger small">{{ booking_form.pickup_location.errors|striptags }}</div>
+                {% endif %}
+
+                <label for="id_nationality" class="form-label mb-1">Nationality</label>
+                {{ booking_form.nationality }}
+                {% if booking_form.nationality.errors %}
+                  <div class="text-danger small">{{ booking_form.nationality.errors|striptags }}</div>
+                {% endif %}
+
+                <label for="id_emergency_contact" class="form-label mb-1">Emergency contact</label>
+                {{ booking_form.emergency_contact }}
+                {% if booking_form.emergency_contact.errors %}
+                  <div class="text-danger small">{{ booking_form.emergency_contact.errors|striptags }}</div>
+                {% endif %}
+
+                {% if user.is_authenticated %}
+                  <button type="submit" class="btn btn-success w-100">Submit Booking</button>
+                {% else %}
+                  <a href="{% url 'login' %}" class="btn btn-outline-primary w-100">Login to Book</a>
+                {% endif %}
+              </form>
+            </div>
+          </div>
 
           <button class="btn btn-outline-dark w-100 inquiry-toggle-btn" type="button" data-bs-toggle="collapse" data-bs-target="#inquiryBox" aria-expanded="{% if inquiry_form.errors %}true{% else %}false{% endif %}" aria-controls="inquiryBox">
             Make an Inquiry

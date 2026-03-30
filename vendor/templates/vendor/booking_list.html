@@ -99,8 +99,10 @@
           <thead>
             <tr>
               <th>Package</th>
-              <th>Customer</th>
+              <th>Traveler</th>
+              <th>Contact</th>
               <th>Travel Date</th>
+              <th>People</th>
               <th>Booked On</th>
               <th class="text-end">Price</th>
             </tr>
@@ -112,8 +114,16 @@
                 <div class="fw-semibold">{{ booking.package.title }}</div>
                 <div class="small text-muted">{{ booking.package.destination.name|default:'No destination' }}</div>
               </td>
-              <td>{% if booking.user %}{{ booking.user.username }}{% else %}Guest{% endif %}</td>
+              <td>
+                <div class="fw-semibold">{{ booking.full_name }}</div>
+                <div class="small text-muted">{% if booking.user %}Account: {{ booking.user.username }}{% else %}Guest booking{% endif %}</div>
+              </td>
+              <td>
+                <div>{{ booking.email }}</div>
+                <div class="small text-muted">{{ booking.phone }}</div>
+              </td>
               <td>{{ booking.travel_date|date:"M d, Y" }}</td>
+              <td>{{ booking.number_of_people }}</td>
               <td>{{ booking.created_at|date:"M d, Y" }}</td>
               <td class="text-end">Rs. {{ booking.package.price }}</td>
             </tr>

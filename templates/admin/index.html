@@ -539,8 +539,9 @@
               <thead>
                 <tr>
                   <th>Package</th>
-                  <th>Customer</th>
+                  <th>Traveler</th>
                   <th>Travel Date</th>
+                  <th>People</th>
                   <th>Booked On</th>
                 </tr>
               </thead>
@@ -548,8 +549,9 @@
                 {% for booking in recent_bookings %}
                   <tr>
                     <td>{{ booking.package.title }}</td>
-                    <td>{% if booking.user %}{{ booking.user.username }}{% else %}Guest{% endif %}</td>
+                    <td>{{ booking.full_name }}</td>
                     <td>{{ booking.travel_date|date:"M d, Y" }}</td>
+                    <td>{{ booking.number_of_people }}</td>
                     <td>{{ booking.created_at|date:"M d, Y" }}</td>
                   </tr>
                 {% endfor %}

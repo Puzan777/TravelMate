@@ -297,8 +297,10 @@
                   <thead>
                     <tr>
                       <th>Package</th>
+                      <th>Traveler</th>
                       <th>Destination</th>
                       <th>Travel Date</th>
+                      <th>People</th>
                       <th>Booked On</th>
                       <th>Price</th>
                     </tr>
@@ -313,6 +315,10 @@
                           <div class="small text-muted">{{ booking.package.duration }}</div>
                         </td>
                         <td>
+                          <div class="fw-semibold">{{ booking.full_name }}</div>
+                          <div class="small text-muted">{{ booking.email }}</div>
+                        </td>
+                        <td>
                           {% if booking.package.destination %}
                             {{ booking.package.destination.name }}
                           {% else %}
@@ -320,6 +326,7 @@
                           {% endif %}
                         </td>
                         <td>{{ booking.travel_date|date:'M d, Y' }}</td>
+                        <td>{{ booking.number_of_people }}</td>
                         <td>{{ booking.created_at|date:'M d, Y' }}</td>
                         <td>${{ booking.package.price }}</td>
                       </tr>
