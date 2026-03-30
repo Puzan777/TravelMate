@@ -55,9 +55,25 @@ class LoginForm(AuthenticationForm):
 class BookingForm(forms.ModelForm):
     class Meta:
         model = Booking
-        fields = ("travel_date",)
+        fields = (
+            "full_name",
+            "email",
+            "phone",
+            "travel_date",
+            "number_of_people",
+            "pickup_location",
+            "nationality",
+            "emergency_contact",
+        )
         widgets = {
+            "full_name": forms.TextInput(attrs={"class": "form-control", "placeholder": "Traveler full name"}),
+            "email": forms.EmailInput(attrs={"class": "form-control", "placeholder": "Traveler email"}),
+            "phone": forms.TextInput(attrs={"class": "form-control", "placeholder": "Phone number"}),
             "travel_date": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
+            "number_of_people": forms.NumberInput(attrs={"class": "form-control", "min": "1", "placeholder": "Number of travelers"}),
+            "pickup_location": forms.TextInput(attrs={"class": "form-control", "placeholder": "Pickup location or departure city"}),
+            "nationality": forms.TextInput(attrs={"class": "form-control", "placeholder": "Nationality"}),
+            "emergency_contact": forms.TextInput(attrs={"class": "form-control", "placeholder": "Emergency contact"}),
         }
 
     def clean_travel_date(self):
@@ -65,6 +81,12 @@ class BookingForm(forms.ModelForm):
         if travel_date < timezone.localdate():
             raise forms.ValidationError("Please choose today or a future date.")
         return travel_date
+
+    def clean_number_of_people(self):
+        number_of_people = self.cleaned_data["number_of_people"]
+        if number_of_people < 1:
+            raise forms.ValidationError("At least one traveler is required.")
+        return number_of_people
 
 
 class InquiryForm(forms.ModelForm):

@@ -157,14 +157,21 @@ class HotSale(models.Model):
 class Booking(models.Model):
     package = models.ForeignKey(Package, on_delete=models.CASCADE, related_name='bookings')
     user = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='bookings')
+    full_name = models.CharField(max_length=120)
+    email = models.EmailField()
+    phone = models.CharField(max_length=30)
     travel_date = models.DateField()
+    number_of_people = models.PositiveIntegerField(default=1)
+    pickup_location = models.CharField(max_length=150, blank=True)
+    nationality = models.CharField(max_length=80)
+    emergency_contact = models.CharField(max_length=120)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ['-created_at']
 
     def __str__(self):
-        return f"{self.package.title} - {self.travel_date}"
+        return f"{self.package.title} - {self.full_name} - {self.travel_date}"
 
 
 class Inquiry(models.Model):

@@ -177,10 +177,15 @@ class HotSaleAdmin(admin.ModelAdmin):
 
 @admin.register(Booking)
 class BookingAdmin(admin.ModelAdmin):
-    list_display = ('package', 'user', 'travel_date', 'created_at')
+    list_display = ('package', 'full_name', 'email', 'phone', 'number_of_people', 'travel_date', 'created_at')
     list_filter = ('travel_date', 'created_at')
-    search_fields = ('package__title', 'user__username')
+    search_fields = ('package__title', 'user__username', 'full_name', 'email', 'phone', 'nationality', 'pickup_location')
     readonly_fields = ('created_at',)
+    fieldsets = (
+        ('Booking', {'fields': ('package', 'user', 'travel_date', 'number_of_people')}),
+        ('Traveler', {'fields': ('full_name', 'email', 'phone', 'nationality', 'emergency_contact', 'pickup_location')}),
+        ('System', {'fields': ('created_at',)}),
+    )
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)

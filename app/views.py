@@ -146,9 +146,13 @@ def package_detail(request, slug):
     if request.user.is_authenticated:
         is_favorite = request.user.favorite_packages.filter(pk=package.pk).exists()
 
-    booking_initial = {'travel_date': timezone.localdate()}
+    booking_initial = {'travel_date': timezone.localdate(), 'number_of_people': 1}
     inquiry_initial = {}
     if request.user.is_authenticated:
+        booking_initial.update({
+            'full_name': request.user.get_full_name() or request.user.username,
+            'email': request.user.email,
+        })
         inquiry_initial = {
             'full_name': request.user.get_full_name() or request.user.username,
             'email': request.user.email,
