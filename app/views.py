@@ -140,8 +140,13 @@ def hot_sale_list(request):
 
 
 def package_detail(request, slug):
-    package = get_object_or_404(Package, slug=slug, is_active=True)
+    package = get_object_or_404(
+        Package.objects.prefetch_related('itinerary_entries'),
+        slug=slug,
+        is_active=True,
+    )
     is_favorite = False
+    itinerary_days = list(package.itinerary_entries.all())
 
     if request.user.is_authenticated:
         is_favorite = request.user.favorite_packages.filter(pk=package.pk).exists()
@@ -197,6 +202,7 @@ def package_detail(request, slug):
         'booking_form': booking_form,
         'inquiry_form': inquiry_form,
         'is_favorite': is_favorite,
+        'itinerary_days': itinerary_days,
     })
 
 

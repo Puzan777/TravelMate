@@ -323,7 +323,25 @@
         </div>
       {% endif %}
 
-      {% if package.itinerary %}
+      {% if itinerary_days %}
+        <div class="mb-4 content-card">
+          <h5 class="content-title">Itinerary</h5>
+          <div class="d-grid gap-3">
+            {% for day in itinerary_days %}
+              <div class="info-item">
+                <p class="info-label">Day {{ day.day_number }}</p>
+                <p class="info-value">{{ day.title }}</p>
+                <div class="content-body mt-2">
+                  <p>{{ day.description|linebreaksbr }}</p>
+                  {% if day.activities %}
+                    <p><strong>Activities:</strong> {{ day.activities|linebreaksbr }}</p>
+                  {% endif %}
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      {% elif package.itinerary %}
         <div class="mb-4 content-card">
           <h5 class="content-title">Itinerary</h5>
           <div class="content-body">{{ package.itinerary|linebreaks }}</div>
