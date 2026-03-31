@@ -16,6 +16,8 @@ class VendorRegistrationForm(UserCreationForm):
     owner_national_id = forms.CharField(required=False, max_length=100)
     contact_phone = forms.CharField(required=False, max_length=30)
     address = forms.CharField(required=False, max_length=255)
+    account_holder_name = forms.CharField(required=True, max_length=150)
+    mobile_payment_number = forms.CharField(required=True, max_length=20)
 
     class Meta:
         model = CustomUser
@@ -30,6 +32,8 @@ class VendorRegistrationForm(UserCreationForm):
             'owner_national_id',
             'contact_phone',
             'address',
+            'account_holder_name',
+            'mobile_payment_number',
             'password1',
             'password2',
         )
@@ -43,6 +47,8 @@ class VendorRegistrationForm(UserCreationForm):
         self.fields['owner_national_id'].widget.attrs.update({'placeholder': 'Citizenship or national ID number (optional)'})
         self.fields['contact_phone'].widget.attrs.update({'placeholder': 'Business phone (optional)'})
         self.fields['address'].widget.attrs.update({'placeholder': 'Business address (optional)'})
+        self.fields['account_holder_name'].widget.attrs.update({'placeholder': 'Account holder name'})
+        self.fields['mobile_payment_number'].widget.attrs.update({'placeholder': 'eSewa number'})
 
         for field in self.fields.values():
             field.widget.attrs['class'] = 'form-control'
@@ -71,6 +77,8 @@ class VendorRegistrationForm(UserCreationForm):
                     'owner_national_id': (self.cleaned_data.get('owner_national_id') or '').strip(),
                     'contact_phone': (self.cleaned_data.get('contact_phone') or '').strip(),
                     'address': (self.cleaned_data.get('address') or '').strip(),
+                    'account_holder_name': (self.cleaned_data.get('account_holder_name') or '').strip(),
+                    'mobile_payment_number': (self.cleaned_data.get('mobile_payment_number') or '').strip(),
                     'verification_status': VendorProfile.VerificationStatus.PENDING,
                     'submitted_at': timezone.now(),
                 },

@@ -30,6 +30,8 @@ class VendorProfileAdmin(admin.ModelAdmin):
 	list_display = (
 		'company_name',
 		'owner_full_name',
+		'account_holder_name',
+		'masked_mobile_payment_number',
 		'pan_vat_number',
 		'user',
 		'verification_status',
@@ -43,6 +45,8 @@ class VendorProfileAdmin(admin.ModelAdmin):
 		'owner_full_name',
 		'pan_vat_number',
 		'business_registration_number',
+		'account_holder_name',
+		'mobile_payment_number',
 		'user__username',
 		'user__email',
 		'contact_phone',
@@ -51,6 +55,9 @@ class VendorProfileAdmin(admin.ModelAdmin):
 	fieldsets = (
 		('Vendor Identity', {
 			'fields': ('user', 'company_name', 'owner_full_name', 'owner_national_id', 'contact_phone', 'address'),
+		}),
+		('Payment Details', {
+			'fields': ('account_holder_name', 'mobile_payment_number'),
 		}),
 		('Business KYC', {
 			'fields': ('pan_vat_number', 'business_registration_number', 'business_registration_certificate'),
@@ -162,3 +169,7 @@ class VendorProfileAdmin(admin.ModelAdmin):
 			'title': 'Reject selected vendors',
 		}
 		return TemplateResponse(request, 'admin/vendor/reject_selected_vendors.html', context)
+
+	@admin.display(description='eSewa Number')
+	def masked_mobile_payment_number(self, obj):
+		return obj.masked_mobile_payment_number

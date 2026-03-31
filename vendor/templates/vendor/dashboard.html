@@ -367,9 +367,12 @@
                 <tr><th>Company</th><td>{{ vendor_profile.company_name }}</td></tr>
                 <tr><th>Owner</th><td>{{ vendor_profile.owner_full_name|default:'-' }}</td></tr>
                 <tr><th>Email</th><td>{{ request.user.email|default:'-' }}</td></tr>
+                <tr><th>Account Holder</th><td>{{ vendor_profile.account_holder_name|default:'-' }}</td></tr>
+                <tr><th>eSewa Number</th><td>{{ vendor_profile.masked_mobile_payment_number }}</td></tr>
               </tbody>
             </table>
           </div>
+          <p class="text-muted small mt-3 mb-0">Full payout details are hidden on the vendor dashboard and are only visible to admin during payout processing.</p>
           {% if vendor_profile.verification_status == 'REJECTED' and vendor_profile.rejection_reason %}
             <div class="alert alert-danger mt-3 mb-0" role="alert">
               <strong>Rejection Reason:</strong> {{ vendor_profile.rejection_reason }}

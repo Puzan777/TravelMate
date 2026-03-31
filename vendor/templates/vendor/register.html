@@ -67,6 +67,18 @@
             </div>
 
             <div class="mb-3">
+              <label class="form-label">Account Holder Name</label>
+              {{ form.account_holder_name }}
+              <div class="text-danger small">{{ form.account_holder_name.errors }}</div>
+            </div>
+
+            <div class="mb-3">
+             <label class="form-label">eSewa Number</label>
+             {{ form.mobile_payment_number }}
+             <div class="text-danger small">{{ form.mobile_payment_number.errors }}</div>
+            </div>
+
+            <div class="mb-3">
               <label class="form-label">Business Phone</label>
               {{ form.contact_phone }}
               <div class="text-danger small">{{ form.contact_phone.errors }}</div>
@@ -83,6 +95,7 @@
               {{ form.password1 }}
               <div class="text-danger small">{{ form.password1.errors }}</div>
             </div>
+          
 
             <div class="mb-4">
               <label class="form-label">Confirm Password</label>

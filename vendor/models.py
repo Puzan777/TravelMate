@@ -22,6 +22,8 @@ class VendorProfile(models.Model):
 	owner_national_id = models.CharField(max_length=100, blank=True)
 	contact_phone = models.CharField(max_length=30, blank=True)
 	address = models.CharField(max_length=255, blank=True)
+	account_holder_name = models.CharField(max_length=150, blank=True)
+	mobile_payment_number = models.CharField(max_length=20, blank=True, null=True)
 	submitted_at = models.DateTimeField(null=True, blank=True)
 	verified_at = models.DateTimeField(null=True, blank=True)
 	verification_status = models.CharField(
@@ -39,6 +41,15 @@ class VendorProfile(models.Model):
 
 	def __str__(self):
 		return self.company_name
+
+	@property
+	def masked_mobile_payment_number(self):
+		number = (self.mobile_payment_number or '').strip()
+		if not number:
+			return '-'
+		if len(number) <= 4:
+			return '*' * len(number)
+		return f"{'*' * (len(number) - 4)}{number[-4:]}"
 
 	def save(self, *args, **kwargs):
 		if self.submitted_at is None:
