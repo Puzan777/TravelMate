@@ -4,14 +4,39 @@
 
 {% block content %}
 <div class="container py-5">
+  <style>
+    .itinerary-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    .itinerary-empty {
+      padding: 12px;
+      border: 1px dashed #cbd5e1;
+      border-radius: 12px;
+      background: #f8fafc;
+      color: #64748b;
+      margin-bottom: 12px;
+    }
+    .itinerary-card {
+      border: 1px solid #dbe4ef;
+      border-radius: 14px;
+      padding: 14px;
+      background: #f8fafc;
+    }
+  </style>
+
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h1 class="h3 mb-0">{{ page_title }}</h1>
     <a href="{% url 'vendor:package_list' %}" class="btn btn-outline-secondary">Back to Packages</a>
   </div>
 
-  <div class="card shadow-sm border-0">
+    <div class="card shadow-sm border-0">
     <div class="card-body p-4">
-      {% if form.errors %}
+      {% if form.errors or itinerary_formset.non_form_errors %}
       <div class="alert alert-danger">Please fix the errors below.</div>
       {% endif %}
 
@@ -43,12 +68,6 @@
             <div class="text-danger small">{{ form.price.errors }}</div>
           </div>
 
-          <div class="col-md-3">
-            <label class="form-label">Rating</label>
-            {{ form.rating }}
-            <div class="text-danger small">{{ form.rating.errors }}</div>
-          </div>
-
           <div class="col-12">
             <label class="form-label">Description</label>
             {{ form.description }}
@@ -56,9 +75,10 @@
           </div>
 
           <div class="col-md-6">
-            <label class="form-label">Destination</label>
+            <label class="form-label">Country / Destination</label>
             {{ form.destination }}
             <div class="text-danger small">{{ form.destination.errors }}</div>
+            <div class="form-text">Choose from the destination list managed by admin.</div>
           </div>
 
           <div class="col-md-6">
@@ -110,10 +130,6 @@
           </div>
 
           <div class="col-md-6 d-flex align-items-end">
-            <div class="form-check me-4">
-              {{ form.is_hot_sale }}
-              <label class="form-check-label" for="{{ form.is_hot_sale.id_for_label }}">Hot Sale</label>
-            </div>
             <div class="form-check">
               {{ form.is_active }}
               <label class="form-check-label" for="{{ form.is_active.id_for_label }}">Active</label>
@@ -127,9 +143,98 @@
           </div>
 
           <div class="col-12">
-            <label class="form-label">Itinerary</label>
-            {{ form.itinerary }}
-            <div class="text-danger small">{{ form.itinerary.errors }}</div>
+            <label class="form-label">Day-by-Day Itinerary</label>
+            {{ itinerary_formset.management_form }}
+            {% if itinerary_formset.non_form_errors %}
+              <div class="text-danger small mb-2">{{ itinerary_formset.non_form_errors }}</div>
+            {% endif %}
+            <div class="itinerary-toolbar">
+              <div class="form-text mb-0">Add one block per day. You can keep adding more days as needed.</div>
+              <button type="button" class="btn btn-outline-primary btn-sm" id="add-itinerary-day">+ Add Day</button>
+            </div>
+            <div id="itinerary-empty-state" class="itinerary-empty"{% if itinerary_formset.forms %} style="display:none"{% endif %}>
+              No itinerary days added yet. Use <strong>Add Day</strong> to create the first one.
+            </div>
+            <div class="d-grid gap-3" id="itinerary-formset-list">
+              {% for itinerary_form in itinerary_formset %}
+                {{ itinerary_form.id }}
+                <div class="itinerary-card">
+                  <div class="row g-3">
+                    <div class="col-md-2">
+                      <label class="form-label">Day</label>
+                      {{ itinerary_form.day_number }}
+                      <div class="text-danger small">{{ itinerary_form.day_number.errors }}</div>
+                    </div>
+
+                    <div class="col-md-10">
+                      <label class="form-label">Title</label>
+                      {{ itinerary_form.title }}
+                      <div class="text-danger small">{{ itinerary_form.title.errors }}</div>
+                    </div>
+
+                    <div class="col-12">
+                      <label class="form-label">Description</label>
+                      {{ itinerary_form.description }}
+                      <div class="text-danger small">{{ itinerary_form.description.errors }}</div>
+                    </div>
+
+                    <div class="col-12">
+                      <label class="form-label">Activities</label>
+                      {{ itinerary_form.activities }}
+                      <div class="text-danger small">{{ itinerary_form.activities.errors }}</div>
+                    </div>
+
+                    {% if itinerary_formset.can_delete %}
+                    <div class="col-12">
+                      <div class="form-check">
+                        {{ itinerary_form.DELETE }}
+                        <label class="form-check-label" for="{{ itinerary_form.DELETE.id_for_label }}">Delete this day</label>
+                      </div>
+                    </div>
+                    {% endif %}
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+            <template id="itinerary-empty-form-template">
+              <div class="itinerary-card">
+                {{ itinerary_formset.empty_form.id }}
+                <div class="row g-3">
+                  <div class="col-md-2">
+                    <label class="form-label">Day</label>
+                    {{ itinerary_formset.empty_form.day_number }}
+                    <div class="text-danger small"></div>
+                  </div>
+
+                  <div class="col-md-10">
+                    <label class="form-label">Title</label>
+                    {{ itinerary_formset.empty_form.title }}
+                    <div class="text-danger small"></div>
+                  </div>
+
+                  <div class="col-12">
+                    <label class="form-label">Description</label>
+                    {{ itinerary_formset.empty_form.description }}
+                    <div class="text-danger small"></div>
+                  </div>
+
+                  <div class="col-12">
+                    <label class="form-label">Activities</label>
+                    {{ itinerary_formset.empty_form.activities }}
+                    <div class="text-danger small"></div>
+                  </div>
+
+                  {% if itinerary_formset.can_delete %}
+                  <div class="col-12">
+                    <div class="form-check">
+                      {{ itinerary_formset.empty_form.DELETE }}
+                      <label class="form-check-label" for="{{ itinerary_formset.empty_form.DELETE.id_for_label }}">Delete this day</label>
+                    </div>
+                  </div>
+                  {% endif %}
+                </div>
+              </div>
+            </template>
           </div>
         </div>
 
@@ -140,4 +245,43 @@
 </div>
 {% endblock %}
 
-{% block footer %}{% endblock %}
+{% block footer %}
+<script>
+  (() => {
+    const addButton = document.getElementById('add-itinerary-day');
+    const list = document.getElementById('itinerary-formset-list');
+    const emptyState = document.getElementById('itinerary-empty-state');
+    const template = document.getElementById('itinerary-empty-form-template');
+    const totalFormsInput = document.getElementById('id_itinerary-TOTAL_FORMS');
+
+    if (!addButton || !list || !template || !totalFormsInput) {
+      return;
+    }
+
+    const updateEmptyState = () => {
+      emptyState.style.display = list.children.length ? 'none' : '';
+    };
+
+    const addForm = () => {
+      const formIndex = Number(totalFormsInput.value);
+      const html = template.innerHTML.replace(/__prefix__/g, formIndex);
+      list.insertAdjacentHTML('beforeend', html);
+      totalFormsInput.value = formIndex + 1;
+      updateEmptyState();
+
+      const dayInput = document.getElementById(`id_itinerary-${formIndex}-day_number`);
+      if (dayInput && !dayInput.value) {
+        dayInput.value = list.children.length;
+      }
+    };
+
+    addButton.addEventListener('click', addForm);
+
+    if (!list.children.length) {
+      addForm();
+    } else {
+      updateEmptyState();
+    }
+  })();
+</script>
+{% endblock %}

@@ -1,8 +1,9 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
+from django.forms import inlineformset_factory
 from django.utils import timezone
 
-from app.models import CustomUser, Destination, HotSale, Inquiry, Package
+from app.models import CustomUser, Destination, HotSale, Inquiry, Package, PackageItinerary
 from .models import VendorProfile
 
 
@@ -90,24 +91,6 @@ class VendorRegistrationForm(UserCreationForm):
         return user
 
 
-class VendorDestinationForm(forms.ModelForm):
-    class Meta:
-        model = Destination
-        fields = (
-            'name',
-            'short_description',
-            'hero_image',
-            'best_season',
-            'visa_info',
-            'safety_note',
-        )
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        for field in self.fields.values():
-            field.widget.attrs['class'] = 'form-control'
-
-
 class VendorPackageForm(forms.ModelForm):
     class Meta:
         model = Package
@@ -116,7 +99,6 @@ class VendorPackageForm(forms.ModelForm):
             'category',
             'image',
             'price',
-            'rating',
             'description',
             'destination',
             'duration',
@@ -128,8 +110,6 @@ class VendorPackageForm(forms.ModelForm):
             'meal',
             'vehicle',
             'major_highlights',
-            'itinerary',
-            'is_hot_sale',
             'is_active',
         )
 
@@ -138,13 +118,30 @@ class VendorPackageForm(forms.ModelForm):
         for field in self.fields.values():
             field.widget.attrs['class'] = 'form-control'
 
-        self.fields['is_hot_sale'].widget.attrs.pop('class', None)
         self.fields['is_active'].widget.attrs.pop('class', None)
+        self.fields['destination'].queryset = Destination.objects.order_by('name')
+        self.fields['destination'].required = True
 
-        if vendor_profile is not None:
-            self.fields['destination'].queryset = Destination.objects.filter(vendor=vendor_profile)
 
-        self.fields['destination'].required = False
+class PackageItineraryForm(forms.ModelForm):
+    class Meta:
+        model = PackageItinerary
+        fields = ('day_number', 'title', 'description', 'activities')
+        widgets = {
+            'day_number': forms.NumberInput(attrs={'class': 'form-control', 'min': '1', 'placeholder': 'Day'}),
+            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Day title'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'What happens on this day?'}),
+            'activities': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Activities, transfers, highlights'}),
+        }
+
+
+PackageItineraryFormSet = inlineformset_factory(
+    Package,
+    PackageItinerary,
+    form=PackageItineraryForm,
+    extra=0,
+    can_delete=True,
+)
 
 
 class VendorHotSaleForm(forms.ModelForm):

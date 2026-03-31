@@ -2,9 +2,9 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 
-from app.models import Booking, Destination, HotSale, Inquiry, Package
+from app.models import Booking, HotSale, Inquiry, Package
 from .forms import (
-	VendorDestinationForm,
+	PackageItineraryFormSet,
 	VendorHotSaleForm,
 	VendorInquiryReplyForm,
 	VendorPackageForm,
@@ -47,7 +47,6 @@ def dashboard(request):
 		'vendor_profile': vendor_profile,
 		'package_count': package_qs.count(),
 		'active_package_count': package_qs.filter(is_active=True).count(),
-		'destination_count': Destination.objects.filter(vendor=vendor_profile).count(),
 		'hot_sale_count': HotSale.objects.filter(package__vendor=vendor_profile, is_active=True).count(),
 		'booking_count': Booking.objects.filter(package__vendor=vendor_profile).count(),
 		'inquiry_count': Inquiry.objects.filter(package__vendor=vendor_profile).count(),
@@ -83,78 +82,6 @@ def _get_approved_vendor_profile(request):
 
 
 @login_required
-def destination_list(request):
-	vendor_profile = _get_approved_vendor_profile(request)
-	if vendor_profile is None:
-		return redirect('home')
-
-	destinations = Destination.objects.filter(vendor=vendor_profile).order_by('name')
-	return render(
-		request,
-		'vendor/destination_list.html',
-		{
-			'destinations': destinations,
-			'vendor_profile': vendor_profile,
-		},
-	)
-
-
-@login_required
-def destination_create(request):
-	vendor_profile = _get_approved_vendor_profile(request)
-	if vendor_profile is None:
-		return redirect('home')
-
-	if request.method == 'POST':
-		form = VendorDestinationForm(request.POST, request.FILES)
-		if form.is_valid():
-			destination = form.save(commit=False)
-			destination.vendor = vendor_profile
-			destination.save()
-			messages.success(request, 'Destination created successfully.')
-			return redirect('vendor:destination_list')
-	else:
-		form = VendorDestinationForm()
-
-	return render(
-		request,
-		'vendor/destination_form.html',
-		{
-			'form': form,
-			'page_title': 'Create Destination',
-			'submit_label': 'Create Destination',
-		},
-	)
-
-
-@login_required
-def destination_edit(request, pk):
-	vendor_profile = _get_approved_vendor_profile(request)
-	if vendor_profile is None:
-		return redirect('home')
-
-	destination = get_object_or_404(Destination, pk=pk, vendor=vendor_profile)
-	if request.method == 'POST':
-		form = VendorDestinationForm(request.POST, request.FILES, instance=destination)
-		if form.is_valid():
-			form.save()
-			messages.success(request, 'Destination updated successfully.')
-			return redirect('vendor:destination_list')
-	else:
-		form = VendorDestinationForm(instance=destination)
-
-	return render(
-		request,
-		'vendor/destination_form.html',
-		{
-			'form': form,
-			'page_title': 'Edit Destination',
-			'submit_label': 'Save Changes',
-		},
-	)
-
-
-@login_required
 def package_list(request):
 	vendor_profile = _get_approved_vendor_profile(request)
 	if vendor_profile is None:
@@ -179,20 +106,25 @@ def package_create(request):
 
 	if request.method == 'POST':
 		form = VendorPackageForm(request.POST, request.FILES, vendor_profile=vendor_profile)
-		if form.is_valid():
+		formset = PackageItineraryFormSet(request.POST, prefix='itinerary')
+		if form.is_valid() and formset.is_valid():
 			package = form.save(commit=False)
 			package.vendor = vendor_profile
 			package.save()
+			formset.instance = package
+			formset.save()
 			messages.success(request, 'Package created successfully.')
 			return redirect('vendor:package_list')
 	else:
 		form = VendorPackageForm(vendor_profile=vendor_profile)
+		formset = PackageItineraryFormSet(prefix='itinerary')
 
 	return render(
 		request,
 		'vendor/package_form.html',
 		{
 			'form': form,
+			'itinerary_formset': formset,
 			'page_title': 'Create Package',
 			'submit_label': 'Create Package',
 		},
@@ -208,18 +140,22 @@ def package_edit(request, pk):
 	package = get_object_or_404(Package, pk=pk, vendor=vendor_profile)
 	if request.method == 'POST':
 		form = VendorPackageForm(request.POST, request.FILES, instance=package, vendor_profile=vendor_profile)
-		if form.is_valid():
+		formset = PackageItineraryFormSet(request.POST, instance=package, prefix='itinerary')
+		if form.is_valid() and formset.is_valid():
 			form.save()
+			formset.save()
 			messages.success(request, 'Package updated successfully.')
 			return redirect('vendor:package_list')
 	else:
 		form = VendorPackageForm(instance=package, vendor_profile=vendor_profile)
+		formset = PackageItineraryFormSet(instance=package, prefix='itinerary')
 
 	return render(
 		request,
 		'vendor/package_form.html',
 		{
 			'form': form,
+			'itinerary_formset': formset,
 			'page_title': 'Edit Package',
 			'submit_label': 'Save Changes',
 		},

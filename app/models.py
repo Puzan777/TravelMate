@@ -29,11 +29,6 @@ class CustomUser(AbstractUser):
 
 class Destination(models.Model):
     """Represents a country/region where packages are available."""
-    vendor = models.ForeignKey(
-        'vendor.VendorProfile',
-        on_delete=models.PROTECT,
-        related_name='destinations',
-    )
     name = models.CharField(max_length=150, unique=True, help_text="Country name (e.g., Nepal, Thailand)")
     short_description = models.TextField(blank=True, help_text="Short text for destination cards")
     hero_image = models.ImageField(upload_to='destinations/', blank=True, null=True)
@@ -125,6 +120,23 @@ class Package(models.Model):
 
     def get_absolute_url(self):
         return reverse('package_detail', args=[self.slug])
+
+
+class PackageItinerary(models.Model):
+    package = models.ForeignKey(Package, on_delete=models.CASCADE, related_name='itinerary_entries')
+    day_number = models.PositiveIntegerField()
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    activities = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ['day_number']
+        constraints = [
+            models.UniqueConstraint(fields=['package', 'day_number'], name='unique_package_day_number'),
+        ]
+
+    def __str__(self):
+        return f"{self.package.title} - Day {self.day_number}"
 
 
 class HotSale(models.Model):

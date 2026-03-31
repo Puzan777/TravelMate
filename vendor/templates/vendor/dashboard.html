@@ -282,7 +282,6 @@
           <h3 class="sidebar-heading">Catalog</h3>
           <ul class="sidebar-links">
             <li><a href="{% url 'vendor:booking_list' %}">Bookings</a></li>
-            <li><a href="{% url 'vendor:destination_list' %}">Destinations</a></li>
             <li><a href="{% url 'vendor:package_list' %}">Packages</a></li>
             <li><a href="{% url 'vendor:hot_sale_list' %}">Hot Sales</a></li>
             <li><a href="{% url 'vendor:inquiry_list' %}">Inquiries</a></li>
@@ -310,10 +309,8 @@
         <section class="quick-actions">
           <h2>Quick Actions</h2>
           <div class="quick-actions-grid">
-            <a class="quick-action-link" href="{% url 'vendor:destination_create' %}">+ Add Destination</a>
             <a class="quick-action-link" href="{% url 'vendor:package_create' %}">+ Add Package</a>
             <a class="quick-action-link" href="{% url 'vendor:hot_sale_create' %}">+ Add Hot Sale</a>
-            <a class="quick-action-link" href="{% url 'vendor:destination_list' %}">Manage Destinations</a>
             <a class="quick-action-link" href="{% url 'vendor:package_list' %}">Manage Packages</a>
             <a class="quick-action-link" href="{% url 'vendor:hot_sale_list' %}">Manage Hot Sales</a>
             <a class="quick-action-link" href="{% url 'vendor:booking_list' %}">Manage Bookings</a>
@@ -335,21 +332,15 @@
           </div>
 
           <div class="dashboard-card">
-            <p class="dashboard-title">Destinations</p>
-            <p class="dashboard-value">{{ destination_count }}</p>
-            <a class="dashboard-link" href="{% url 'vendor:destination_list' %}">Manage destinations</a>
+            <p class="dashboard-title">Bookings</p>
+            <p class="dashboard-value">{{ booking_count }}</p>
+            <a class="dashboard-link" href="{% url 'vendor:booking_list' %}">Manage bookings</a>
           </div>
 
           <div class="dashboard-card">
             <p class="dashboard-title">Hot Sales</p>
             <p class="dashboard-value">{{ hot_sale_count }}</p>
             <a class="dashboard-link" href="{% url 'vendor:hot_sale_list' %}">Manage hot sales</a>
-          </div>
-
-          <div class="dashboard-card">
-            <p class="dashboard-title">Bookings</p>
-            <p class="dashboard-value">{{ booking_count }}</p>
-            <a class="dashboard-link" href="{% url 'vendor:booking_list' %}">Manage bookings</a>
           </div>
 
           <div class="dashboard-card">
@@ -483,6 +474,7 @@
             <a href="{% url 'vendor:hot_sale_list' %}">Manage Hot Sales</a>
           </div>
         </section>
+
       </div>
     </div>
   </div>

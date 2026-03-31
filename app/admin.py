@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import CustomUser, Destination, Package, Booking, Inquiry, HotSale
+from .models import Booking, CustomUser, Destination, HotSale, Inquiry, Package, PackageItinerary
 
 # Hide default Django admin nav sidebar; custom dashboard provides navigation.
 admin.site.enable_nav_sidebar = False
@@ -7,6 +7,10 @@ admin.site.enable_nav_sidebar = False
 
 def _current_vendor_profile(user):
     return getattr(user, 'vendor_profile', None)
+
+
+def _is_platform_admin(user):
+    return user.is_active and user.is_staff and not getattr(user, 'is_vendor', False)
 
 
 @admin.register(CustomUser)
@@ -18,42 +22,31 @@ class CustomUserAdmin(admin.ModelAdmin):
 
 @admin.register(Destination)
 class DestinationAdmin(admin.ModelAdmin):
-    list_display = ('name', 'vendor', 'best_season', 'created_at')
+    list_display = ('name', 'best_season', 'created_at')
     search_fields = ('name', 'short_description', 'visa_info', 'safety_note')
     readonly_fields = ('created_at', 'updated_at')
     fieldsets = (
-        (None, {'fields': ('vendor', 'name', 'hero_image', 'short_description')}),
+        (None, {'fields': ('name', 'hero_image', 'short_description')}),
         ('Travel Info', {'fields': ('best_season', 'visa_info', 'safety_note')}),
         ('System', {'fields': ('created_at', 'updated_at')}),
     )
 
     def get_queryset(self, request):
-        qs = super().get_queryset(request)
-        if request.user.is_superuser:
-            return qs
-        vendor_profile = _current_vendor_profile(request.user)
-        if vendor_profile:
-            return qs.filter(vendor=vendor_profile)
-        return qs.none()
-
-    def save_model(self, request, obj, form, change):
-        if not request.user.is_superuser:
-            vendor_profile = _current_vendor_profile(request.user)
-            if vendor_profile and obj.vendor_id is None:
-                obj.vendor = vendor_profile
-        super().save_model(request, obj, form, change)
+        if _is_platform_admin(request.user):
+            return super().get_queryset(request)
+        return super().get_queryset(request).none()
 
     def has_add_permission(self, request):
-        return False
+        return _is_platform_admin(request.user)
 
     def has_change_permission(self, request, obj=None):
-        return False
+        return _is_platform_admin(request.user)
 
     def has_delete_permission(self, request, obj=None):
-        return False
+        return _is_platform_admin(request.user)
 
     def has_view_permission(self, request, obj=None):
-        return request.user.is_active and request.user.is_staff
+        return _is_platform_admin(request.user)
 
 
 @admin.register(Package)
@@ -83,12 +76,8 @@ class PackageAdmin(admin.ModelAdmin):
         return qs.none()
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        if db_field.name == 'destination' and not request.user.is_superuser:
-            vendor_profile = _current_vendor_profile(request.user)
-            if vendor_profile:
-                kwargs['queryset'] = Destination.objects.filter(vendor=vendor_profile).order_by('name')
-            else:
-                kwargs['queryset'] = Destination.objects.none()
+        if db_field.name == 'destination':
+            kwargs['queryset'] = Destination.objects.order_by('name')
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
     def save_model(self, request, obj, form, change):
@@ -173,6 +162,22 @@ class HotSaleAdmin(admin.ModelAdmin):
 
     def has_view_permission(self, request, obj=None):
         return request.user.is_active and request.user.is_staff
+
+
+@admin.register(PackageItinerary)
+class PackageItineraryAdmin(admin.ModelAdmin):
+    list_display = ('package', 'day_number', 'title')
+    list_filter = ('package__vendor',)
+    search_fields = ('package__title', 'title', 'description', 'activities')
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request).select_related('package', 'package__vendor')
+        if request.user.is_superuser:
+            return qs
+        vendor_profile = _current_vendor_profile(request.user)
+        if vendor_profile:
+            return qs.filter(package__vendor=vendor_profile)
+        return qs.none()
 
 
 @admin.register(Booking)
