@@ -9,6 +9,10 @@ urlpatterns = [
     path("login/", login_view, name="login"),
     path("logout/", logout_view, name="logout"),
     path('profile/', views.profile_view, name='profile'),
+    path('management/activity-categories/', views.activity_category_list, name='activity_category_list'),
+    path('management/activity-categories/create/', views.activity_category_create, name='activity_category_create'),
+    path('management/activity-categories/<int:pk>/edit/', views.activity_category_edit, name='activity_category_edit'),
+    path('management/activity-categories/<int:pk>/delete/', views.activity_category_delete, name='activity_category_delete'),
     path("", views.home, name='home'),
 
     # Destinations

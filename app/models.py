@@ -144,6 +144,60 @@ class PackageItinerary(models.Model):
         return f"{self.package.title} - Day {self.day_number}"
 
 
+class ActivityCategory(models.Model):
+    name = models.CharField(max_length=120, unique=True)
+    description = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['name']
+        verbose_name = 'Activity Category'
+        verbose_name_plural = 'Activity Categories'
+
+    def __str__(self):
+        return self.name
+
+
+class Activity(models.Model):
+    class DifficultyLevel(models.TextChoices):
+        EASY = 'easy', 'Easy'
+        MODERATE = 'moderate', 'Moderate'
+        HARD = 'hard', 'Hard'
+
+    vendor = models.ForeignKey('vendor.VendorProfile', on_delete=models.CASCADE, related_name='activities')
+    category = models.ForeignKey(ActivityCategory, on_delete=models.PROTECT, related_name='activities')
+    name = models.CharField(max_length=150)
+    description = models.TextField()
+    equipment_provided = models.TextField(blank=True)
+    safety_notes = models.TextField(blank=True)
+    duration = models.CharField(max_length=100)
+    difficulty_level = models.CharField(max_length=20, choices=DifficultyLevel.choices)
+    min_age = models.PositiveIntegerField(blank=True, null=True)
+    max_weight = models.PositiveIntegerField(blank=True, null=True)
+    min_weight = models.PositiveIntegerField(blank=True, null=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['name']
+        constraints = [
+            models.UniqueConstraint(fields=['vendor', 'name'], name='unique_vendor_activity_name'),
+        ]
+
+    def __str__(self):
+        return self.name
+
+    def clean(self):
+        errors = {}
+        if self.min_weight is not None and self.max_weight is not None and self.min_weight > self.max_weight:
+            errors['min_weight'] = 'Minimum weight cannot be greater than maximum weight.'
+        if self.category_id and not self.category.is_active:
+            errors['category'] = 'Please choose an active category.'
+        if errors:
+            raise ValidationError(errors)
+
+
 class HotSale(models.Model):
     package = models.ForeignKey(Package, on_delete=models.CASCADE, related_name='hot_sale_entries')
     sale_price = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)])

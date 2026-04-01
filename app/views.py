@@ -1,11 +1,12 @@
 # Create your views here.
+from django.core.exceptions import PermissionDenied
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout
 from django.contrib import messages
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
-from .forms import SignUpForm, LoginForm, BookingForm, InquiryForm
-from .models import CustomUser, Destination, Package, Booking, Inquiry, HotSale
+from .forms import ActivityCategoryForm, SignUpForm, LoginForm, BookingForm, InquiryForm
+from .models import ActivityCategory, Booking, CustomUser, Destination, HotSale, Inquiry, Package
 
 
 def _redirect_after_login(request, user):
@@ -36,6 +37,14 @@ def _ensure_vendor_profile(user):
             'company_name': user.get_full_name() or user.username,
         },
     )
+
+
+def _ensure_platform_admin(user):
+    is_platform_admin = user.is_authenticated and (
+        user.is_superuser or user.role == CustomUser.Role.ADMIN or (user.is_staff and not user.is_vendor)
+    )
+    if not is_platform_admin:
+        raise PermissionDenied
 
 
 def signup_view(request):
@@ -69,6 +78,70 @@ def login_view(request):
 def logout_view(request):
     logout(request)
     return redirect("login")
+
+
+@login_required
+def activity_category_list(request):
+    _ensure_platform_admin(request.user)
+    categories = ActivityCategory.objects.order_by('name')
+    return render(request, 'admin_portal/activity_category_list.html', {'categories': categories})
+
+
+@login_required
+def activity_category_create(request):
+    _ensure_platform_admin(request.user)
+    if request.method == 'POST':
+        form = ActivityCategoryForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Activity category created successfully.')
+            return redirect('activity_category_list')
+    else:
+        form = ActivityCategoryForm()
+    return render(
+        request,
+        'admin_portal/activity_category_form.html',
+        {
+            'form': form,
+            'page_title': 'Create Activity Category',
+            'submit_label': 'Create Category',
+        },
+    )
+
+
+@login_required
+def activity_category_edit(request, pk):
+    _ensure_platform_admin(request.user)
+    category = get_object_or_404(ActivityCategory, pk=pk)
+    if request.method == 'POST':
+        form = ActivityCategoryForm(request.POST, instance=category)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Activity category updated successfully.')
+            return redirect('activity_category_list')
+    else:
+        form = ActivityCategoryForm(instance=category)
+    return render(
+        request,
+        'admin_portal/activity_category_form.html',
+        {
+            'form': form,
+            'page_title': 'Edit Activity Category',
+            'submit_label': 'Save Changes',
+            'category': category,
+        },
+    )
+
+
+@login_required
+def activity_category_delete(request, pk):
+    _ensure_platform_admin(request.user)
+    category = get_object_or_404(ActivityCategory, pk=pk)
+    if request.method == 'POST':
+        category.delete()
+        messages.success(request, 'Activity category deleted successfully.')
+        return redirect('activity_category_list')
+    return render(request, 'admin_portal/activity_category_confirm_delete.html', {'category': category})
 
 
 def home(request):

@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.utils import timezone
-from .models import CustomUser, Booking, Inquiry
+from .models import ActivityCategory, Booking, CustomUser, Inquiry
 
 class SignUpForm(UserCreationForm):
     email = forms.EmailField(required=True)
@@ -99,3 +99,20 @@ class InquiryForm(forms.ModelForm):
             "phone": forms.TextInput(attrs={"class": "form-control", "placeholder": "Phone (optional)"}),
             "message": forms.Textarea(attrs={"class": "form-control", "rows": 4, "placeholder": "Tell us what you need"}),
         }
+
+
+class ActivityCategoryForm(forms.ModelForm):
+    class Meta:
+        model = ActivityCategory
+        fields = ("name", "description", "is_active")
+        widgets = {
+            "name": forms.TextInput(attrs={"class": "form-control", "placeholder": "Category name"}),
+            "description": forms.Textarea(attrs={"class": "form-control", "rows": 4, "placeholder": "Category description"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["is_active"].widget.attrs.pop("class", None)
+
+    def clean_name(self):
+        return (self.cleaned_data.get("name") or "").strip()
