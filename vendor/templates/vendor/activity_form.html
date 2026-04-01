@@ -14,6 +14,13 @@
       {% if form.errors %}
       <div class="alert alert-danger">Please fix the errors below.</div>
       {% endif %}
+      {% if form.non_field_errors %}
+      <div class="alert alert-danger">
+        {% for error in form.non_field_errors %}
+        <div>{{ error }}</div>
+        {% endfor %}
+      </div>
+      {% endif %}
 
       <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
@@ -66,7 +73,12 @@
               <input type="file" name="images" class="form-control" accept="image/*" multiple>
             </div>
             <button type="button" id="add-image-input" class="btn btn-sm btn-outline-secondary mt-2">+ Add more images</button>
-            <div class="form-text">Each selection is kept. Use Add more images to select files in multiple rounds.</div>
+            <div class="form-text">Each selection is kept. Max 10 images. Allowed: JPG, JPEG, PNG, WEBP, GIF. Max size: 5MB each.</div>
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">New image preview</label>
+            <div id="new-image-preview" class="d-flex flex-wrap gap-2"></div>
           </div>
 
           {% if activity_images %}
@@ -74,7 +86,17 @@
             <label class="form-label">Current Images</label>
             <div class="d-flex flex-wrap gap-2">
               {% for item in activity_images %}
-              <img src="{{ item.image.url }}" alt="Activity image" class="rounded border" style="height: 90px; width: 120px; object-fit: cover;">
+              <div class="border rounded p-2" style="width: 150px;">
+                <img src="{{ item.image.url }}" alt="Activity image" class="rounded border mb-2" style="height: 90px; width: 100%; object-fit: cover;">
+                <div class="form-check mb-1">
+                  <input class="form-check-input" type="radio" name="primary_image_id" value="{{ item.pk }}" id="primary-image-{{ item.pk }}" {% if item.is_primary %}checked{% endif %}>
+                  <label class="form-check-label small" for="primary-image-{{ item.pk }}">Set as cover</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="remove_image_ids" value="{{ item.pk }}" id="remove-image-{{ item.pk }}">
+                  <label class="form-check-label small text-danger" for="remove-image-{{ item.pk }}">Remove</label>
+                </div>
+              </div>
               {% endfor %}
             </div>
           </div>
@@ -131,9 +153,44 @@
   (function () {
     const container = document.getElementById('activity-image-inputs');
     const addButton = document.getElementById('add-image-input');
+    const previewContainer = document.getElementById('new-image-preview');
     if (!container || !addButton) {
       return;
     }
+
+    function renderPreviews() {
+      if (!previewContainer) {
+        return;
+      }
+      previewContainer.innerHTML = '';
+
+      const inputs = container.querySelectorAll('input[type="file"][name="images"]');
+      inputs.forEach(function (input) {
+        const files = Array.from(input.files || []);
+        files.forEach(function (file) {
+          if (!file.type || !file.type.startsWith('image/')) {
+            return;
+          }
+          const img = document.createElement('img');
+          img.className = 'rounded border';
+          img.style.height = '90px';
+          img.style.width = '120px';
+          img.style.objectFit = 'cover';
+          img.alt = file.name;
+          img.src = URL.createObjectURL(file);
+          img.onload = function () {
+            URL.revokeObjectURL(img.src);
+          };
+          previewContainer.appendChild(img);
+        });
+      });
+    }
+
+    container.addEventListener('change', function (event) {
+      if (event.target && event.target.matches('input[type="file"][name="images"]')) {
+        renderPreviews();
+      }
+    });
 
     addButton.addEventListener('click', function () {
       const input = document.createElement('input');
@@ -143,7 +200,10 @@
       input.accept = 'image/*';
       input.multiple = true;
       container.appendChild(input);
+      renderPreviews();
     });
+
+    renderPreviews();
   })();
 </script>
 {% endblock %}

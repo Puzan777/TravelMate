@@ -203,10 +203,11 @@ class Activity(models.Model):
 class ActivityImage(models.Model):
     activity = models.ForeignKey(Activity, on_delete=models.CASCADE, related_name='images')
     image = models.ImageField(upload_to='activities/')
+    is_primary = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ['created_at']
+        ordering = ['-is_primary', 'created_at']
 
     def __str__(self):
         return f"{self.activity.name} image"

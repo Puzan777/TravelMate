@@ -1,3 +1,5 @@
+import os
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
@@ -12,6 +14,55 @@ from .forms import (
 	VendorRegistrationForm,
 )
 from .models import VendorProfile
+
+
+MAX_ACTIVITY_IMAGES = 10
+MAX_ACTIVITY_IMAGE_SIZE = 5 * 1024 * 1024  # 5 MB
+ALLOWED_ACTIVITY_IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.webp', '.gif'}
+ALLOWED_ACTIVITY_IMAGE_CONTENT_TYPES = {
+	'image/jpeg',
+	'image/png',
+	'image/webp',
+	'image/gif',
+}
+
+
+def _validate_activity_images(image_files, existing_count):
+	if existing_count + len(image_files) > MAX_ACTIVITY_IMAGES:
+		return f'You can upload up to {MAX_ACTIVITY_IMAGES} images per activity.'
+
+	for image_file in image_files:
+		ext = os.path.splitext(image_file.name)[1].lower()
+		if ext not in ALLOWED_ACTIVITY_IMAGE_EXTENSIONS:
+			return 'Only JPG, JPEG, PNG, WEBP, and GIF files are allowed.'
+
+		if getattr(image_file, 'size', 0) > MAX_ACTIVITY_IMAGE_SIZE:
+			return 'Each image must be 5 MB or smaller.'
+
+		content_type = (getattr(image_file, 'content_type', '') or '').lower()
+		if content_type and content_type not in ALLOWED_ACTIVITY_IMAGE_CONTENT_TYPES:
+			return 'Invalid image type uploaded.'
+
+	return None
+
+
+def _set_primary_activity_image(activity, preferred_image_id=None):
+	images_qs = activity.images.all().order_by('created_at')
+	if not images_qs.exists():
+		return
+
+	if preferred_image_id is not None and images_qs.filter(pk=preferred_image_id).exists():
+		images_qs.update(is_primary=False)
+		images_qs.filter(pk=preferred_image_id).update(is_primary=True)
+		return
+
+	if images_qs.filter(is_primary=True).exists():
+		return
+
+	first_image = images_qs.first()
+	if first_image is not None:
+		first_image.is_primary = True
+		first_image.save(update_fields=['is_primary'])
 
 
 def register(request):
@@ -124,12 +175,16 @@ def activity_create(request):
 
 	if request.method == 'POST':
 		form = VendorActivityForm(request.POST)
+		image_files = request.FILES.getlist('images')
+		image_error = _validate_activity_images(image_files, existing_count=0)
+		if image_error:
+			form.add_error(None, image_error)
 		if form.is_valid():
 			activity = form.save(commit=False)
 			activity.vendor = vendor_profile
 			activity.save()
-			for image_file in request.FILES.getlist('images'):
-				ActivityImage.objects.create(activity=activity, image=image_file)
+			for index, image_file in enumerate(image_files):
+				ActivityImage.objects.create(activity=activity, image=image_file, is_primary=(index == 0))
 			messages.success(request, 'Activity created successfully.')
 			return redirect('vendor:activity_list')
 	else:
@@ -142,6 +197,7 @@ def activity_create(request):
 			'form': form,
 			'page_title': 'Create Activity',
 			'submit_label': 'Create Activity',
+			'activity_images': [],
 		},
 	)
 
@@ -155,10 +211,32 @@ def activity_edit(request, pk):
 	activity = get_object_or_404(Activity, pk=pk, vendor=vendor_profile)
 	if request.method == 'POST':
 		form = VendorActivityForm(request.POST, instance=activity)
+		remove_image_ids = request.POST.getlist('remove_image_ids')
+		images_to_remove = activity.images.filter(pk__in=remove_image_ids)
+		remaining_count = activity.images.exclude(pk__in=images_to_remove.values_list('pk', flat=True)).count()
+		image_files = request.FILES.getlist('images')
+		image_error = _validate_activity_images(image_files, existing_count=remaining_count)
+		if image_error:
+			form.add_error(None, image_error)
+
 		if form.is_valid():
 			form.save()
-			for image_file in request.FILES.getlist('images'):
-				ActivityImage.objects.create(activity=activity, image=image_file)
+			images_to_remove.delete()
+
+			has_existing_images = activity.images.exists()
+			for index, image_file in enumerate(image_files):
+				ActivityImage.objects.create(
+					activity=activity,
+					image=image_file,
+					is_primary=(not has_existing_images and index == 0),
+				)
+
+			preferred_primary_id = request.POST.get('primary_image_id')
+			if preferred_primary_id and preferred_primary_id.isdigit():
+				_set_primary_activity_image(activity, preferred_image_id=int(preferred_primary_id))
+			else:
+				_set_primary_activity_image(activity)
+
 			messages.success(request, 'Activity updated successfully.')
 			return redirect('vendor:activity_list')
 	else:
@@ -172,7 +250,7 @@ def activity_edit(request, pk):
 			'page_title': 'Edit Activity',
 			'submit_label': 'Save Changes',
 			'activity': activity,
-			'activity_images': activity.images.all(),
+			'activity_images': activity.images.all().order_by('-is_primary', 'created_at'),
 		},
 	)
 
