@@ -1,106 +1,26 @@
 {% extends 'base.html' %}
 
-{% block title %}My Activities{% endblock %}
-
-{% block extrastyle %}
-<style>
-  :root {
-    --vd-bg-page: #f3f6fb;
-    --vd-bg-surface: #ffffff;
-    --vd-text-muted: #5b6475;
-    --vd-line: #dbe2ec;
-    --vd-line-soft: #e9eef5;
-    --vd-shadow-soft: 0 10px 24px rgba(17, 24, 39, 0.06);
-  }
-  .vendor-wrap {
-    max-width: 1240px;
-  }
-  .vendor-shell {
-    background: var(--vd-bg-page);
-    border: 1px solid var(--vd-line-soft);
-    border-radius: 14px;
-    padding: 18px;
-  }
-  .page-hero {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 14px;
-    background: linear-gradient(120deg, #0b3d69, #0a4f8a 45%, #0e6bb7);
-    color: #fff;
-    border-radius: 14px;
-    padding: 18px 20px;
-    margin-bottom: 16px;
-    box-shadow: var(--vd-shadow-soft);
-  }
-  .page-hero h1 {
-    margin: 0;
-    font-size: 1.3rem;
-    color: #fff;
-  }
-  .page-hero p {
-    margin: 5px 0 0;
-    color: rgba(255, 255, 255, 0.9);
-    font-size: 0.9rem;
-  }
-  .hero-actions {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-  }
-  .hero-actions .btn {
-    border-radius: 999px;
-    font-weight: 600;
-  }
-  .list-card {
-    background: var(--vd-bg-surface);
-    border: 1px solid var(--vd-line);
-    border-radius: 12px;
-    box-shadow: var(--vd-shadow-soft);
-  }
-  .table-wrap {
-    overflow-x: auto;
-  }
-  .table-wrap table {
-    margin-bottom: 0;
-  }
-  .table-wrap thead th {
-    color: var(--vd-text-muted);
-    font-weight: 700;
-    font-size: 0.82rem;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-    background: #f8fafc;
-    border-bottom: 1px solid var(--vd-line-soft);
-  }
-  .table-wrap tbody tr:hover {
-    background: #f8fbff;
-  }
-  .difficulty-easy { color: #16a34a; }
-  .difficulty-moderate { color: #ca8a04; }
-  .difficulty-hard { color: #dc2626; }
-</style>
-{% endblock %}
+{% block title %}Vendor Activities{% endblock %}
 
 {% block content %}
-<div class="container vendor-wrap py-4 py-md-5">
-  <div class="vendor-shell">
-    <section class="page-hero">
-      <div>
-        <h1>My Activities</h1>
-        <p>Create and manage your activity listings.</p>
-      </div>
-      <div class="hero-actions">
-        <a href="{% url 'vendor:dashboard' %}" class="btn btn-outline-light">Dashboard</a>
-        <a href="{% url 'vendor:activity_create' %}" class="btn btn-light text-primary">+ Add Activity</a>
-      </div>
-    </section>
+<div class="container py-5">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h1 class="h3 mb-1">My Activities</h1>
+      <p class="text-muted mb-0">Create and manage vendor-owned activities grouped by admin categories.</p>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{% url 'vendor:dashboard' %}" class="btn btn-outline-secondary">Dashboard</a>
+      <a href="{% url 'vendor:activity_create' %}" class="btn btn-primary">+ Add Activity</a>
+    </div>
+  </div>
 
-    <div class="list-card">
+  <div class="card shadow-sm border-0">
+    <div class="card-body p-0">
       {% if activities %}
-      <div class="table-wrap">
-        <table class="table align-middle">
-          <thead>
+      <div class="table-responsive">
+        <table class="table align-middle mb-0">
+          <thead class="table-light">
             <tr>
               <th>Name</th>
               <th>Category</th>
@@ -115,15 +35,11 @@
             <tr>
               <td>
                 <div class="fw-semibold">{{ activity.name }}</div>
-                <div class="small text-muted">{{ activity.description|truncatewords:10 }}</div>
+                <div class="small text-muted">{{ activity.description|truncatechars:90 }}</div>
               </td>
               <td>{{ activity.category.name }}</td>
               <td>{{ activity.duration }}</td>
-              <td>
-                <span class="difficulty-{{ activity.difficulty_level }}">
-                  {{ activity.get_difficulty_level_display }}
-                </span>
-              </td>
+              <td>{{ activity.get_difficulty_level_display }}</td>
               <td>
                 {% if activity.is_active %}
                 <span class="badge text-bg-success">Active</span>
@@ -132,7 +48,7 @@
                 {% endif %}
               </td>
               <td class="text-end">
-                <a href="{% url 'vendor:activity_edit' activity.pk %}" class="btn btn-sm btn-outline-secondary">Edit</a>
+                <a href="{% url 'vendor:activity_edit' activity.pk %}" class="btn btn-sm btn-outline-primary">Edit</a>
                 <a href="{% url 'vendor:activity_delete' activity.pk %}" class="btn btn-sm btn-outline-danger">Delete</a>
               </td>
             </tr>
@@ -141,11 +57,9 @@
         </table>
       </div>
       {% else %}
-      <div class="p-4 text-center text-muted">No activities yet. Add your first activity to start offering experiences.</div>
+      <div class="p-4 text-center text-muted">No activities yet. Create your first activity to get started.</div>
       {% endif %}
     </div>
   </div>
 </div>
 {% endblock %}
-
-{% block footer %}{% endblock %}

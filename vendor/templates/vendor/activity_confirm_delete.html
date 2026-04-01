@@ -2,75 +2,18 @@
 
 {% block title %}Delete Activity{% endblock %}
 
-{% block extrastyle %}
-<style>
-  :root {
-    --vd-bg-page: #f3f6fb;
-    --vd-bg-surface: #ffffff;
-    --vd-text-muted: #5b6475;
-    --vd-line: #dbe2ec;
-    --vd-line-soft: #e9eef5;
-    --vd-shadow-soft: 0 10px 24px rgba(17, 24, 39, 0.06);
-  }
-  .vendor-wrap {
-    max-width: 600px;
-  }
-  .vendor-shell {
-    background: var(--vd-bg-page);
-    border: 1px solid var(--vd-line-soft);
-    border-radius: 14px;
-    padding: 18px;
-  }
-  .delete-card {
-    background: var(--vd-bg-surface);
-    border: 1px solid #fecaca;
-    border-radius: 12px;
-    box-shadow: var(--vd-shadow-soft);
-    padding: 24px;
-    text-align: center;
-  }
-  .delete-icon {
-    width: 64px;
-    height: 64px;
-    background: #fee2e2;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto 16px;
-  }
-  .delete-icon svg {
-    width: 32px;
-    height: 32px;
-    color: #dc2626;
-  }
-</style>
-{% endblock %}
-
 {% block content %}
-<div class="container vendor-wrap py-4 py-md-5">
-  <div class="vendor-shell">
-    <div class="delete-card">
-      <div class="delete-icon">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-        </svg>
-      </div>
-      <h4 class="mb-3">Delete Activity?</h4>
-      <p class="text-muted mb-4">
-        Are you sure you want to delete <strong>"{{ activity.name }}"</strong>?<br>
-        This action cannot be undone.
-      </p>
-      <form method="post">
+<div class="container py-5">
+  <div class="card shadow-sm border-0">
+    <div class="card-body p-4">
+      <h1 class="h4 mb-3">Delete Activity</h1>
+      <p class="mb-3">Are you sure you want to delete <strong>{{ activity.name }}</strong>?</p>
+      <form method="post" class="d-flex gap-2">
         {% csrf_token %}
-        <div class="d-flex gap-2 justify-content-center">
-          <button type="submit" class="btn btn-danger">Yes, Delete</button>
-          <a href="{% url 'vendor:activity_list' %}" class="btn btn-outline-secondary">Cancel</a>
-        </div>
+        <a href="{% url 'vendor:activity_list' %}" class="btn btn-outline-secondary">Cancel</a>
+        <button type="submit" class="btn btn-danger">Delete Activity</button>
       </form>
     </div>
   </div>
 </div>
 {% endblock %}
-
-{% block footer %}{% endblock %}

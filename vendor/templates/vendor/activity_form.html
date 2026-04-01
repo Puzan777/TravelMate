@@ -2,173 +2,96 @@
 
 {% block title %}{{ page_title }}{% endblock %}
 
-{% block extrastyle %}
-<style>
-  :root {
-    --vd-bg-page: #f3f6fb;
-    --vd-bg-surface: #ffffff;
-    --vd-text-muted: #5b6475;
-    --vd-line: #dbe2ec;
-    --vd-line-soft: #e9eef5;
-    --vd-shadow-soft: 0 10px 24px rgba(17, 24, 39, 0.06);
-  }
-  .vendor-wrap {
-    max-width: 800px;
-  }
-  .vendor-shell {
-    background: var(--vd-bg-page);
-    border: 1px solid var(--vd-line-soft);
-    border-radius: 14px;
-    padding: 18px;
-  }
-  .page-hero {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 14px;
-    background: linear-gradient(120deg, #0b3d69, #0a4f8a 45%, #0e6bb7);
-    color: #fff;
-    border-radius: 14px;
-    padding: 18px 20px;
-    margin-bottom: 16px;
-    box-shadow: var(--vd-shadow-soft);
-  }
-  .page-hero h1 {
-    margin: 0;
-    font-size: 1.3rem;
-    color: #fff;
-  }
-  .page-hero p {
-    margin: 5px 0 0;
-    color: rgba(255, 255, 255, 0.9);
-    font-size: 0.9rem;
-  }
-  .hero-actions {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-  }
-  .hero-actions .btn {
-    border-radius: 999px;
-    font-weight: 600;
-  }
-  .form-card {
-    background: var(--vd-bg-surface);
-    border: 1px solid var(--vd-line);
-    border-radius: 12px;
-    box-shadow: var(--vd-shadow-soft);
-    padding: 24px;
-  }
-  .form-card .form-label {
-    font-weight: 600;
-    color: #17314a;
-  }
-  .form-card .form-text {
-    color: var(--vd-text-muted);
-  }
-</style>
-{% endblock %}
-
 {% block content %}
-<div class="container vendor-wrap py-4 py-md-5">
-  <div class="vendor-shell">
-    <section class="page-hero">
-      <div>
-        <h1>{{ page_title }}</h1>
-        <p>Fill in the details for your activity.</p>
-      </div>
-      <div class="hero-actions">
-        <a href="{% url 'vendor:activity_list' %}" class="btn btn-outline-light">Back to List</a>
-      </div>
-    </section>
+<div class="container py-5">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0">{{ page_title }}</h1>
+    <a href="{% url 'vendor:activity_list' %}" class="btn btn-outline-secondary">Back to Activities</a>
+  </div>
 
-    <div class="form-card">
-      <form method="post" novalidate>
+  <div class="card shadow-sm border-0">
+    <div class="card-body p-4">
+      {% if form.errors %}
+      <div class="alert alert-danger">Please fix the errors below.</div>
+      {% endif %}
+
+      <form method="post">
         {% csrf_token %}
-        
-        <div class="mb-3">
-          <label for="id_category" class="form-label">Category *</label>
-          {{ form.category }}
-          {% if form.category.errors %}
-          <div class="text-danger small mt-1">{{ form.category.errors.0 }}</div>
-          {% endif %}
-        </div>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Category</label>
+            {{ form.category }}
+            <div class="text-danger small">{{ form.category.errors }}</div>
+          </div>
 
-        <div class="mb-3">
-          <label for="id_name" class="form-label">Activity Name *</label>
-          {{ form.name }}
-          {% if form.name.errors %}
-          <div class="text-danger small mt-1">{{ form.name.errors.0 }}</div>
-          {% endif %}
-        </div>
+          <div class="col-md-6">
+            <label class="form-label">Name</label>
+            {{ form.name }}
+            <div class="text-danger small">{{ form.name.errors }}</div>
+          </div>
 
-        <div class="mb-3">
-          <label for="id_description" class="form-label">Description *</label>
-          {{ form.description }}
-          {% if form.description.errors %}
-          <div class="text-danger small mt-1">{{ form.description.errors.0 }}</div>
-          {% endif %}
-        </div>
+          <div class="col-12">
+            <label class="form-label">Description</label>
+            {{ form.description }}
+            <div class="text-danger small">{{ form.description.errors }}</div>
+          </div>
 
-        <div class="row">
-          <div class="col-md-6 mb-3">
-            <label for="id_duration" class="form-label">Duration *</label>
+          <div class="col-12">
+            <label class="form-label">Equipment provided - What's included</label>
+            {{ form.equipment_provided }}
+            <div class="text-danger small">{{ form.equipment_provided.errors }}</div>
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">Special instructions or warnings - Safety notes</label>
+            {{ form.safety_notes }}
+            <div class="text-danger small">{{ form.safety_notes.errors }}</div>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Duration</label>
             {{ form.duration }}
-            <div class="form-text">e.g., 2 hours, Half day, Full day</div>
-            {% if form.duration.errors %}
-            <div class="text-danger small mt-1">{{ form.duration.errors.0 }}</div>
-            {% endif %}
+            <div class="text-danger small">{{ form.duration.errors }}</div>
           </div>
-          <div class="col-md-6 mb-3">
-            <label for="id_difficulty_level" class="form-label">Difficulty Level *</label>
+
+          <div class="col-md-6">
+            <label class="form-label">Difficulty Level</label>
             {{ form.difficulty_level }}
-            {% if form.difficulty_level.errors %}
-            <div class="text-danger small mt-1">{{ form.difficulty_level.errors.0 }}</div>
-            {% endif %}
+            <div class="text-danger small">{{ form.difficulty_level.errors }}</div>
           </div>
-        </div>
 
-        <div class="row">
-          <div class="col-md-4 mb-3">
-            <label for="id_min_age" class="form-label">Minimum Age</label>
+          <div class="col-md-4">
+            <label class="form-label">Minimum Age</label>
             {{ form.min_age }}
-            <div class="form-text">Optional age requirement</div>
-            {% if form.min_age.errors %}
-            <div class="text-danger small mt-1">{{ form.min_age.errors.0 }}</div>
-            {% endif %}
+            <div class="text-danger small">{{ form.min_age.errors }}</div>
           </div>
-          <div class="col-md-4 mb-3">
-            <label for="id_min_weight" class="form-label">Min Weight (kg)</label>
+
+          <div class="col-md-4">
+            <label class="form-label">Minimum Weight</label>
             {{ form.min_weight }}
-            {% if form.min_weight.errors %}
-            <div class="text-danger small mt-1">{{ form.min_weight.errors.0 }}</div>
-            {% endif %}
+            <div class="text-danger small">{{ form.min_weight.errors }}</div>
           </div>
-          <div class="col-md-4 mb-3">
-            <label for="id_max_weight" class="form-label">Max Weight (kg)</label>
+
+          <div class="col-md-4">
+            <label class="form-label">Maximum Weight</label>
             {{ form.max_weight }}
-            {% if form.max_weight.errors %}
-            <div class="text-danger small mt-1">{{ form.max_weight.errors.0 }}</div>
-            {% endif %}
+            <div class="text-danger small">{{ form.max_weight.errors }}</div>
+          </div>
+
+          <div class="col-12">
+            <div class="form-check">
+              {{ form.is_active }}
+              <label class="form-check-label" for="{{ form.is_active.id_for_label }}">Active</label>
+            </div>
           </div>
         </div>
 
-        <div class="mb-4">
-          <div class="form-check">
-            {{ form.is_active }}
-            <label class="form-check-label" for="id_is_active">Active</label>
-          </div>
-          <div class="form-text">Inactive activities won't be visible to customers.</div>
-        </div>
-
-        <div class="d-flex gap-2">
-          <button type="submit" class="btn btn-primary">{{ submit_label }}</button>
+        <div class="d-flex gap-2 mt-4">
           <a href="{% url 'vendor:activity_list' %}" class="btn btn-outline-secondary">Cancel</a>
+          <button type="submit" class="btn btn-primary">{{ submit_label }}</button>
         </div>
       </form>
     </div>
   </div>
 </div>
 {% endblock %}
-
-{% block footer %}{% endblock %}
