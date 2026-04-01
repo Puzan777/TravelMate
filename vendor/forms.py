@@ -3,7 +3,7 @@ from django.contrib.auth.forms import UserCreationForm
 from django.forms import inlineformset_factory
 from django.utils import timezone
 
-from app.models import CustomUser, Destination, HotSale, Inquiry, Package, PackageItinerary
+from app.models import Activity, ActivityCategory, CustomUser, Destination, HotSale, Inquiry, Package, PackageItinerary
 from .models import VendorProfile
 
 
@@ -181,6 +181,53 @@ class VendorHotSaleForm(forms.ModelForm):
             package_qs = package_qs.filter(vendor=vendor_profile)
 
         self.fields['package'].queryset = package_qs.order_by('title')
+
+
+class VendorActivityForm(forms.ModelForm):
+    class Meta:
+        model = Activity
+        fields = (
+            'category',
+            'name',
+            'description',
+            'equipment_provided',
+            'safety_notes',
+            'duration',
+            'difficulty_level',
+            'min_age',
+            'max_weight',
+            'min_weight',
+            'is_active',
+        )
+        widgets = {
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Activity description'}),
+            'equipment_provided': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'What equipment/items are included?'}),
+            'safety_notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Any warnings or special instructions'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field_name, field in self.fields.items():
+            if field_name == 'is_active':
+                field.widget.attrs.pop('class', None)
+                continue
+            field.widget.attrs.setdefault('class', 'form-control')
+
+        self.fields['category'].queryset = ActivityCategory.objects.filter(is_active=True).order_by('name')
+
+    def clean_name(self):
+        return (self.cleaned_data.get('name') or '').strip()
+
+    def clean_duration(self):
+        return (self.cleaned_data.get('duration') or '').strip()
+
+    def clean(self):
+        cleaned_data = super().clean()
+        min_weight = cleaned_data.get('min_weight')
+        max_weight = cleaned_data.get('max_weight')
+        if min_weight is not None and max_weight is not None and min_weight > max_weight:
+            self.add_error('min_weight', 'Minimum weight cannot be greater than maximum weight.')
+        return cleaned_data
 
 
 class VendorInquiryReplyForm(forms.ModelForm):

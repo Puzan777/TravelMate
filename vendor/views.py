@@ -2,9 +2,10 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 
-from app.models import Booking, HotSale, Inquiry, Package
+from app.models import Activity, Booking, HotSale, Inquiry, Package
 from .forms import (
 	PackageItineraryFormSet,
+	VendorActivityForm,
 	VendorHotSaleForm,
 	VendorInquiryReplyForm,
 	VendorPackageForm,
@@ -94,6 +95,100 @@ def package_list(request):
 		{
 			'packages': packages,
 			'vendor_profile': vendor_profile,
+		},
+	)
+
+
+@login_required
+def activity_list(request):
+	vendor_profile = _get_approved_vendor_profile(request)
+	if vendor_profile is None:
+		return redirect('home')
+
+	activities = Activity.objects.filter(vendor=vendor_profile).select_related('category').order_by('name')
+	return render(
+		request,
+		'vendor/activity_list.html',
+		{
+			'activities': activities,
+			'vendor_profile': vendor_profile,
+		},
+	)
+
+
+@login_required
+def activity_create(request):
+	vendor_profile = _get_approved_vendor_profile(request)
+	if vendor_profile is None:
+		return redirect('home')
+
+	if request.method == 'POST':
+		form = VendorActivityForm(request.POST)
+		if form.is_valid():
+			activity = form.save(commit=False)
+			activity.vendor = vendor_profile
+			activity.save()
+			messages.success(request, 'Activity created successfully.')
+			return redirect('vendor:activity_list')
+	else:
+		form = VendorActivityForm()
+
+	return render(
+		request,
+		'vendor/activity_form.html',
+		{
+			'form': form,
+			'page_title': 'Create Activity',
+			'submit_label': 'Create Activity',
+		},
+	)
+
+
+@login_required
+def activity_edit(request, pk):
+	vendor_profile = _get_approved_vendor_profile(request)
+	if vendor_profile is None:
+		return redirect('home')
+
+	activity = get_object_or_404(Activity, pk=pk, vendor=vendor_profile)
+	if request.method == 'POST':
+		form = VendorActivityForm(request.POST, instance=activity)
+		if form.is_valid():
+			form.save()
+			messages.success(request, 'Activity updated successfully.')
+			return redirect('vendor:activity_list')
+	else:
+		form = VendorActivityForm(instance=activity)
+
+	return render(
+		request,
+		'vendor/activity_form.html',
+		{
+			'form': form,
+			'page_title': 'Edit Activity',
+			'submit_label': 'Save Changes',
+			'activity': activity,
+		},
+	)
+
+
+@login_required
+def activity_delete(request, pk):
+	vendor_profile = _get_approved_vendor_profile(request)
+	if vendor_profile is None:
+		return redirect('home')
+
+	activity = get_object_or_404(Activity, pk=pk, vendor=vendor_profile)
+	if request.method == 'POST':
+		activity.delete()
+		messages.success(request, 'Activity deleted successfully.')
+		return redirect('vendor:activity_list')
+
+	return render(
+		request,
+		'vendor/activity_confirm_delete.html',
+		{
+			'activity': activity,
 		},
 	)
 
