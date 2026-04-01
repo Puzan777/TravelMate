@@ -190,6 +190,8 @@ class VendorActivityForm(forms.ModelForm):
             'category',
             'name',
             'description',
+            'price',
+            'max_group_size',
             'equipment_provided',
             'safety_notes',
             'duration',
@@ -225,8 +227,11 @@ class VendorActivityForm(forms.ModelForm):
         cleaned_data = super().clean()
         min_weight = cleaned_data.get('min_weight')
         max_weight = cleaned_data.get('max_weight')
+        max_group_size = cleaned_data.get('max_group_size')
         if min_weight is not None and max_weight is not None and min_weight > max_weight:
             self.add_error('min_weight', 'Minimum weight cannot be greater than maximum weight.')
+        if max_group_size is not None and max_group_size <= 0:
+            self.add_error('max_group_size', 'Max group size must be greater than 0.')
         return cleaned_data
 
 

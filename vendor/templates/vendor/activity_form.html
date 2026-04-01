@@ -15,7 +15,7 @@
       <div class="alert alert-danger">Please fix the errors below.</div>
       {% endif %}
 
-      <form method="post">
+      <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
         <div class="row g-3">
           <div class="col-md-6">
@@ -36,6 +36,18 @@
             <div class="text-danger small">{{ form.description.errors }}</div>
           </div>
 
+          <div class="col-md-6">
+            <label class="form-label">Price</label>
+            {{ form.price }}
+            <div class="text-danger small">{{ form.price.errors }}</div>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Max group size (optional)</label>
+            {{ form.max_group_size }}
+            <div class="text-danger small">{{ form.max_group_size.errors }}</div>
+          </div>
+
           <div class="col-12">
             <label class="form-label">Equipment provided - What's included</label>
             {{ form.equipment_provided }}
@@ -47,6 +59,26 @@
             {{ form.safety_notes }}
             <div class="text-danger small">{{ form.safety_notes.errors }}</div>
           </div>
+
+          <div class="col-12">
+            <label class="form-label">Activity Images</label>
+            <div id="activity-image-inputs" class="d-flex flex-column gap-2">
+              <input type="file" name="images" class="form-control" accept="image/*" multiple>
+            </div>
+            <button type="button" id="add-image-input" class="btn btn-sm btn-outline-secondary mt-2">+ Add more images</button>
+            <div class="form-text">Each selection is kept. Use Add more images to select files in multiple rounds.</div>
+          </div>
+
+          {% if activity_images %}
+          <div class="col-12">
+            <label class="form-label">Current Images</label>
+            <div class="d-flex flex-wrap gap-2">
+              {% for item in activity_images %}
+              <img src="{{ item.image.url }}" alt="Activity image" class="rounded border" style="height: 90px; width: 120px; object-fit: cover;">
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
 
           <div class="col-md-6">
             <label class="form-label">Duration</label>
@@ -94,4 +126,24 @@
     </div>
   </div>
 </div>
+
+<script>
+  (function () {
+    const container = document.getElementById('activity-image-inputs');
+    const addButton = document.getElementById('add-image-input');
+    if (!container || !addButton) {
+      return;
+    }
+
+    addButton.addEventListener('click', function () {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.name = 'images';
+      input.className = 'form-control';
+      input.accept = 'image/*';
+      input.multiple = true;
+      container.appendChild(input);
+    });
+  })();
+</script>
 {% endblock %}

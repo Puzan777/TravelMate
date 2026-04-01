@@ -169,6 +169,8 @@ class Activity(models.Model):
     category = models.ForeignKey(ActivityCategory, on_delete=models.PROTECT, related_name='activities')
     name = models.CharField(max_length=150)
     description = models.TextField()
+    price = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)])
+    max_group_size = models.PositiveIntegerField(blank=True, null=True)
     equipment_provided = models.TextField(blank=True)
     safety_notes = models.TextField(blank=True)
     duration = models.CharField(max_length=100)
@@ -196,6 +198,18 @@ class Activity(models.Model):
             errors['category'] = 'Please choose an active category.'
         if errors:
             raise ValidationError(errors)
+
+
+class ActivityImage(models.Model):
+    activity = models.ForeignKey(Activity, on_delete=models.CASCADE, related_name='images')
+    image = models.ImageField(upload_to='activities/')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at']
+
+    def __str__(self):
+        return f"{self.activity.name} image"
 
 
 class HotSale(models.Model):

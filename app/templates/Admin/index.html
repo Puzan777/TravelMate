@@ -383,6 +383,7 @@
       <div class="side-block">
         <h3 class="side-heading">Catalog</h3>
         <ul class="side-links">
+          <li><a href="{% url 'activity_category_list' %}">Activity Categories</a></li>
           <li><a href="{% url 'admin:app_destination_changelist' %}">Destinations</a></li>
           <li><a href="{% url 'admin:app_package_changelist' %}">Packages</a></li>
           <li><a href="{% url 'admin:app_hotsale_changelist' %}">Hot Sales</a></li>
@@ -483,6 +484,7 @@
         <section class="dash-main-card">
           <h2 class="card-title">Quick Actions</h2>
           <div class="actions-grid">
+            <a class="action-link" href="{% url 'activity_category_list' %}">Manage Activity Categories</a>
             <a class="action-link" href="{% url 'admin:vendor_vendorprofile_changelist' %}?verification_status__exact=PENDING">Review Vendor Queue</a>
             <a class="action-link" href="{% url 'admin:app_customuser_add' %}">Create User</a>
             <a class="action-link" href="{% url 'admin:app_booking_changelist' %}">Manage Bookings</a>

@@ -2,7 +2,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 
-from app.models import Activity, Booking, HotSale, Inquiry, Package
+from app.models import Activity, ActivityImage, Booking, HotSale, Inquiry, Package
 from .forms import (
 	PackageItineraryFormSet,
 	VendorActivityForm,
@@ -128,6 +128,8 @@ def activity_create(request):
 			activity = form.save(commit=False)
 			activity.vendor = vendor_profile
 			activity.save()
+			for image_file in request.FILES.getlist('images'):
+				ActivityImage.objects.create(activity=activity, image=image_file)
 			messages.success(request, 'Activity created successfully.')
 			return redirect('vendor:activity_list')
 	else:
@@ -155,6 +157,8 @@ def activity_edit(request, pk):
 		form = VendorActivityForm(request.POST, instance=activity)
 		if form.is_valid():
 			form.save()
+			for image_file in request.FILES.getlist('images'):
+				ActivityImage.objects.create(activity=activity, image=image_file)
 			messages.success(request, 'Activity updated successfully.')
 			return redirect('vendor:activity_list')
 	else:
@@ -168,6 +172,7 @@ def activity_edit(request, pk):
 			'page_title': 'Edit Activity',
 			'submit_label': 'Save Changes',
 			'activity': activity,
+			'activity_images': activity.images.all(),
 		},
 	)
 
