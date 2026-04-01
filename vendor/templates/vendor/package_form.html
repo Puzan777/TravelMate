@@ -168,6 +168,14 @@
       <div class="alert alert-danger">Please fix the errors below.</div>
       {% endif %}
 
+      {% if form.non_field_errors %}
+      <div class="alert alert-danger">
+        {% for error in form.non_field_errors %}
+          <div>{{ error }}</div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
       <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
 
@@ -199,22 +207,17 @@
                     </div>
                   </div>
 
-                  <div class="mt-3">
-                    <label class="form-label">Image</label>
-                    {{ form.image }}
-                    <div class="text-danger small">{{ form.image.errors }}</div>
-                  </div>
                 </div>
 
                 <div class="col-lg-5">
-                  <div class="image-preview-frame" id="package-image-preview-frame">
-                    {% if form.instance.image %}
-                      <img src="{{ form.instance.image.url }}" alt="Package preview" id="package-image-preview">
+                  <div class="image-preview-frame" id="package-cover-preview-frame">
+                    {% if package_cover_image %}
+                      <img src="{{ package_cover_image.image.url }}" alt="Package cover preview" id="package-cover-preview-image">
                     {% else %}
-                      <div class="image-preview-placeholder" id="package-image-placeholder">
-                        Package cover preview appears here after image selection.
+                      <div class="image-preview-placeholder" id="package-cover-preview-placeholder">
+                        Add package images below. Select one as cover in edit mode.
                       </div>
-                      <img src="" alt="Package preview" id="package-image-preview" style="display:none;">
+                      <img src="" alt="Package cover preview" id="package-cover-preview-image" style="display:none;">
                     {% endif %}
                   </div>
                   <div class="form-check mt-3">
@@ -222,6 +225,41 @@
                     <label class="form-check-label" for="{{ form.is_active.id_for_label }}">Active</label>
                   </div>
                 </div>
+
+                <div class="col-12">
+                  <label class="form-label">Package Images</label>
+                  <div id="package-image-inputs" class="d-flex flex-column gap-2">
+                    <input type="file" name="images" class="form-control" accept="image/*" multiple>
+                  </div>
+                  <button type="button" id="add-package-image-input" class="btn btn-sm btn-outline-secondary mt-2">+ Add more images</button>
+                  <div class="form-text">Each selection is kept. Max 10 images. Allowed: JPG, JPEG, PNG, WEBP, GIF. Max size: 5MB each.</div>
+                </div>
+
+                <div class="col-12">
+                  <label class="form-label">New image preview</label>
+                  <div id="package-new-image-preview" class="d-flex flex-wrap gap-2"></div>
+                </div>
+
+                {% if package_images %}
+                <div class="col-12">
+                  <label class="form-label">Current Images</label>
+                  <div class="d-flex flex-wrap gap-2">
+                    {% for item in package_images %}
+                    <div class="border rounded p-2" style="width: 150px;">
+                      <img src="{{ item.image.url }}" alt="Package image" class="rounded border mb-2" style="height: 90px; width: 100%; object-fit: cover;">
+                      <div class="form-check mb-1">
+                        <input class="form-check-input" type="radio" name="primary_image_id" value="{{ item.pk }}" id="primary-package-image-{{ item.pk }}" {% if item.is_primary %}checked{% endif %}>
+                        <label class="form-check-label small" for="primary-package-image-{{ item.pk }}">Set as cover</label>
+                      </div>
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="remove_image_ids" value="{{ item.pk }}" id="remove-package-image-{{ item.pk }}">
+                        <label class="form-check-label small text-danger" for="remove-package-image-{{ item.pk }}">Remove</label>
+                      </div>
+                    </div>
+                    {% endfor %}
+                  </div>
+                </div>
+                {% endif %}
               </div>
             </div>
           </section>
@@ -528,9 +566,11 @@
     const emptyState = document.getElementById('itinerary-empty-state');
     const template = document.getElementById('itinerary-empty-form-template');
     const totalFormsInput = document.getElementById('id_itinerary-TOTAL_FORMS');
-    const imageInput = document.getElementById('id_image');
-    const imagePreview = document.getElementById('package-image-preview');
-    const imagePlaceholder = document.getElementById('package-image-placeholder');
+    const packageImageInputs = document.getElementById('package-image-inputs');
+    const addPackageImageInputButton = document.getElementById('add-package-image-input');
+    const packagePreviewContainer = document.getElementById('package-new-image-preview');
+    const packageCoverPreviewImage = document.getElementById('package-cover-preview-image');
+    const packageCoverPreviewPlaceholder = document.getElementById('package-cover-preview-placeholder');
 
     const updateEmptyState = () => {
       emptyState.style.display = list.children.length ? 'none' : '';
@@ -588,23 +628,93 @@
       }
     }
 
-    if (imageInput && imagePreview) {
-      imageInput.addEventListener('change', (event) => {
-        const [file] = event.target.files || [];
-        if (!file) {
-          return;
-        }
-        const reader = new FileReader();
-        reader.onload = (loadEvent) => {
-          imagePreview.src = loadEvent.target.result;
-          imagePreview.style.display = 'block';
-          if (imagePlaceholder) {
-            imagePlaceholder.style.display = 'none';
+    function renderPackageImagePreviews() {
+      if (!packageImageInputs || !packagePreviewContainer) {
+        return;
+      }
+      packagePreviewContainer.innerHTML = '';
+      let firstImageUrl = null;
+
+      const inputs = packageImageInputs.querySelectorAll('input[type="file"][name="images"]');
+      inputs.forEach((input) => {
+        const files = Array.from(input.files || []);
+        files.forEach((file) => {
+          if (!file.type || !file.type.startsWith('image/')) {
+            return;
           }
-        };
-        reader.readAsDataURL(file);
+          const img = document.createElement('img');
+          img.className = 'rounded border';
+          img.style.height = '90px';
+          img.style.width = '120px';
+          img.style.objectFit = 'cover';
+          img.alt = file.name;
+          img.src = URL.createObjectURL(file);
+          if (!firstImageUrl) {
+            firstImageUrl = img.src;
+          }
+          img.onload = () => {
+            URL.revokeObjectURL(img.src);
+          };
+          packagePreviewContainer.appendChild(img);
+        });
       });
+
+      const selectedRadio = document.querySelector('input[name="primary_image_id"]:checked');
+      if (!selectedRadio && firstImageUrl && packageCoverPreviewImage) {
+        packageCoverPreviewImage.src = firstImageUrl;
+        packageCoverPreviewImage.style.display = 'block';
+        if (packageCoverPreviewPlaceholder) {
+          packageCoverPreviewPlaceholder.style.display = 'none';
+        }
+      }
     }
+
+    function updateCoverFromSelectedPrimary() {
+      if (!packageCoverPreviewImage) {
+        return;
+      }
+      const selectedRadio = document.querySelector('input[name="primary_image_id"]:checked');
+      if (!selectedRadio) {
+        return;
+      }
+      const imageCard = selectedRadio.closest('.border.rounded');
+      const imageTag = imageCard ? imageCard.querySelector('img') : null;
+      if (!imageTag) {
+        return;
+      }
+      packageCoverPreviewImage.src = imageTag.src;
+      packageCoverPreviewImage.style.display = 'block';
+      if (packageCoverPreviewPlaceholder) {
+        packageCoverPreviewPlaceholder.style.display = 'none';
+      }
+    }
+
+    if (packageImageInputs && addPackageImageInputButton) {
+      packageImageInputs.addEventListener('change', (event) => {
+        if (event.target && event.target.matches('input[type="file"][name="images"]')) {
+          renderPackageImagePreviews();
+        }
+      });
+
+      addPackageImageInputButton.addEventListener('click', () => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.name = 'images';
+        input.className = 'form-control';
+        input.accept = 'image/*';
+        input.multiple = true;
+        packageImageInputs.appendChild(input);
+        renderPackageImagePreviews();
+      });
+
+      renderPackageImagePreviews();
+    }
+
+    document.querySelectorAll('input[name="primary_image_id"]').forEach((radio) => {
+      radio.addEventListener('change', updateCoverFromSelectedPrimary);
+    });
+
+    updateCoverFromSelectedPrimary();
   })();
 </script>
 {% endblock %}

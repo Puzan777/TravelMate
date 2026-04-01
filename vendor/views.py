@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 
-from app.models import Activity, ActivityImage, Booking, HotSale, Inquiry, Package
+from app.models import Activity, ActivityImage, Booking, HotSale, Inquiry, Package, PackageImage
 from .forms import (
 	PackageItineraryFormSet,
 	VendorActivityForm,
@@ -20,6 +20,16 @@ MAX_ACTIVITY_IMAGES = 10
 MAX_ACTIVITY_IMAGE_SIZE = 5 * 1024 * 1024  # 5 MB
 ALLOWED_ACTIVITY_IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.webp', '.gif'}
 ALLOWED_ACTIVITY_IMAGE_CONTENT_TYPES = {
+	'image/jpeg',
+	'image/png',
+	'image/webp',
+	'image/gif',
+}
+
+MAX_PACKAGE_IMAGES = 10
+MAX_PACKAGE_IMAGE_SIZE = 5 * 1024 * 1024  # 5 MB
+ALLOWED_PACKAGE_IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.webp', '.gif'}
+ALLOWED_PACKAGE_IMAGE_CONTENT_TYPES = {
 	'image/jpeg',
 	'image/png',
 	'image/webp',
@@ -63,6 +73,59 @@ def _set_primary_activity_image(activity, preferred_image_id=None):
 	if first_image is not None:
 		first_image.is_primary = True
 		first_image.save(update_fields=['is_primary'])
+
+
+def _validate_package_images(image_files, existing_count):
+	if existing_count + len(image_files) > MAX_PACKAGE_IMAGES:
+		return f'You can upload up to {MAX_PACKAGE_IMAGES} images per package.'
+
+	for image_file in image_files:
+		ext = os.path.splitext(image_file.name)[1].lower()
+		if ext not in ALLOWED_PACKAGE_IMAGE_EXTENSIONS:
+			return 'Only JPG, JPEG, PNG, WEBP, and GIF files are allowed.'
+
+		if getattr(image_file, 'size', 0) > MAX_PACKAGE_IMAGE_SIZE:
+			return 'Each image must be 5 MB or smaller.'
+
+		content_type = (getattr(image_file, 'content_type', '') or '').lower()
+		if content_type and content_type not in ALLOWED_PACKAGE_IMAGE_CONTENT_TYPES:
+			return 'Invalid image type uploaded.'
+
+	return None
+
+
+def _ensure_package_images_seed(package):
+	if package.images.exists() or not package.image:
+		return
+	PackageImage.objects.create(package=package, image=package.image.name, is_primary=True)
+
+
+def _set_primary_package_image(package, preferred_image_id=None):
+	images_qs = package.images.all().order_by('created_at')
+	if not images_qs.exists():
+		return
+
+	if preferred_image_id is not None and images_qs.filter(pk=preferred_image_id).exists():
+		images_qs.update(is_primary=False)
+		images_qs.filter(pk=preferred_image_id).update(is_primary=True)
+		return
+
+	if images_qs.filter(is_primary=True).exists():
+		return
+
+	first_image = images_qs.first()
+	if first_image is not None:
+		first_image.is_primary = True
+		first_image.save(update_fields=['is_primary'])
+
+
+def _sync_package_cover_image(package):
+	primary_image = package.images.filter(is_primary=True).first() or package.images.first()
+	if primary_image is None:
+		return
+	if package.image != primary_image.image.name:
+		package.image = primary_image.image.name
+		package.save(update_fields=['image'])
 
 
 def register(request):
@@ -285,10 +348,20 @@ def package_create(request):
 	if request.method == 'POST':
 		form = VendorPackageForm(request.POST, request.FILES, vendor_profile=vendor_profile)
 		formset = PackageItineraryFormSet(request.POST, prefix='itinerary')
+		image_files = request.FILES.getlist('images')
+		image_error = _validate_package_images(image_files, existing_count=0)
+		if image_error:
+			form.add_error(None, image_error)
+		if not image_files:
+			form.add_error(None, 'Please upload at least one package image.')
 		if form.is_valid() and formset.is_valid():
 			package = form.save(commit=False)
 			package.vendor = vendor_profile
+			package.image = image_files[0]
 			package.save()
+			PackageImage.objects.create(package=package, image=package.image.name, is_primary=True)
+			for image_file in image_files[1:]:
+				PackageImage.objects.create(package=package, image=image_file)
 			formset.instance = package
 			formset.save()
 			messages.success(request, 'Package created successfully.')
@@ -305,6 +378,8 @@ def package_create(request):
 			'itinerary_formset': formset,
 			'page_title': 'Create Package',
 			'submit_label': 'Create Package',
+			'package_images': [],
+			'package_cover_image': None,
 		},
 	)
 
@@ -316,12 +391,39 @@ def package_edit(request, pk):
 		return redirect('home')
 
 	package = get_object_or_404(Package, pk=pk, vendor=vendor_profile)
+	_ensure_package_images_seed(package)
 	if request.method == 'POST':
 		form = VendorPackageForm(request.POST, request.FILES, instance=package, vendor_profile=vendor_profile)
 		formset = PackageItineraryFormSet(request.POST, instance=package, prefix='itinerary')
+		remove_image_ids = request.POST.getlist('remove_image_ids')
+		images_to_remove = package.images.filter(pk__in=remove_image_ids)
+		remaining_count = package.images.exclude(pk__in=images_to_remove.values_list('pk', flat=True)).count()
+		image_files = request.FILES.getlist('images')
+		image_error = _validate_package_images(image_files, existing_count=remaining_count)
+		if image_error:
+			form.add_error(None, image_error)
+		if remaining_count + len(image_files) == 0:
+			form.add_error(None, 'Please keep at least one package image.')
 		if form.is_valid() and formset.is_valid():
 			form.save()
 			formset.save()
+			images_to_remove.delete()
+
+			has_existing_images = package.images.exists()
+			for index, image_file in enumerate(image_files):
+				PackageImage.objects.create(
+					package=package,
+					image=image_file,
+					is_primary=(not has_existing_images and index == 0),
+				)
+
+			preferred_primary_id = request.POST.get('primary_image_id')
+			if preferred_primary_id and preferred_primary_id.isdigit():
+				_set_primary_package_image(package, preferred_image_id=int(preferred_primary_id))
+			else:
+				_set_primary_package_image(package)
+			_sync_package_cover_image(package)
+
 			messages.success(request, 'Package updated successfully.')
 			return redirect('vendor:package_list')
 	else:
@@ -336,6 +438,9 @@ def package_edit(request, pk):
 			'itinerary_formset': formset,
 			'page_title': 'Edit Package',
 			'submit_label': 'Save Changes',
+			'package': package,
+			'package_images': package.images.all().order_by('-is_primary', 'created_at'),
+			'package_cover_image': package.images.filter(is_primary=True).first() or package.images.first(),
 		},
 	)
 

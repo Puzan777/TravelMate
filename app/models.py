@@ -147,6 +147,19 @@ class PackageItinerary(models.Model):
         return f"{self.package.title} - Day {self.day_number}"
 
 
+class PackageImage(models.Model):
+    package = models.ForeignKey(Package, on_delete=models.CASCADE, related_name='images')
+    image = models.ImageField(upload_to='packages/')
+    is_primary = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-is_primary', 'created_at']
+
+    def __str__(self):
+        return f"{self.package.title} image"
+
+
 class ActivityCategory(models.Model):
     name = models.CharField(max_length=120, unique=True)
     description = models.TextField(blank=True)

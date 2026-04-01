@@ -121,6 +121,7 @@ class VendorPackageForm(forms.ModelForm):
         for field in self.fields.values():
             field.widget.attrs['class'] = 'form-control'
 
+        self.fields['image'].required = False
         self.fields['is_active'].widget.attrs.pop('class', None)
         self.fields['destination'].queryset = Destination.objects.order_by('name')
         self.fields['destination'].required = True

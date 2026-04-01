@@ -4,6 +4,31 @@
 
 {% block content %}
 <div class="container py-5">
+  <style>
+    .cover-preview-frame {
+      border: 1px dashed #cbd5e1;
+      border-radius: 16px;
+      background: linear-gradient(180deg, #f8fbff 0%, #f3f7fc 100%);
+      min-height: 240px;
+      max-width: 460px;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+    }
+    .cover-preview-frame img {
+      width: 100%;
+      height: 240px;
+      object-fit: cover;
+      display: block;
+    }
+    .cover-preview-placeholder {
+      color: #64748b;
+      font-size: 0.92rem;
+      text-align: center;
+      padding: 16px;
+    }
+  </style>
+
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h1 class="h3 mb-0">{{ page_title }}</h1>
     <a href="{% url 'vendor:activity_list' %}" class="btn btn-outline-secondary">Back to Activities</a>
@@ -65,6 +90,22 @@
             <label class="form-label">Special instructions or warnings - Safety notes</label>
             {{ form.safety_notes }}
             <div class="text-danger small">{{ form.safety_notes.errors }}</div>
+          </div>
+
+          <div class="col-lg-5 col-12">
+            <label class="form-label">Cover Preview</label>
+            <div class="cover-preview-frame" id="activity-cover-preview-frame">
+              {% with primary_activity_image=activity_images|first %}
+                {% if primary_activity_image %}
+                  <img src="{{ primary_activity_image.image.url }}" alt="Activity cover preview" id="activity-cover-preview-image">
+                {% else %}
+                  <div class="cover-preview-placeholder" id="activity-cover-preview-placeholder">
+                    Add activity images below. Select one as cover in edit mode.
+                  </div>
+                  <img src="" alt="Activity cover preview" id="activity-cover-preview-image" style="display:none;">
+                {% endif %}
+              {% endwith %}
+            </div>
           </div>
 
           <div class="col-12">
@@ -154,6 +195,8 @@
     const container = document.getElementById('activity-image-inputs');
     const addButton = document.getElementById('add-image-input');
     const previewContainer = document.getElementById('new-image-preview');
+    const coverPreviewImage = document.getElementById('activity-cover-preview-image');
+    const coverPreviewPlaceholder = document.getElementById('activity-cover-preview-placeholder');
     if (!container || !addButton) {
       return;
     }
@@ -163,6 +206,7 @@
         return;
       }
       previewContainer.innerHTML = '';
+      let firstImageUrl = null;
 
       const inputs = container.querySelectorAll('input[type="file"][name="images"]');
       inputs.forEach(function (input) {
@@ -178,12 +222,44 @@
           img.style.objectFit = 'cover';
           img.alt = file.name;
           img.src = URL.createObjectURL(file);
+          if (!firstImageUrl) {
+            firstImageUrl = img.src;
+          }
           img.onload = function () {
             URL.revokeObjectURL(img.src);
           };
           previewContainer.appendChild(img);
         });
       });
+
+      const selectedRadio = document.querySelector('input[name="primary_image_id"]:checked');
+      if (!selectedRadio && firstImageUrl && coverPreviewImage) {
+        coverPreviewImage.src = firstImageUrl;
+        coverPreviewImage.style.display = 'block';
+        if (coverPreviewPlaceholder) {
+          coverPreviewPlaceholder.style.display = 'none';
+        }
+      }
+    }
+
+    function updateCoverFromSelectedPrimary() {
+      if (!coverPreviewImage) {
+        return;
+      }
+      const selectedRadio = document.querySelector('input[name="primary_image_id"]:checked');
+      if (!selectedRadio) {
+        return;
+      }
+      const imageCard = selectedRadio.closest('.border.rounded');
+      const imageTag = imageCard ? imageCard.querySelector('img') : null;
+      if (!imageTag) {
+        return;
+      }
+      coverPreviewImage.src = imageTag.src;
+      coverPreviewImage.style.display = 'block';
+      if (coverPreviewPlaceholder) {
+        coverPreviewPlaceholder.style.display = 'none';
+      }
     }
 
     container.addEventListener('change', function (event) {
@@ -203,6 +279,11 @@
       renderPreviews();
     });
 
+    document.querySelectorAll('input[name="primary_image_id"]').forEach(function (radio) {
+      radio.addEventListener('change', updateCoverFromSelectedPrimary);
+    });
+
+    updateCoverFromSelectedPrimary();
     renderPreviews();
   })();
 </script>
