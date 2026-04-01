@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0">{{ page_title }}</h1>
+    <a href="{% url 'activity_category_list' %}" class="btn btn-outline-secondary">Back to Categories</a>
+  </div>
+
+  <div class="card shadow-sm border-0">
+    <div class="card-body p-4">
+      {% if form.errors %}
+      <div class="alert alert-danger">Please fix the errors below.</div>
+      {% endif %}
+
+      <form method="post">
+        {% csrf_token %}
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Name</label>
+            {{ form.name }}
+            <div class="text-danger small">{{ form.name.errors }}</div>
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">Description</label>
+            {{ form.description }}
+            <div class="text-danger small">{{ form.description.errors }}</div>
+          </div>
+
+          <div class="col-12">
+            <div class="form-check">
+              {{ form.is_active }}
+              <label class="form-check-label" for="{{ form.is_active.id_for_label }}">Active</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="d-flex gap-2 mt-4">
+          <a href="{% url 'activity_category_list' %}" class="btn btn-outline-secondary">Cancel</a>
+          <button type="submit" class="btn btn-primary">{{ submit_label }}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
