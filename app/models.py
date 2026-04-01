@@ -76,6 +76,9 @@ class Package(models.Model):
 
     # link to Destination (country selection - optional for backwards compatibility)
     destination = models.ForeignKey(Destination, on_delete=models.PROTECT, blank=True, null=True, related_name='packages')
+    region = models.CharField(max_length=150, blank=True)
+    city = models.CharField(max_length=120, blank=True)
+    best_season = models.CharField(max_length=120, blank=True)
 
     duration = models.CharField(max_length=100)
     max_people = models.PositiveIntegerField(blank=True, null=True)
