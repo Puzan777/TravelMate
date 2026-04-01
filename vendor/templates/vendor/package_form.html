@@ -5,6 +5,61 @@
 {% block content %}
 <div class="container py-5">
   <style>
+    .package-shell {
+      display: grid;
+      gap: 18px;
+    }
+    .form-shell {
+      display: grid;
+      gap: 18px;
+    }
+    .section-card {
+      border: 1px solid #dbe4ef;
+      border-radius: 16px;
+      background: #ffffff;
+      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+      overflow: hidden;
+    }
+    .section-head {
+      padding: 14px 18px;
+      border-bottom: 1px solid #e6edf5;
+      background: linear-gradient(180deg, #f8fbff 0%, #f3f7fc 100%);
+    }
+    .section-title {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #17314a;
+    }
+    .section-copy {
+      margin: 4px 0 0;
+      font-size: 0.88rem;
+      color: #5f738a;
+    }
+    .section-body {
+      padding: 18px;
+    }
+    .image-preview-frame {
+      border: 1px dashed #cbd5e1;
+      border-radius: 16px;
+      background: linear-gradient(180deg, #f8fbff 0%, #f3f7fc 100%);
+      min-height: 240px;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+    }
+    .image-preview-frame img {
+      width: 100%;
+      height: 240px;
+      object-fit: cover;
+      display: block;
+    }
+    .image-preview-placeholder {
+      padding: 20px;
+      text-align: center;
+      color: #64748b;
+      font-size: 0.92rem;
+    }
     .itinerary-toolbar {
       display: flex;
       justify-content: space-between;
@@ -24,8 +79,81 @@
     .itinerary-card {
       border: 1px solid #dbe4ef;
       border-radius: 14px;
-      padding: 14px;
       background: #f8fafc;
+      overflow: hidden;
+    }
+    .itinerary-card summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 14px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      background: #eef5fb;
+      border-bottom: 1px solid transparent;
+    }
+    .itinerary-card summary::-webkit-details-marker {
+      display: none;
+    }
+    .itinerary-card[open] summary {
+      border-bottom-color: #dbe4ef;
+    }
+    .itinerary-summary-text {
+      margin: 0;
+      font-weight: 700;
+      color: #17314a;
+    }
+    .itinerary-summary-meta {
+      margin: 2px 0 0;
+      color: #5f738a;
+      font-size: 0.84rem;
+    }
+    .itinerary-summary-toggle {
+      color: #33597c;
+      font-size: 0.84rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .itinerary-card-body {
+      padding: 14px;
+    }
+    .sticky-actions {
+      position: sticky;
+      bottom: 12px;
+      z-index: 20;
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid #dbe4ef;
+      box-shadow: 0 16px 30px rgba(15, 23, 42, 0.08);
+      border-radius: 16px;
+      backdrop-filter: blur(8px);
+      padding: 12px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .sticky-actions-copy {
+      margin: 0;
+      color: #5f738a;
+      font-size: 0.88rem;
+    }
+    .sticky-actions-group {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    @media (max-width: 640px) {
+      .sticky-actions {
+        bottom: 8px;
+      }
+      .sticky-actions-group {
+        width: 100%;
+      }
+      .sticky-actions-group .btn {
+        flex: 1 1 0;
+      }
     }
   </style>
 
@@ -43,202 +171,331 @@
       <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
 
-        <div class="row g-3">
-          <div class="col-md-8">
-            <label class="form-label">Title</label>
-            {{ form.title }}
-            <div class="text-danger small">{{ form.title.errors }}</div>
-          </div>
-
-          <div class="col-md-4">
-            <label class="form-label">Category</label>
-            {{ form.category }}
-            <div class="text-danger small">{{ form.category.errors }}</div>
-          </div>
-
-          <div class="col-md-6">
-            <label class="form-label">Image</label>
-            {{ form.image }}
-            <div class="text-danger small">{{ form.image.errors }}</div>
-          </div>
-
-          <div class="col-md-3">
-            <label class="form-label">Price</label>
-            {{ form.price }}
-            <div class="text-danger small">{{ form.price.errors }}</div>
-          </div>
-
-          <div class="col-12">
-            <label class="form-label">Description</label>
-            {{ form.description }}
-            <div class="text-danger small">{{ form.description.errors }}</div>
-          </div>
-
-          <div class="col-md-6">
-            <label class="form-label">Country / Destination</label>
-            {{ form.destination }}
-            <div class="text-danger small">{{ form.destination.errors }}</div>
-            <div class="form-text">Choose from the destination list managed by admin.</div>
-          </div>
-
-          <div class="col-md-6">
-            <label class="form-label">Duration</label>
-            {{ form.duration }}
-            <div class="text-danger small">{{ form.duration.errors }}</div>
-          </div>
-
-          <div class="col-md-4">
-            <label class="form-label">Max People</label>
-            {{ form.max_people }}
-            <div class="text-danger small">{{ form.max_people.errors }}</div>
-          </div>
-
-          <div class="col-md-4">
-            <label class="form-label">Trip Difficulty</label>
-            {{ form.trip_difficulty }}
-            <div class="text-danger small">{{ form.trip_difficulty.errors }}</div>
-          </div>
-
-          <div class="col-md-4">
-            <label class="form-label">Activity</label>
-            {{ form.activity }}
-            <div class="text-danger small">{{ form.activity.errors }}</div>
-          </div>
-
-          <div class="col-md-4">
-            <label class="form-label">Max Elevation</label>
-            {{ form.max_elevation }}
-            <div class="text-danger small">{{ form.max_elevation.errors }}</div>
-          </div>
-
-          <div class="col-md-4">
-            <label class="form-label">Accommodation</label>
-            {{ form.accommodation }}
-            <div class="text-danger small">{{ form.accommodation.errors }}</div>
-          </div>
-
-          <div class="col-md-4">
-            <label class="form-label">Meal</label>
-            {{ form.meal }}
-            <div class="text-danger small">{{ form.meal.errors }}</div>
-          </div>
-
-          <div class="col-md-6">
-            <label class="form-label">Vehicle</label>
-            {{ form.vehicle }}
-            <div class="text-danger small">{{ form.vehicle.errors }}</div>
-          </div>
-
-          <div class="col-md-6 d-flex align-items-end">
-            <div class="form-check">
-              {{ form.is_active }}
-              <label class="form-check-label" for="{{ form.is_active.id_for_label }}">Active</label>
+        <div class="form-shell">
+        <div class="package-shell">
+          <section class="section-card">
+            <div class="section-head">
+              <h2 class="section-title">Basic Info</h2>
+              <p class="section-copy">Set the core details travelers will see first.</p>
             </div>
-          </div>
+            <div class="section-body">
+              <div class="row g-3">
+                <div class="col-lg-7">
+                  <label class="form-label">Title</label>
+                  {{ form.title }}
+                  <div class="text-danger small">{{ form.title.errors }}</div>
 
-          <div class="col-12">
-            <label class="form-label">Major Highlights</label>
-            {{ form.major_highlights }}
-            <div class="text-danger small">{{ form.major_highlights.errors }}</div>
-          </div>
+                  <div class="row g-3 mt-1">
+                    <div class="col-md-6">
+                      <label class="form-label">Category</label>
+                      {{ form.category }}
+                      <div class="text-danger small">{{ form.category.errors }}</div>
+                    </div>
 
-          <div class="col-12">
-            <label class="form-label">Day-by-Day Itinerary</label>
-            {{ itinerary_formset.management_form }}
-            {% if itinerary_formset.non_form_errors %}
-              <div class="text-danger small mb-2">{{ itinerary_formset.non_form_errors }}</div>
-            {% endif %}
-            <div class="itinerary-toolbar">
-              <div class="form-text mb-0">Add one block per day. You can keep adding more days as needed.</div>
-              <button type="button" class="btn btn-outline-primary btn-sm" id="add-itinerary-day">+ Add Day</button>
+                    <div class="col-md-6">
+                      <label class="form-label">Price</label>
+                      {{ form.price }}
+                      <div class="text-danger small">{{ form.price.errors }}</div>
+                    </div>
+                  </div>
+
+                  <div class="mt-3">
+                    <label class="form-label">Image</label>
+                    {{ form.image }}
+                    <div class="text-danger small">{{ form.image.errors }}</div>
+                  </div>
+                </div>
+
+                <div class="col-lg-5">
+                  <div class="image-preview-frame" id="package-image-preview-frame">
+                    {% if form.instance.image %}
+                      <img src="{{ form.instance.image.url }}" alt="Package preview" id="package-image-preview">
+                    {% else %}
+                      <div class="image-preview-placeholder" id="package-image-placeholder">
+                        Package cover preview appears here after image selection.
+                      </div>
+                      <img src="" alt="Package preview" id="package-image-preview" style="display:none;">
+                    {% endif %}
+                  </div>
+                  <div class="form-check mt-3">
+                    {{ form.is_active }}
+                    <label class="form-check-label" for="{{ form.is_active.id_for_label }}">Active</label>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div id="itinerary-empty-state" class="itinerary-empty"{% if itinerary_formset.forms %} style="display:none"{% endif %}>
-              No itinerary days added yet. Use <strong>Add Day</strong> to create the first one.
+          </section>
+
+          <section class="section-card">
+            <div class="section-head">
+              <h2 class="section-title">Package Details</h2>
+              <p class="section-copy">Describe the destination, trip profile, and package-level logistics.</p>
             </div>
-            <div class="d-grid gap-3" id="itinerary-formset-list">
-              {% for itinerary_form in itinerary_formset %}
-                {{ itinerary_form.id }}
-                <div class="itinerary-card">
+            <div class="section-body">
+              <div class="row g-3">
+                <div class="col-12">
+                  <label class="form-label">Description</label>
+                  {{ form.description }}
+                  <div class="text-danger small">{{ form.description.errors }}</div>
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label">Country / Destination</label>
+                  {{ form.destination }}
+                  <div class="text-danger small">{{ form.destination.errors }}</div>
+                  <div class="form-text">Choose from the destination list managed by admin.</div>
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label">Duration</label>
+                  {{ form.duration }}
+                  <div class="text-danger small">{{ form.duration.errors }}</div>
+                </div>
+
+                <div class="col-md-4">
+                  <label class="form-label">Max People</label>
+                  {{ form.max_people }}
+                  <div class="text-danger small">{{ form.max_people.errors }}</div>
+                </div>
+
+                <div class="col-md-4">
+                  <label class="form-label">Trip Difficulty</label>
+                  {{ form.trip_difficulty }}
+                  <div class="text-danger small">{{ form.trip_difficulty.errors }}</div>
+                </div>
+
+                <div class="col-md-4">
+                  <label class="form-label">Activity</label>
+                  {{ form.activity }}
+                  <div class="text-danger small">{{ form.activity.errors }}</div>
+                </div>
+
+                <div class="col-md-4">
+                  <label class="form-label">Max Elevation</label>
+                  {{ form.max_elevation }}
+                  <div class="text-danger small">{{ form.max_elevation.errors }}</div>
+                </div>
+
+                <div class="col-md-4">
+                  <label class="form-label">Accommodation</label>
+                  {{ form.accommodation }}
+                  <div class="text-danger small">{{ form.accommodation.errors }}</div>
+                </div>
+
+                <div class="col-md-4">
+                  <label class="form-label">Meal</label>
+                  {{ form.meal }}
+                  <div class="text-danger small">{{ form.meal.errors }}</div>
+                </div>
+
+                <div class="col-md-4">
+                  <label class="form-label">Vehicle</label>
+                  {{ form.vehicle }}
+                  <div class="text-danger small">{{ form.vehicle.errors }}</div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="section-card">
+            <div class="section-head">
+              <h2 class="section-title">Highlights</h2>
+              <p class="section-copy">Summarize the major selling points of the package.</p>
+            </div>
+            <div class="section-body">
+              <label class="form-label">Major Highlights</label>
+              {{ form.major_highlights }}
+              <div class="text-danger small">{{ form.major_highlights.errors }}</div>
+            </div>
+          </section>
+
+          <section class="section-card">
+            <div class="section-head">
+              <h2 class="section-title">Itinerary</h2>
+              <p class="section-copy">Build the trip day by day with optional detail fields.</p>
+            </div>
+            <div class="section-body">
+              <label class="form-label">Day-by-Day Itinerary</label>
+              {{ itinerary_formset.management_form }}
+              {% if itinerary_formset.non_form_errors %}
+                <div class="text-danger small mb-2">{{ itinerary_formset.non_form_errors }}</div>
+              {% endif %}
+              <div class="itinerary-toolbar">
+                <div class="form-text mb-0">Add one block per day. You can keep adding more days as needed.</div>
+                <button type="button" class="btn btn-outline-primary btn-sm" id="add-itinerary-day">+ Add Day</button>
+              </div>
+              <div id="itinerary-empty-state" class="itinerary-empty"{% if itinerary_formset.forms %} style="display:none"{% endif %}>
+                No itinerary days added yet. Use <strong>Add Day</strong> to create the first one.
+              </div>
+              <div class="d-grid gap-3" id="itinerary-formset-list">
+                {% for itinerary_form in itinerary_formset %}
+                  {{ itinerary_form.id }}
+                  <details class="itinerary-card" {% if itinerary_form.errors %}open{% endif %}>
+                    <summary>
+                      <div>
+                        <p class="itinerary-summary-text" data-itinerary-summary>Day {{ itinerary_form.day_number.value|default:forloop.counter }} - {{ itinerary_form.title.value|default:'Untitled Day' }}</p>
+                        <p class="itinerary-summary-meta">Expand to edit this day's details.</p>
+                      </div>
+                      <span class="itinerary-summary-toggle">Edit Day</span>
+                    </summary>
+                    <div class="itinerary-card-body">
+                    <div class="row g-3">
+                      <div class="col-md-2">
+                        <label class="form-label">Day</label>
+                        {{ itinerary_form.day_number }}
+                        <div class="text-danger small">{{ itinerary_form.day_number.errors }}</div>
+                      </div>
+
+                      <div class="col-md-10">
+                        <label class="form-label">Title</label>
+                        {{ itinerary_form.title }}
+                        <div class="text-danger small">{{ itinerary_form.title.errors }}</div>
+                      </div>
+
+                      <div class="col-12">
+                        <label class="form-label">Description</label>
+                        {{ itinerary_form.description }}
+                        <div class="text-danger small">{{ itinerary_form.description.errors }}</div>
+                      </div>
+
+                      <div class="col-12">
+                        <label class="form-label">Activities</label>
+                        {{ itinerary_form.activities }}
+                        <div class="text-danger small">{{ itinerary_form.activities.errors }}</div>
+                      </div>
+
+                      <div class="col-md-6">
+                        <label class="form-label">Max. Elevation</label>
+                        {{ itinerary_form.max_elevation }}
+                        <div class="text-danger small">{{ itinerary_form.max_elevation.errors }}</div>
+                      </div>
+
+                      <div class="col-md-6">
+                        <label class="form-label">Duration</label>
+                        {{ itinerary_form.duration }}
+                        <div class="text-danger small">{{ itinerary_form.duration.errors }}</div>
+                      </div>
+
+                      <div class="col-md-6">
+                        <label class="form-label">Distance</label>
+                        {{ itinerary_form.distance }}
+                        <div class="text-danger small">{{ itinerary_form.distance.errors }}</div>
+                      </div>
+
+                      <div class="col-md-6">
+                        <label class="form-label">Difficulty Level</label>
+                        {{ itinerary_form.difficulty_level }}
+                        <div class="text-danger small">{{ itinerary_form.difficulty_level.errors }}</div>
+                      </div>
+
+                      <div class="col-12">
+                        <label class="form-label">Meals Included</label>
+                        {{ itinerary_form.meals_included }}
+                        <div class="text-danger small">{{ itinerary_form.meals_included.errors }}</div>
+                      </div>
+
+                      {% if itinerary_formset.can_delete %}
+                      <div class="col-12">
+                        <div class="form-check">
+                          {{ itinerary_form.DELETE }}
+                          <label class="form-check-label" for="{{ itinerary_form.DELETE.id_for_label }}">Delete this day</label>
+                        </div>
+                      </div>
+                      {% endif %}
+                    </div>
+                    </div>
+                  </details>
+                {% endfor %}
+              </div>
+              <template id="itinerary-empty-form-template">
+                <details class="itinerary-card" open>
+                  {{ itinerary_formset.empty_form.id }}
+                  <summary>
+                    <div>
+                      <p class="itinerary-summary-text" data-itinerary-summary>New Day - Untitled Day</p>
+                      <p class="itinerary-summary-meta">Expand to edit this day's details.</p>
+                    </div>
+                    <span class="itinerary-summary-toggle">Edit Day</span>
+                  </summary>
+                  <div class="itinerary-card-body">
                   <div class="row g-3">
                     <div class="col-md-2">
                       <label class="form-label">Day</label>
-                      {{ itinerary_form.day_number }}
-                      <div class="text-danger small">{{ itinerary_form.day_number.errors }}</div>
+                      {{ itinerary_formset.empty_form.day_number }}
+                      <div class="text-danger small"></div>
                     </div>
 
                     <div class="col-md-10">
                       <label class="form-label">Title</label>
-                      {{ itinerary_form.title }}
-                      <div class="text-danger small">{{ itinerary_form.title.errors }}</div>
+                      {{ itinerary_formset.empty_form.title }}
+                      <div class="text-danger small"></div>
                     </div>
 
                     <div class="col-12">
                       <label class="form-label">Description</label>
-                      {{ itinerary_form.description }}
-                      <div class="text-danger small">{{ itinerary_form.description.errors }}</div>
+                      {{ itinerary_formset.empty_form.description }}
+                      <div class="text-danger small"></div>
                     </div>
 
                     <div class="col-12">
                       <label class="form-label">Activities</label>
-                      {{ itinerary_form.activities }}
-                      <div class="text-danger small">{{ itinerary_form.activities.errors }}</div>
+                      {{ itinerary_formset.empty_form.activities }}
+                      <div class="text-danger small"></div>
+                    </div>
+
+                    <div class="col-md-6">
+                      <label class="form-label">Max. Elevation</label>
+                      {{ itinerary_formset.empty_form.max_elevation }}
+                      <div class="text-danger small"></div>
+                    </div>
+
+                    <div class="col-md-6">
+                      <label class="form-label">Duration</label>
+                      {{ itinerary_formset.empty_form.duration }}
+                      <div class="text-danger small"></div>
+                    </div>
+
+                    <div class="col-md-6">
+                      <label class="form-label">Distance</label>
+                      {{ itinerary_formset.empty_form.distance }}
+                      <div class="text-danger small"></div>
+                    </div>
+
+                    <div class="col-md-6">
+                      <label class="form-label">Difficulty Level</label>
+                      {{ itinerary_formset.empty_form.difficulty_level }}
+                      <div class="text-danger small"></div>
+                    </div>
+
+                    <div class="col-12">
+                      <label class="form-label">Meals Included</label>
+                      {{ itinerary_formset.empty_form.meals_included }}
+                      <div class="text-danger small"></div>
                     </div>
 
                     {% if itinerary_formset.can_delete %}
                     <div class="col-12">
                       <div class="form-check">
-                        {{ itinerary_form.DELETE }}
-                        <label class="form-check-label" for="{{ itinerary_form.DELETE.id_for_label }}">Delete this day</label>
+                        {{ itinerary_formset.empty_form.DELETE }}
+                        <label class="form-check-label" for="{{ itinerary_formset.empty_form.DELETE.id_for_label }}">Delete this day</label>
                       </div>
                     </div>
                     {% endif %}
                   </div>
-                </div>
-              {% endfor %}
+                  </div>
+                </details>
+              </template>
             </div>
-            <template id="itinerary-empty-form-template">
-              <div class="itinerary-card">
-                {{ itinerary_formset.empty_form.id }}
-                <div class="row g-3">
-                  <div class="col-md-2">
-                    <label class="form-label">Day</label>
-                    {{ itinerary_formset.empty_form.day_number }}
-                    <div class="text-danger small"></div>
-                  </div>
-
-                  <div class="col-md-10">
-                    <label class="form-label">Title</label>
-                    {{ itinerary_formset.empty_form.title }}
-                    <div class="text-danger small"></div>
-                  </div>
-
-                  <div class="col-12">
-                    <label class="form-label">Description</label>
-                    {{ itinerary_formset.empty_form.description }}
-                    <div class="text-danger small"></div>
-                  </div>
-
-                  <div class="col-12">
-                    <label class="form-label">Activities</label>
-                    {{ itinerary_formset.empty_form.activities }}
-                    <div class="text-danger small"></div>
-                  </div>
-
-                  {% if itinerary_formset.can_delete %}
-                  <div class="col-12">
-                    <div class="form-check">
-                      {{ itinerary_formset.empty_form.DELETE }}
-                      <label class="form-check-label" for="{{ itinerary_formset.empty_form.DELETE.id_for_label }}">Delete this day</label>
-                    </div>
-                  </div>
-                  {% endif %}
-                </div>
-              </div>
-            </template>
+          </section>
+        </div>
+          <div class="sticky-actions">
+            <p class="sticky-actions-copy">Review the package sections above, then save when ready.</p>
+            <div class="sticky-actions-group">
+              <a href="{% url 'vendor:package_list' %}" class="btn btn-outline-secondary">Cancel</a>
+              <button type="submit" class="btn btn-primary">{{ submit_label }}</button>
+            </div>
           </div>
         </div>
-
-        <button type="submit" class="btn btn-primary w-100 mt-4">{{ submit_label }}</button>
       </form>
     </div>
   </div>
@@ -253,13 +510,36 @@
     const emptyState = document.getElementById('itinerary-empty-state');
     const template = document.getElementById('itinerary-empty-form-template');
     const totalFormsInput = document.getElementById('id_itinerary-TOTAL_FORMS');
-
-    if (!addButton || !list || !template || !totalFormsInput) {
-      return;
-    }
+    const imageInput = document.getElementById('id_image');
+    const imagePreview = document.getElementById('package-image-preview');
+    const imagePlaceholder = document.getElementById('package-image-placeholder');
 
     const updateEmptyState = () => {
       emptyState.style.display = list.children.length ? 'none' : '';
+    };
+
+    const updateSummary = (card) => {
+      const summaryText = card.querySelector('[data-itinerary-summary]');
+      const dayInput = card.querySelector('input[name$="-day_number"]');
+      const titleInput = card.querySelector('input[name$="-title"]');
+      if (!summaryText || !dayInput || !titleInput) {
+        return;
+      }
+      const dayLabel = dayInput.value ? `Day ${dayInput.value}` : 'New Day';
+      const titleLabel = titleInput.value ? titleInput.value : 'Untitled Day';
+      summaryText.textContent = `${dayLabel} - ${titleLabel}`;
+    };
+
+    const bindCard = (card) => {
+      const dayInput = card.querySelector('input[name$="-day_number"]');
+      const titleInput = card.querySelector('input[name$="-title"]');
+      if (dayInput) {
+        dayInput.addEventListener('input', () => updateSummary(card));
+      }
+      if (titleInput) {
+        titleInput.addEventListener('input', () => updateSummary(card));
+      }
+      updateSummary(card);
     };
 
     const addForm = () => {
@@ -269,18 +549,43 @@
       totalFormsInput.value = formIndex + 1;
       updateEmptyState();
 
+      const card = list.lastElementChild;
       const dayInput = document.getElementById(`id_itinerary-${formIndex}-day_number`);
       if (dayInput && !dayInput.value) {
-        dayInput.value = list.children.length;
+        dayInput.value = Array.from(list.children).filter((item) => item.matches('.itinerary-card')).length;
+      }
+      if (card) {
+        bindCard(card);
       }
     };
 
-    addButton.addEventListener('click', addForm);
+    if (addButton && list && template && totalFormsInput) {
+      addButton.addEventListener('click', addForm);
 
-    if (!list.children.length) {
-      addForm();
-    } else {
-      updateEmptyState();
+      if (!list.children.length) {
+        addForm();
+      } else {
+        updateEmptyState();
+        list.querySelectorAll('.itinerary-card').forEach(bindCard);
+      }
+    }
+
+    if (imageInput && imagePreview) {
+      imageInput.addEventListener('change', (event) => {
+        const [file] = event.target.files || [];
+        if (!file) {
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = (loadEvent) => {
+          imagePreview.src = loadEvent.target.result;
+          imagePreview.style.display = 'block';
+          if (imagePlaceholder) {
+            imagePlaceholder.style.display = 'none';
+          }
+        };
+        reader.readAsDataURL(file);
+      });
     }
   })();
 </script>

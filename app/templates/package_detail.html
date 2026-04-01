@@ -336,6 +336,40 @@
                   {% if day.activities %}
                     <p><strong>Activities:</strong> {{ day.activities|linebreaksbr }}</p>
                   {% endif %}
+                  {% if day.max_elevation or day.duration or day.distance or day.difficulty_level or day.meals_included %}
+                    <div class="info-grid mt-3">
+                      {% if day.max_elevation %}
+                        <div class="info-item">
+                          <p class="info-label">Max. Elevation</p>
+                          <p class="info-value">{{ day.max_elevation }}</p>
+                        </div>
+                      {% endif %}
+                      {% if day.duration %}
+                        <div class="info-item">
+                          <p class="info-label">Duration</p>
+                          <p class="info-value">{{ day.duration }}</p>
+                        </div>
+                      {% endif %}
+                      {% if day.distance %}
+                        <div class="info-item">
+                          <p class="info-label">Distance</p>
+                          <p class="info-value">{{ day.distance }}</p>
+                        </div>
+                      {% endif %}
+                      {% if day.difficulty_level %}
+                        <div class="info-item">
+                          <p class="info-label">Difficulty Level</p>
+                          <p class="info-value">{{ day.difficulty_level }}</p>
+                        </div>
+                      {% endif %}
+                      {% if day.meals_included %}
+                        <div class="info-item">
+                          <p class="info-label">Meals Included</p>
+                          <p class="info-value">{{ day.meals_included }}</p>
+                        </div>
+                      {% endif %}
+                    </div>
+                  {% endif %}
                 </div>
               </div>
             {% endfor %}

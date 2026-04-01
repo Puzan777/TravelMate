@@ -128,6 +128,11 @@ class PackageItinerary(models.Model):
     title = models.CharField(max_length=200)
     description = models.TextField()
     activities = models.TextField(blank=True)
+    max_elevation = models.CharField(max_length=100, blank=True)
+    duration = models.CharField(max_length=100, blank=True)
+    distance = models.CharField(max_length=100, blank=True)
+    difficulty_level = models.CharField(max_length=100, blank=True)
+    meals_included = models.CharField(max_length=150, blank=True)
 
     class Meta:
         ordering = ['day_number']

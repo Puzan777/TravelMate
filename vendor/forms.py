@@ -126,12 +126,27 @@ class VendorPackageForm(forms.ModelForm):
 class PackageItineraryForm(forms.ModelForm):
     class Meta:
         model = PackageItinerary
-        fields = ('day_number', 'title', 'description', 'activities')
+        fields = (
+            'day_number',
+            'title',
+            'description',
+            'activities',
+            'max_elevation',
+            'duration',
+            'distance',
+            'difficulty_level',
+            'meals_included',
+        )
         widgets = {
             'day_number': forms.NumberInput(attrs={'class': 'form-control', 'min': '1', 'placeholder': 'Day'}),
             'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Day title'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'What happens on this day?'}),
             'activities': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Activities, transfers, highlights'}),
+            'max_elevation': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Max. elevation (optional)'}),
+            'duration': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Duration (optional)'}),
+            'distance': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Distance (optional)'}),
+            'difficulty_level': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Difficulty level (optional)'}),
+            'meals_included': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Meals included (optional)'}),
         }
 
 
