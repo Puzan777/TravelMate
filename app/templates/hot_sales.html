@@ -5,8 +5,8 @@
   <div class="row justify-content-center mb-5">
     <div class="col-xl-8 col-lg-10 text-center">
       <span class="badge rounded-pill text-bg-danger px-3 py-2 mb-3">Limited-Time Offers</span>
-      <h1 class="display-5 fw-bold mb-3">Hot Sale Packages</h1>
-      <p class="lead text-muted mb-0">Browse discounted packages </p>
+      <h1 class="display-5 fw-bold mb-3">Hot Sale Offers</h1>
+      <p class="lead text-muted mb-0">Browse discounted packages and activities.</p>
     </div>
   </div>
 
@@ -64,8 +64,10 @@
     {% for sale in hot_sales %}
       <div class="col-md-6 col-xl-4">
         <article class="sale-card h-100">
-          {% if sale.package.image %}
+          {% if sale.package and sale.package.image %}
             <img src="{{ sale.package.image.url }}" class="sale-image" alt="{{ sale.package.title }}">
+          {% elif sale.activity_primary_image %}
+            <img src="{{ sale.activity_primary_image.image.url }}" class="sale-image" alt="{{ sale.activity.name }}">
           {% else %}
             <div class="bg-secondary sale-image"></div>
           {% endif %}
@@ -73,36 +75,53 @@
           <div class="p-4 d-flex flex-column h-100">
             <div class="d-flex align-items-start justify-content-between gap-3 mb-3">
               <div>
-                <div class="text-uppercase small text-muted fw-semibold mb-1">{{ sale.package.get_category_display }}</div>
-                <h2 class="h4 mb-1">{{ sale.package.title }}</h2>
-                {% if sale.package.destination %}
+                <div class="text-uppercase small text-muted fw-semibold mb-1">{{ sale.target_type }}</div>
+                <h2 class="h4 mb-1">{{ sale.target_name }}</h2>
+                {% if sale.package and sale.package.destination %}
                   <div class="small text-muted">{{ sale.package.destination.name }}</div>
+                {% elif sale.activity and sale.activity.category %}
+                  <div class="small text-muted">{{ sale.activity.category.name }}</div>
                 {% endif %}
               </div>
               <span class="badge rounded-pill text-bg-warning text-dark px-3 py-2">Hot Sale</span>
             </div>
 
             <div class="sale-price-row mb-3">
-              <span class="sale-original-price fs-5">${{ sale.package.price }}</span>
+              <span class="sale-original-price fs-5">${{ sale.original_price }}</span>
               <span class="sale-price">${{ sale.sale_price }}</span>
               <span class="badge rounded-pill text-bg-light border">Save ${{ sale.savings_amount }}</span>
             </div>
 
             <div class="small text-muted mb-3">
-              <span class="me-3"><strong>Duration:</strong> {{ sale.package.duration }}</span>
-              {% if sale.package.max_people %}
-                <span><strong>Max People:</strong> {{ sale.package.max_people }}</span>
+              {% if sale.package %}
+                <span class="me-3"><strong>Duration:</strong> {{ sale.package.duration }}</span>
+                {% if sale.package.max_people %}
+                  <span><strong>Max People:</strong> {{ sale.package.max_people }}</span>
+                {% endif %}
+              {% elif sale.activity %}
+                <span class="me-3"><strong>Duration:</strong> {{ sale.activity.duration }}</span>
+                {% if sale.activity.max_group_size %}
+                  <span><strong>Max Group:</strong> {{ sale.activity.max_group_size }}</span>
+                {% endif %}
               {% endif %}
             </div>
 
-            <p class="text-muted sale-description mb-3">{{ sale.package.description }}</p>
+            {% if sale.package %}
+              <p class="text-muted sale-description mb-3">{{ sale.package.description }}</p>
+            {% elif sale.activity %}
+              <p class="text-muted sale-description mb-3">{{ sale.activity.description }}</p>
+            {% endif %}
 
             {% if sale.note %}
               <div class="sale-note small mb-4">{{ sale.note }}</div>
             {% endif %}
 
             <div class="mt-auto d-flex gap-2">
-              <a href="{{ sale.package.get_absolute_url }}" class="btn btn-primary flex-grow-1">View Package</a>
+              {% if sale.package %}
+                <a href="{{ sale.package.get_absolute_url }}" class="btn btn-primary flex-grow-1">View Package</a>
+              {% else %}
+                <span class="btn btn-outline-secondary flex-grow-1 disabled">Activity Offer</span>
+              {% endif %}
             </div>
           </div>
         </article>

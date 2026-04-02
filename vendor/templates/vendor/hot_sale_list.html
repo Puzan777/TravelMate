@@ -85,7 +85,7 @@
     <section class="page-hero">
       <div>
         <h1>My Hot Sales</h1>
-        <p>Create and manage discounted prices for your packages.</p>
+        <p>Create and manage discounted prices for your packages and activities.</p>
       </div>
       <div class="hero-actions">
         <a href="{% url 'vendor:dashboard' %}" class="btn btn-outline-light">Dashboard</a>
@@ -99,7 +99,8 @@
         <table class="table align-middle">
           <thead>
             <tr>
-              <th>Package</th>
+              <th>Type</th>
+              <th>Offer</th>
               <th>Original Price</th>
               <th>Sale Price</th>
               <th>Savings</th>
@@ -110,8 +111,9 @@
           <tbody>
             {% for hot_sale in hot_sales %}
             <tr>
-              <td class="fw-semibold">{{ hot_sale.package.title }}</td>
-              <td>Rs. {{ hot_sale.package.price }}</td>
+              <td>{{ hot_sale.target_type }}</td>
+              <td class="fw-semibold">{{ hot_sale.target_name }}</td>
+              <td>Rs. {{ hot_sale.original_price }}</td>
               <td>Rs. {{ hot_sale.sale_price }}</td>
               <td>Rs. {{ hot_sale.savings_amount }}</td>
               <td>
@@ -130,7 +132,7 @@
         </table>
       </div>
       {% else %}
-      <div class="p-4 text-center text-muted">No hot sales yet. Add one to promote a package separately from package creation.</div>
+      <div class="p-4 text-center text-muted">No hot sales yet. Add one to promote a package or activity separately.</div>
       {% endif %}
     </div>
   </div>

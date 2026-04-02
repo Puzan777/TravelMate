@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import Booking, CustomUser, Destination, HotSale, Inquiry, Package, PackageItinerary
+from django.db.models import Q
+from .models import Activity, Booking, CustomUser, Destination, HotSale, Inquiry, Package, PackageItinerary
 
 # Hide default Django admin nav sidebar; custom dashboard provides navigation.
 admin.site.enable_nav_sidebar = False
@@ -102,13 +103,13 @@ class PackageAdmin(admin.ModelAdmin):
 
 @admin.register(HotSale)
 class HotSaleAdmin(admin.ModelAdmin):
-    list_display = ('package', 'original_price', 'sale_price', 'savings', 'is_active', 'created_at')
+    list_display = ('target_type', 'target_name', 'original_price', 'sale_price', 'savings', 'is_active', 'created_at')
     list_filter = ('is_active', 'created_at')
-    search_fields = ('package__title', 'package__slug', 'note')
+    search_fields = ('package__title', 'package__slug', 'activity__name', 'note')
     autocomplete_fields = ('package',)
     readonly_fields = ('original_price', 'created_at', 'updated_at')
     fieldsets = (
-        ('Hot Sale', {'fields': ('package', 'original_price', 'sale_price', 'note', 'is_active')}),
+        ('Hot Sale', {'fields': ('package', 'activity', 'original_price', 'sale_price', 'note', 'is_active')}),
         ('System', {'fields': ('created_at', 'updated_at')}),
     )
 
@@ -130,13 +131,37 @@ class HotSaleAdmin(admin.ModelAdmin):
             formfield.widget.can_change_related = False
             formfield.widget.can_delete_related = False
             formfield.widget.can_view_related = False
+        if db_field.name == 'activity':
+            activity_qs = Activity.objects.filter(is_active=True)
+            if not request.user.is_superuser:
+                vendor_profile = _current_vendor_profile(request.user)
+                if vendor_profile:
+                    activity_qs = activity_qs.filter(vendor=vendor_profile)
+                else:
+                    activity_qs = activity_qs.none()
+            kwargs['queryset'] = activity_qs.order_by('name')
+            formfield = super().formfield_for_foreignkey(db_field, request, **kwargs)
+            formfield.label = 'Search Activity'
+            formfield.help_text = 'Search and select an existing active activity for this hot sale.'
+            formfield.widget.can_add_related = False
+            formfield.widget.can_change_related = False
+            formfield.widget.can_delete_related = False
+            formfield.widget.can_view_related = False
         return formfield
+
+    @admin.display(description='Type')
+    def target_type(self, obj):
+        return obj.target_type
+
+    @admin.display(description='Offer')
+    def target_name(self, obj):
+        return obj.target_name
 
     @admin.display(description='Original Price')
     def original_price(self, obj):
         if not obj:
-            return 'Select a package to preview the original price.'
-        return obj.package.price
+            return 'Select a package or activity to preview the original price.'
+        return obj.original_price
 
     @admin.display(description='Savings')
     def savings(self, obj):
@@ -148,7 +173,7 @@ class HotSaleAdmin(admin.ModelAdmin):
             return qs
         vendor_profile = _current_vendor_profile(request.user)
         if vendor_profile:
-            return qs.filter(package__vendor=vendor_profile)
+            return qs.filter(Q(package__vendor=vendor_profile) | Q(activity__vendor=vendor_profile))
         return qs.none()
 
     def has_add_permission(self, request):

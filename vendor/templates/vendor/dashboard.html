@@ -449,8 +449,8 @@
               <table class="simple-table">
                 <thead>
                   <tr>
-                    <th>Package</th>
-                    <th>Destination</th>
+                    <th>Type</th>
+                    <th>Offer</th>
                     <th>Original Price</th>
                     <th>Sale Price</th>
                     <th>Active</th>
@@ -459,9 +459,9 @@
                 <tbody>
                   {% for sale in recent_hot_sales %}
                     <tr>
-                      <td>{{ sale.package.title }}</td>
-                      <td>{% if sale.package.destination %}{{ sale.package.destination.name }}{% else %}-{% endif %}</td>
-                      <td>Rs. {{ sale.package.price }}</td>
+                      <td>{{ sale.target_type }}</td>
+                      <td>{{ sale.target_name }}</td>
+                      <td>Rs. {{ sale.original_price }}</td>
                       <td>Rs. {{ sale.sale_price }}</td>
                       <td>{% if sale.is_active %}Yes{% else %}No{% endif %}</td>
                     </tr>

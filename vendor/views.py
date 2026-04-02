@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
+from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 
 from app.models import Activity, ActivityImage, Booking, HotSale, Inquiry, Package, PackageImage
@@ -84,13 +85,19 @@ def dashboard(request):
 		'vendor_profile': vendor_profile,
 		'package_count': package_qs.count(),
 		'active_package_count': package_qs.filter(is_active=True).count(),
-		'hot_sale_count': HotSale.objects.filter(package__vendor=vendor_profile, is_active=True).count(),
+		'hot_sale_count': HotSale.objects.filter(
+			Q(package__vendor=vendor_profile) | Q(activity__vendor=vendor_profile),
+			is_active=True,
+		).count(),
 		'booking_count': Booking.objects.filter(package__vendor=vendor_profile).count(),
 		'inquiry_count': Inquiry.objects.filter(package__vendor=vendor_profile).count(),
 		'recent_bookings': recent_bookings,
 		'recent_inquiries': recent_inquiries,
-		'recent_hot_sales': HotSale.objects.filter(package__vendor=vendor_profile)
-			.select_related('package', 'package__destination')
+		'recent_hot_sales': HotSale.objects.filter(
+			Q(package__vendor=vendor_profile) | Q(activity__vendor=vendor_profile)
+		)
+			.select_related('package', 'package__destination', 'activity')
+			.prefetch_related('activity__images')
 			.order_by('-updated_at')[:8],
 	}
 	return render(request, 'vendor/dashboard.html', context)
@@ -436,7 +443,9 @@ def hot_sale_list(request):
 	if vendor_profile is None:
 		return redirect('home')
 
-	hot_sales = HotSale.objects.filter(package__vendor=vendor_profile).select_related('package').order_by('-created_at')
+	hot_sales = HotSale.objects.filter(
+		Q(package__vendor=vendor_profile) | Q(activity__vendor=vendor_profile)
+	).select_related('package', 'activity').prefetch_related('activity__images').order_by('-created_at')
 	return render(
 		request,
 		'vendor/hot_sale_list.html',
@@ -480,7 +489,10 @@ def hot_sale_edit(request, pk):
 	if vendor_profile is None:
 		return redirect('home')
 
-	hot_sale = get_object_or_404(HotSale, pk=pk, package__vendor=vendor_profile)
+	hot_sale = get_object_or_404(
+		HotSale.objects.filter(Q(package__vendor=vendor_profile) | Q(activity__vendor=vendor_profile)),
+		pk=pk,
+	)
 	if request.method == 'POST':
 		form = VendorHotSaleForm(request.POST, instance=hot_sale, vendor_profile=vendor_profile)
 		if form.is_valid():

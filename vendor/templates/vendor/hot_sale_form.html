@@ -14,15 +14,25 @@
       {% if form.errors %}
       <div class="alert alert-danger">Please fix the errors below.</div>
       {% endif %}
+      {% if form.non_field_errors %}
+      <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+      {% endif %}
 
       <form method="post">
         {% csrf_token %}
+        <p class="text-muted small mb-3">Choose exactly one: package or activity.</p>
 
         <div class="row g-3">
           <div class="col-md-6">
-            <label class="form-label">Package</label>
+            <label class="form-label">Package (optional)</label>
             {{ form.package }}
             <div class="text-danger small">{{ form.package.errors }}</div>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Activity (optional)</label>
+            {{ form.activity }}
+            <div class="text-danger small">{{ form.activity.errors }}</div>
           </div>
 
           <div class="col-md-6">

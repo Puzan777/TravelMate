@@ -255,7 +255,8 @@ class ActivityImage(models.Model):
 
 
 class HotSale(models.Model):
-    package = models.ForeignKey(Package, on_delete=models.CASCADE, related_name='hot_sale_entries')
+    package = models.ForeignKey(Package, on_delete=models.CASCADE, related_name='hot_sale_entries', null=True, blank=True)
+    activity = models.ForeignKey(Activity, on_delete=models.CASCADE, related_name='hot_sale_entries', null=True, blank=True)
     sale_price = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)])
     note = models.TextField(blank=True, help_text='Optional note shown only on the hot sale page.')
     is_active = models.BooleanField(default=True)
@@ -266,19 +267,65 @@ class HotSale(models.Model):
         ordering = ['-created_at']
         verbose_name = 'Hot Sale'
         verbose_name_plural = 'Hot Sales'
+        constraints = [
+            models.CheckConstraint(
+                check=(
+                    (models.Q(package__isnull=False) & models.Q(activity__isnull=True))
+                    | (models.Q(package__isnull=True) & models.Q(activity__isnull=False))
+                ),
+                name='hotsale_exactly_one_target',
+            ),
+        ]
 
     def __str__(self):
-        return f"{self.package.title} - {self.sale_price}"
+        return f"{self.target_name} - {self.sale_price}"
+
+    @property
+    def target_name(self):
+        if self.package_id:
+            return self.package.title
+        if self.activity_id:
+            return self.activity.name
+        return 'Unknown Offer'
+
+    @property
+    def target_type(self):
+        if self.package_id:
+            return 'Package'
+        if self.activity_id:
+            return 'Activity'
+        return 'Offer'
+
+    @property
+    def original_price(self):
+        if self.package_id:
+            return self.package.price
+        if self.activity_id:
+            return self.activity.price
+        return None
+
+    @property
+    def activity_primary_image(self):
+        if not self.activity_id:
+            return None
+        return self.activity.images.first()
 
     def clean(self):
-        if self.package_id and self.sale_price is not None and self.sale_price >= self.package.price:
+        if bool(self.package_id) == bool(self.activity_id):
+            raise ValidationError('Select either a package or an activity for the hot sale.')
+
+        original_price = self.original_price
+        if original_price is not None and self.sale_price is not None and self.sale_price >= original_price:
             raise ValidationError({
-                'sale_price': 'Hot sale price must be lower than the original package price.'
+                'sale_price': 'Hot sale price must be lower than the original price.'
             })
 
     @property
     def savings_amount(self):
-        return self.package.price - self.sale_price
+        original_price = self.original_price
+        if original_price is None:
+            return 0
+        return original_price - self.sale_price
 
 
 class Booking(models.Model):

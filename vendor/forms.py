@@ -168,6 +168,7 @@ class VendorHotSaleForm(forms.ModelForm):
         model = HotSale
         fields = (
             'package',
+            'activity',
             'sale_price',
             'note',
             'is_active',
@@ -181,10 +182,23 @@ class VendorHotSaleForm(forms.ModelForm):
         self.fields['is_active'].widget.attrs.pop('class', None)
 
         package_qs = Package.objects.filter(is_active=True)
+        activity_qs = Activity.objects.filter(is_active=True)
         if vendor_profile is not None:
             package_qs = package_qs.filter(vendor=vendor_profile)
+            activity_qs = activity_qs.filter(vendor=vendor_profile)
 
         self.fields['package'].queryset = package_qs.order_by('title')
+        self.fields['activity'].queryset = activity_qs.order_by('name')
+
+    def clean(self):
+        cleaned_data = super().clean()
+        package = cleaned_data.get('package')
+        activity = cleaned_data.get('activity')
+
+        if bool(package) == bool(activity):
+            raise forms.ValidationError('Please choose either a package or an activity.')
+
+        return cleaned_data
 
 
 class VendorActivityForm(forms.ModelForm):

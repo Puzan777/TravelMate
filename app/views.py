@@ -1,5 +1,6 @@
 # Create your views here.
 from django.core.exceptions import PermissionDenied
+from django.db.models import Q
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout
 from django.contrib import messages
@@ -203,8 +204,9 @@ def package_list(request, category=None, hot_sales=False):
 def hot_sale_list(request):
     hot_sales = HotSale.objects.filter(
         is_active=True,
-        package__is_active=True,
-    ).select_related('package', 'package__destination')
+    ).filter(
+        Q(package__is_active=True) | Q(activity__is_active=True),
+    ).select_related('package', 'package__destination', 'activity').prefetch_related('activity__images')
 
     return render(request, 'hot_sales.html', {
         'hot_sales': hot_sales,
