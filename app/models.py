@@ -1,5 +1,8 @@
 from django.contrib.auth.models import AbstractUser
+from django.core.files.storage import default_storage
 from django.db import models
+from django.db.models.signals import post_delete, post_save, pre_save
+from django.dispatch import receiver
 from django.urls import reverse
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, MaxValueValidator
@@ -159,6 +162,17 @@ class PackageImage(models.Model):
     def __str__(self):
         return f"{self.package.title} image"
 
+    def clean(self):
+        sibling_qs = PackageImage.objects.filter(package_id=self.package_id).exclude(pk=self.pk)
+        if self.is_primary and sibling_qs.filter(is_primary=True).exists():
+            raise ValidationError({'is_primary': 'Only one package image can be primary.'})
+        if not self.is_primary and sibling_qs.exists() and not sibling_qs.filter(is_primary=True).exists():
+            raise ValidationError({'is_primary': 'At least one package image must be primary.'})
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
 
 class ActivityCategory(models.Model):
     name = models.CharField(max_length=120, unique=True)
@@ -227,6 +241,17 @@ class ActivityImage(models.Model):
 
     def __str__(self):
         return f"{self.activity.name} image"
+
+    def clean(self):
+        sibling_qs = ActivityImage.objects.filter(activity_id=self.activity_id).exclude(pk=self.pk)
+        if self.is_primary and sibling_qs.filter(is_primary=True).exists():
+            raise ValidationError({'is_primary': 'Only one activity image can be primary.'})
+        if not self.is_primary and sibling_qs.exists() and not sibling_qs.filter(is_primary=True).exists():
+            raise ValidationError({'is_primary': 'At least one activity image must be primary.'})
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
 
 
 class HotSale(models.Model):
@@ -301,3 +326,112 @@ class Inquiry(models.Model):
 
     def __str__(self):
         return f"Inquiry: {self.package.title} ({self.full_name})"
+
+
+def _normalize_single_primary(sender, parent_fk_name, parent_id):
+    if parent_id is None:
+        return
+
+    images = sender.objects.filter(**{f'{parent_fk_name}_id': parent_id}).order_by('created_at', 'pk')
+    if not images.exists():
+        return
+
+    primary_ids = list(images.filter(is_primary=True).values_list('pk', flat=True))
+    if len(primary_ids) == 1:
+        return
+
+    if len(primary_ids) == 0:
+        first_image = images.first()
+        if first_image is not None:
+            images.filter(pk=first_image.pk).update(is_primary=True)
+        return
+
+    keep_id = primary_ids[0]
+    images.exclude(pk=keep_id).filter(is_primary=True).update(is_primary=False)
+
+
+def _delete_file_if_unreferenced(file_name, checks):
+    if not file_name:
+        return
+
+    for check in checks:
+        if check().exists():
+            return
+
+    if default_storage.exists(file_name):
+        default_storage.delete(file_name)
+
+
+@receiver(post_save, sender=ActivityImage)
+def _activity_image_post_save(sender, instance, **kwargs):
+    _normalize_single_primary(ActivityImage, 'activity', instance.activity_id)
+
+
+@receiver(post_delete, sender=ActivityImage)
+def _activity_image_post_delete(sender, instance, **kwargs):
+    file_name = getattr(instance.image, 'name', None)
+    _delete_file_if_unreferenced(
+        file_name,
+        checks=[
+            lambda: ActivityImage.objects.filter(image=file_name),
+        ],
+    )
+    _normalize_single_primary(ActivityImage, 'activity', instance.activity_id)
+
+
+@receiver(post_save, sender=PackageImage)
+def _package_image_post_save(sender, instance, **kwargs):
+    _normalize_single_primary(PackageImage, 'package', instance.package_id)
+
+
+@receiver(post_delete, sender=PackageImage)
+def _package_image_post_delete(sender, instance, **kwargs):
+    file_name = getattr(instance.image, 'name', None)
+    _delete_file_if_unreferenced(
+        file_name,
+        checks=[
+            lambda: PackageImage.objects.filter(image=file_name),
+            lambda: Package.objects.filter(image=file_name),
+        ],
+    )
+    _normalize_single_primary(PackageImage, 'package', instance.package_id)
+
+
+@receiver(pre_save, sender=Package)
+def _package_pre_save(sender, instance, **kwargs):
+    if not instance.pk:
+        instance._old_image_name = None
+        return
+
+    try:
+        old_package = sender.objects.only('image').get(pk=instance.pk)
+        instance._old_image_name = old_package.image.name
+    except sender.DoesNotExist:
+        instance._old_image_name = None
+
+
+@receiver(post_save, sender=Package)
+def _package_post_save(sender, instance, **kwargs):
+    old_name = getattr(instance, '_old_image_name', None)
+    new_name = getattr(instance.image, 'name', None)
+
+    if old_name and old_name != new_name:
+        _delete_file_if_unreferenced(
+            old_name,
+            checks=[
+                lambda: Package.objects.filter(image=old_name),
+                lambda: PackageImage.objects.filter(image=old_name),
+            ],
+        )
+
+
+@receiver(post_delete, sender=Package)
+def _package_post_delete(sender, instance, **kwargs):
+    file_name = getattr(instance.image, 'name', None)
+    _delete_file_if_unreferenced(
+        file_name,
+        checks=[
+            lambda: Package.objects.filter(image=file_name),
+            lambda: PackageImage.objects.filter(image=file_name),
+        ],
+    )
