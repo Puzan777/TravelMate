@@ -1,7 +1,6 @@
-import os
-
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
 
 from app.models import Activity, ActivityImage, Booking, HotSale, Inquiry, Package, PackageImage
@@ -13,110 +12,33 @@ from .forms import (
 	VendorPackageForm,
 	VendorRegistrationForm,
 )
+from .image_utils import (
+	DEFAULT_ALLOWED_IMAGE_CONTENT_TYPES,
+	DEFAULT_ALLOWED_IMAGE_EXTENSIONS,
+	DEFAULT_MAX_IMAGES,
+	DEFAULT_MAX_IMAGE_SIZE,
+	parse_selected_primary_index,
+	set_primary_image,
+	validate_uploaded_images,
+)
 from .models import VendorProfile
 
 
-MAX_ACTIVITY_IMAGES = 10
-MAX_ACTIVITY_IMAGE_SIZE = 5 * 1024 * 1024  # 5 MB
-ALLOWED_ACTIVITY_IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.webp', '.gif'}
-ALLOWED_ACTIVITY_IMAGE_CONTENT_TYPES = {
-	'image/jpeg',
-	'image/png',
-	'image/webp',
-	'image/gif',
-}
+MAX_ACTIVITY_IMAGES = DEFAULT_MAX_IMAGES
+MAX_ACTIVITY_IMAGE_SIZE = DEFAULT_MAX_IMAGE_SIZE
+ALLOWED_ACTIVITY_IMAGE_EXTENSIONS = DEFAULT_ALLOWED_IMAGE_EXTENSIONS
+ALLOWED_ACTIVITY_IMAGE_CONTENT_TYPES = DEFAULT_ALLOWED_IMAGE_CONTENT_TYPES
 
-MAX_PACKAGE_IMAGES = 10
-MAX_PACKAGE_IMAGE_SIZE = 5 * 1024 * 1024  # 5 MB
-ALLOWED_PACKAGE_IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.webp', '.gif'}
-ALLOWED_PACKAGE_IMAGE_CONTENT_TYPES = {
-	'image/jpeg',
-	'image/png',
-	'image/webp',
-	'image/gif',
-}
-
-
-def _validate_activity_images(image_files, existing_count):
-	if existing_count + len(image_files) > MAX_ACTIVITY_IMAGES:
-		return f'You can upload up to {MAX_ACTIVITY_IMAGES} images per activity.'
-
-	for image_file in image_files:
-		ext = os.path.splitext(image_file.name)[1].lower()
-		if ext not in ALLOWED_ACTIVITY_IMAGE_EXTENSIONS:
-			return 'Only JPG, JPEG, PNG, WEBP, and GIF files are allowed.'
-
-		if getattr(image_file, 'size', 0) > MAX_ACTIVITY_IMAGE_SIZE:
-			return 'Each image must be 5 MB or smaller.'
-
-		content_type = (getattr(image_file, 'content_type', '') or '').lower()
-		if content_type and content_type not in ALLOWED_ACTIVITY_IMAGE_CONTENT_TYPES:
-			return 'Invalid image type uploaded.'
-
-	return None
-
-
-def _set_primary_activity_image(activity, preferred_image_id=None):
-	images_qs = activity.images.all().order_by('created_at')
-	if not images_qs.exists():
-		return
-
-	if preferred_image_id is not None and images_qs.filter(pk=preferred_image_id).exists():
-		images_qs.update(is_primary=False)
-		images_qs.filter(pk=preferred_image_id).update(is_primary=True)
-		return
-
-	if images_qs.filter(is_primary=True).exists():
-		return
-
-	first_image = images_qs.first()
-	if first_image is not None:
-		first_image.is_primary = True
-		first_image.save(update_fields=['is_primary'])
-
-
-def _validate_package_images(image_files, existing_count):
-	if existing_count + len(image_files) > MAX_PACKAGE_IMAGES:
-		return f'You can upload up to {MAX_PACKAGE_IMAGES} images per package.'
-
-	for image_file in image_files:
-		ext = os.path.splitext(image_file.name)[1].lower()
-		if ext not in ALLOWED_PACKAGE_IMAGE_EXTENSIONS:
-			return 'Only JPG, JPEG, PNG, WEBP, and GIF files are allowed.'
-
-		if getattr(image_file, 'size', 0) > MAX_PACKAGE_IMAGE_SIZE:
-			return 'Each image must be 5 MB or smaller.'
-
-		content_type = (getattr(image_file, 'content_type', '') or '').lower()
-		if content_type and content_type not in ALLOWED_PACKAGE_IMAGE_CONTENT_TYPES:
-			return 'Invalid image type uploaded.'
-
-	return None
+MAX_PACKAGE_IMAGES = DEFAULT_MAX_IMAGES
+MAX_PACKAGE_IMAGE_SIZE = DEFAULT_MAX_IMAGE_SIZE
+ALLOWED_PACKAGE_IMAGE_EXTENSIONS = DEFAULT_ALLOWED_IMAGE_EXTENSIONS
+ALLOWED_PACKAGE_IMAGE_CONTENT_TYPES = DEFAULT_ALLOWED_IMAGE_CONTENT_TYPES
 
 
 def _ensure_package_images_seed(package):
 	if package.images.exists() or not package.image:
 		return
 	PackageImage.objects.create(package=package, image=package.image.name, is_primary=True)
-
-
-def _set_primary_package_image(package, preferred_image_id=None):
-	images_qs = package.images.all().order_by('created_at')
-	if not images_qs.exists():
-		return
-
-	if preferred_image_id is not None and images_qs.filter(pk=preferred_image_id).exists():
-		images_qs.update(is_primary=False)
-		images_qs.filter(pk=preferred_image_id).update(is_primary=True)
-		return
-
-	if images_qs.filter(is_primary=True).exists():
-		return
-
-	first_image = images_qs.first()
-	if first_image is not None:
-		first_image.is_primary = True
-		first_image.save(update_fields=['is_primary'])
 
 
 def _sync_package_cover_image(package):
@@ -239,15 +161,31 @@ def activity_create(request):
 	if request.method == 'POST':
 		form = VendorActivityForm(request.POST)
 		image_files = request.FILES.getlist('images')
-		image_error = _validate_activity_images(image_files, existing_count=0)
+		selected_new_primary_index = parse_selected_primary_index(
+			request.POST.get('selected_new_primary_index'),
+			len(image_files),
+		)
+		image_error = validate_uploaded_images(
+			image_files,
+			existing_count=0,
+			entity_label='activity',
+			max_images=MAX_ACTIVITY_IMAGES,
+			max_size_bytes=MAX_ACTIVITY_IMAGE_SIZE,
+			allowed_extensions=ALLOWED_ACTIVITY_IMAGE_EXTENSIONS,
+			allowed_content_types=ALLOWED_ACTIVITY_IMAGE_CONTENT_TYPES,
+		)
 		if image_error:
 			form.add_error(None, image_error)
+		if not image_files:
+			form.add_error(None, 'Please upload at least one activity image.')
 		if form.is_valid():
-			activity = form.save(commit=False)
-			activity.vendor = vendor_profile
-			activity.save()
-			for index, image_file in enumerate(image_files):
-				ActivityImage.objects.create(activity=activity, image=image_file, is_primary=(index == 0))
+			with transaction.atomic():
+				activity = form.save(commit=False)
+				activity.vendor = vendor_profile
+				activity.save()
+				primary_index = selected_new_primary_index if selected_new_primary_index is not None else 0
+				for index, image_file in enumerate(image_files):
+					ActivityImage.objects.create(activity=activity, image=image_file, is_primary=(index == primary_index))
 			messages.success(request, 'Activity created successfully.')
 			return redirect('vendor:activity_list')
 	else:
@@ -278,27 +216,45 @@ def activity_edit(request, pk):
 		images_to_remove = activity.images.filter(pk__in=remove_image_ids)
 		remaining_count = activity.images.exclude(pk__in=images_to_remove.values_list('pk', flat=True)).count()
 		image_files = request.FILES.getlist('images')
-		image_error = _validate_activity_images(image_files, existing_count=remaining_count)
+		selected_new_primary_index = parse_selected_primary_index(
+			request.POST.get('selected_new_primary_index'),
+			len(image_files),
+		)
+		image_error = validate_uploaded_images(
+			image_files,
+			existing_count=remaining_count,
+			entity_label='activity',
+			max_images=MAX_ACTIVITY_IMAGES,
+			max_size_bytes=MAX_ACTIVITY_IMAGE_SIZE,
+			allowed_extensions=ALLOWED_ACTIVITY_IMAGE_EXTENSIONS,
+			allowed_content_types=ALLOWED_ACTIVITY_IMAGE_CONTENT_TYPES,
+		)
 		if image_error:
 			form.add_error(None, image_error)
+		if remaining_count + len(image_files) == 0:
+			form.add_error(None, 'Please keep at least one activity image.')
 
 		if form.is_valid():
-			form.save()
-			images_to_remove.delete()
+			with transaction.atomic():
+				form.save()
+				images_to_remove.delete()
 
-			has_existing_images = activity.images.exists()
-			for index, image_file in enumerate(image_files):
-				ActivityImage.objects.create(
-					activity=activity,
-					image=image_file,
-					is_primary=(not has_existing_images and index == 0),
-				)
+				has_existing_images = activity.images.exists()
+				new_images = []
+				for index, image_file in enumerate(image_files):
+					new_images.append(ActivityImage.objects.create(
+						activity=activity,
+						image=image_file,
+						is_primary=(not has_existing_images and index == 0),
+					))
 
-			preferred_primary_id = request.POST.get('primary_image_id')
-			if preferred_primary_id and preferred_primary_id.isdigit():
-				_set_primary_activity_image(activity, preferred_image_id=int(preferred_primary_id))
-			else:
-				_set_primary_activity_image(activity)
+				preferred_primary_id = request.POST.get('primary_image_id')
+				if preferred_primary_id and preferred_primary_id.isdigit():
+					set_primary_image(activity.images, preferred_image_id=int(preferred_primary_id))
+				elif selected_new_primary_index is not None and selected_new_primary_index < len(new_images):
+					set_primary_image(activity.images, preferred_image_id=new_images[selected_new_primary_index].pk)
+				else:
+					set_primary_image(activity.images)
 
 			messages.success(request, 'Activity updated successfully.')
 			return redirect('vendor:activity_list')
@@ -349,21 +305,34 @@ def package_create(request):
 		form = VendorPackageForm(request.POST, request.FILES, vendor_profile=vendor_profile)
 		formset = PackageItineraryFormSet(request.POST, prefix='itinerary')
 		image_files = request.FILES.getlist('images')
-		image_error = _validate_package_images(image_files, existing_count=0)
+		selected_new_primary_index = parse_selected_primary_index(
+			request.POST.get('selected_new_primary_index'),
+			len(image_files),
+		)
+		image_error = validate_uploaded_images(
+			image_files,
+			existing_count=0,
+			entity_label='package',
+			max_images=MAX_PACKAGE_IMAGES,
+			max_size_bytes=MAX_PACKAGE_IMAGE_SIZE,
+			allowed_extensions=ALLOWED_PACKAGE_IMAGE_EXTENSIONS,
+			allowed_content_types=ALLOWED_PACKAGE_IMAGE_CONTENT_TYPES,
+		)
 		if image_error:
 			form.add_error(None, image_error)
 		if not image_files:
 			form.add_error(None, 'Please upload at least one package image.')
 		if form.is_valid() and formset.is_valid():
-			package = form.save(commit=False)
-			package.vendor = vendor_profile
-			package.image = image_files[0]
-			package.save()
-			PackageImage.objects.create(package=package, image=package.image.name, is_primary=True)
-			for image_file in image_files[1:]:
-				PackageImage.objects.create(package=package, image=image_file)
-			formset.instance = package
-			formset.save()
+			with transaction.atomic():
+				primary_index = selected_new_primary_index if selected_new_primary_index is not None else 0
+				package = form.save(commit=False)
+				package.vendor = vendor_profile
+				package.image = image_files[primary_index]
+				package.save()
+				for index, image_file in enumerate(image_files):
+					PackageImage.objects.create(package=package, image=image_file, is_primary=(index == primary_index))
+				formset.instance = package
+				formset.save()
 			messages.success(request, 'Package created successfully.')
 			return redirect('vendor:package_list')
 	else:
@@ -399,30 +368,46 @@ def package_edit(request, pk):
 		images_to_remove = package.images.filter(pk__in=remove_image_ids)
 		remaining_count = package.images.exclude(pk__in=images_to_remove.values_list('pk', flat=True)).count()
 		image_files = request.FILES.getlist('images')
-		image_error = _validate_package_images(image_files, existing_count=remaining_count)
+		selected_new_primary_index = parse_selected_primary_index(
+			request.POST.get('selected_new_primary_index'),
+			len(image_files),
+		)
+		image_error = validate_uploaded_images(
+			image_files,
+			existing_count=remaining_count,
+			entity_label='package',
+			max_images=MAX_PACKAGE_IMAGES,
+			max_size_bytes=MAX_PACKAGE_IMAGE_SIZE,
+			allowed_extensions=ALLOWED_PACKAGE_IMAGE_EXTENSIONS,
+			allowed_content_types=ALLOWED_PACKAGE_IMAGE_CONTENT_TYPES,
+		)
 		if image_error:
 			form.add_error(None, image_error)
 		if remaining_count + len(image_files) == 0:
 			form.add_error(None, 'Please keep at least one package image.')
 		if form.is_valid() and formset.is_valid():
-			form.save()
-			formset.save()
-			images_to_remove.delete()
+			with transaction.atomic():
+				form.save()
+				formset.save()
+				images_to_remove.delete()
 
-			has_existing_images = package.images.exists()
-			for index, image_file in enumerate(image_files):
-				PackageImage.objects.create(
-					package=package,
-					image=image_file,
-					is_primary=(not has_existing_images and index == 0),
-				)
+				has_existing_images = package.images.exists()
+				new_images = []
+				for index, image_file in enumerate(image_files):
+					new_images.append(PackageImage.objects.create(
+						package=package,
+						image=image_file,
+						is_primary=(not has_existing_images and index == 0),
+					))
 
-			preferred_primary_id = request.POST.get('primary_image_id')
-			if preferred_primary_id and preferred_primary_id.isdigit():
-				_set_primary_package_image(package, preferred_image_id=int(preferred_primary_id))
-			else:
-				_set_primary_package_image(package)
-			_sync_package_cover_image(package)
+				preferred_primary_id = request.POST.get('primary_image_id')
+				if preferred_primary_id and preferred_primary_id.isdigit():
+					set_primary_image(package.images, preferred_image_id=int(preferred_primary_id))
+				elif selected_new_primary_index is not None and selected_new_primary_index < len(new_images):
+					set_primary_image(package.images, preferred_image_id=new_images[selected_new_primary_index].pk)
+				else:
+					set_primary_image(package.images)
+				_sync_package_cover_image(package)
 
 			messages.success(request, 'Package updated successfully.')
 			return redirect('vendor:package_list')
@@ -471,7 +456,8 @@ def hot_sale_create(request):
 	if request.method == 'POST':
 		form = VendorHotSaleForm(request.POST, vendor_profile=vendor_profile)
 		if form.is_valid():
-			form.save()
+			with transaction.atomic():
+				form.save()
 			messages.success(request, 'Hot sale created successfully.')
 			return redirect('vendor:hot_sale_list')
 	else:
@@ -498,7 +484,8 @@ def hot_sale_edit(request, pk):
 	if request.method == 'POST':
 		form = VendorHotSaleForm(request.POST, instance=hot_sale, vendor_profile=vendor_profile)
 		if form.is_valid():
-			form.save()
+			with transaction.atomic():
+				form.save()
 			messages.success(request, 'Hot sale updated successfully.')
 			return redirect('vendor:hot_sale_list')
 	else:

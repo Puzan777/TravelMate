@@ -60,6 +60,24 @@
       color: #64748b;
       font-size: 0.92rem;
     }
+    .pending-remove {
+      opacity: 0.45;
+      filter: grayscale(80%);
+      position: relative;
+    }
+    .pending-remove::after {
+      content: 'Marked for removal';
+      position: absolute;
+      inset: auto 8px 8px 8px;
+      text-align: center;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: #991b1b;
+      background: rgba(254, 226, 226, 0.92);
+      border: 1px solid #fecaca;
+      border-radius: 6px;
+      padding: 3px 6px;
+    }
     .itinerary-toolbar {
       display: flex;
       justify-content: space-between;
@@ -178,6 +196,7 @@
 
       <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
+        <input type="hidden" name="selected_new_primary_index" id="package-selected-new-primary-index" value="">
 
         <div class="form-shell">
         <div class="package-shell">
@@ -228,10 +247,8 @@
 
                 <div class="col-12">
                   <label class="form-label">Package Images</label>
-                  <div id="package-image-inputs" class="d-flex flex-column gap-2">
-                    <input type="file" name="images" class="form-control" accept="image/*" multiple>
-                  </div>
-                  <button type="button" id="add-package-image-input" class="btn btn-sm btn-outline-secondary mt-2">+ Add more images</button>
+                  <input type="file" id="package-image-picker" class="form-control" accept="image/*" multiple>
+                  <input type="file" id="package-images-input" name="images" accept="image/*" multiple style="display:none;">
                   <div class="form-text">Each selection is kept. Max 10 images. Allowed: JPG, JPEG, PNG, WEBP, GIF. Max size: 5MB each.</div>
                 </div>
 
@@ -245,14 +262,14 @@
                   <label class="form-label">Current Images</label>
                   <div class="d-flex flex-wrap gap-2">
                     {% for item in package_images %}
-                    <div class="border rounded p-2" style="width: 150px;">
+                    <div class="border rounded p-2 js-image-card" style="width: 150px;">
                       <img src="{{ item.image.url }}" alt="Package image" class="rounded border mb-2" style="height: 90px; width: 100%; object-fit: cover;">
                       <div class="form-check mb-1">
                         <input class="form-check-input" type="radio" name="primary_image_id" value="{{ item.pk }}" id="primary-package-image-{{ item.pk }}" {% if item.is_primary %}checked{% endif %}>
                         <label class="form-check-label small" for="primary-package-image-{{ item.pk }}">Set as cover</label>
                       </div>
                       <div class="form-check">
-                        <input class="form-check-input" type="checkbox" name="remove_image_ids" value="{{ item.pk }}" id="remove-package-image-{{ item.pk }}">
+                        <input class="form-check-input js-remove-image" type="checkbox" name="remove_image_ids" value="{{ item.pk }}" id="remove-package-image-{{ item.pk }}">
                         <label class="form-check-label small text-danger" for="remove-package-image-{{ item.pk }}">Remove</label>
                       </div>
                     </div>
@@ -566,11 +583,13 @@
     const emptyState = document.getElementById('itinerary-empty-state');
     const template = document.getElementById('itinerary-empty-form-template');
     const totalFormsInput = document.getElementById('id_itinerary-TOTAL_FORMS');
-    const packageImageInputs = document.getElementById('package-image-inputs');
-    const addPackageImageInputButton = document.getElementById('add-package-image-input');
+    const packageImagePicker = document.getElementById('package-image-picker');
+    const packageImagesInput = document.getElementById('package-images-input');
     const packagePreviewContainer = document.getElementById('package-new-image-preview');
+    const selectedNewPrimaryInput = document.getElementById('package-selected-new-primary-index');
     const packageCoverPreviewImage = document.getElementById('package-cover-preview-image');
     const packageCoverPreviewPlaceholder = document.getElementById('package-cover-preview-placeholder');
+    const removeCheckboxes = document.querySelectorAll('.js-remove-image');
 
     const updateEmptyState = () => {
       emptyState.style.display = list.children.length ? 'none' : '';
@@ -628,20 +647,48 @@
       }
     }
 
+    let selectedPackageFiles = [];
+
+    function syncPackageFilesInput() {
+      if (!packageImagesInput) {
+        return;
+      }
+      const dt = new DataTransfer();
+      selectedPackageFiles.forEach((file) => dt.items.add(file));
+      packageImagesInput.files = dt.files;
+    }
+
+    function removeSelectedPackageFile(indexToRemove) {
+      selectedPackageFiles = selectedPackageFiles.filter((_file, idx) => idx !== indexToRemove);
+
+      if (selectedNewPrimaryInput && selectedNewPrimaryInput.value !== '') {
+        const currentIndex = Number(selectedNewPrimaryInput.value);
+        if (currentIndex === indexToRemove) {
+          selectedNewPrimaryInput.value = '';
+        } else if (currentIndex > indexToRemove) {
+          selectedNewPrimaryInput.value = String(currentIndex - 1);
+        }
+      }
+
+      syncPackageFilesInput();
+      renderPackageImagePreviews();
+    }
+
     function renderPackageImagePreviews() {
-      if (!packageImageInputs || !packagePreviewContainer) {
+      if (!packagePreviewContainer) {
         return;
       }
       packagePreviewContainer.innerHTML = '';
       let firstImageUrl = null;
+      const selectedIndex = selectedNewPrimaryInput && selectedNewPrimaryInput.value !== ''
+        ? Number(selectedNewPrimaryInput.value)
+        : null;
+      let hasSelectedInCurrentBatch = false;
 
-      const inputs = packageImageInputs.querySelectorAll('input[type="file"][name="images"]');
-      inputs.forEach((input) => {
-        const files = Array.from(input.files || []);
-        files.forEach((file) => {
-          if (!file.type || !file.type.startsWith('image/')) {
-            return;
-          }
+      selectedPackageFiles.forEach((file, currentIndex) => {
+        if (!file.type || !file.type.startsWith('image/')) {
+          return;
+        }
           const img = document.createElement('img');
           img.className = 'rounded border';
           img.style.height = '90px';
@@ -655,9 +702,76 @@
           img.onload = () => {
             URL.revokeObjectURL(img.src);
           };
-          packagePreviewContainer.appendChild(img);
-        });
+          const card = document.createElement('label');
+          card.className = 'border rounded p-2';
+          card.style.width = '150px';
+          card.style.cursor = 'pointer';
+
+          const selectorWrap = document.createElement('div');
+          selectorWrap.className = 'form-check mb-1';
+
+          const selector = document.createElement('input');
+          selector.type = 'radio';
+          selector.name = 'new_package_primary_preview';
+          selector.className = 'form-check-input';
+          selector.value = String(currentIndex);
+
+          const selectorLabel = document.createElement('span');
+          selectorLabel.className = 'form-check-label small ms-1';
+          selectorLabel.textContent = 'Use as cover';
+
+          selectorWrap.appendChild(selector);
+          selectorWrap.appendChild(selectorLabel);
+
+          const removeBtn = document.createElement('button');
+          removeBtn.type = 'button';
+          removeBtn.className = 'btn btn-sm btn-outline-danger mt-1';
+          removeBtn.textContent = 'Remove';
+          removeBtn.addEventListener('click', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            removeSelectedPackageFile(currentIndex);
+          });
+
+          card.appendChild(img);
+          card.appendChild(selectorWrap);
+          card.appendChild(removeBtn);
+          packagePreviewContainer.appendChild(card);
+
+          const shouldSelect = selectedIndex !== null
+            ? selectedIndex === currentIndex
+            : currentIndex === 0;
+
+          if (shouldSelect) {
+            selector.checked = true;
+            hasSelectedInCurrentBatch = true;
+            if (selectedNewPrimaryInput) {
+              selectedNewPrimaryInput.value = String(currentIndex);
+            }
+          }
+
+          selector.addEventListener('change', () => {
+            if (!selectedNewPrimaryInput) {
+              return;
+            }
+            selectedNewPrimaryInput.value = selector.value;
+            const selectedRadio = document.querySelector('input[name="primary_image_id"]:checked');
+            if (selectedRadio) {
+              selectedRadio.checked = false;
+            }
+            if (packageCoverPreviewImage) {
+              packageCoverPreviewImage.src = img.src;
+              packageCoverPreviewImage.style.display = 'block';
+              if (packageCoverPreviewPlaceholder) {
+                packageCoverPreviewPlaceholder.style.display = 'none';
+              }
+            }
+          });
       });
+
+      if (!hasSelectedInCurrentBatch && selectedNewPrimaryInput) {
+        selectedNewPrimaryInput.value = '';
+      }
 
       const selectedRadio = document.querySelector('input[name="primary_image_id"]:checked');
       if (!selectedRadio && firstImageUrl && packageCoverPreviewImage) {
@@ -665,6 +779,11 @@
         packageCoverPreviewImage.style.display = 'block';
         if (packageCoverPreviewPlaceholder) {
           packageCoverPreviewPlaceholder.style.display = 'none';
+        }
+      } else if (!selectedRadio && !firstImageUrl && packageCoverPreviewImage) {
+        packageCoverPreviewImage.style.display = 'none';
+        if (packageCoverPreviewPlaceholder) {
+          packageCoverPreviewPlaceholder.style.display = 'block';
         }
       }
     }
@@ -675,6 +794,9 @@
       }
       const selectedRadio = document.querySelector('input[name="primary_image_id"]:checked');
       if (!selectedRadio) {
+        if (selectedNewPrimaryInput) {
+          selectedNewPrimaryInput.value = '';
+        }
         return;
       }
       const imageCard = selectedRadio.closest('.border.rounded');
@@ -689,26 +811,35 @@
       }
     }
 
-    if (packageImageInputs && addPackageImageInputButton) {
-      packageImageInputs.addEventListener('change', (event) => {
-        if (event.target && event.target.matches('input[type="file"][name="images"]')) {
-          renderPackageImagePreviews();
+    if (packageImagePicker && packageImagesInput) {
+      packageImagePicker.addEventListener('change', () => {
+        const newFiles = Array.from(packageImagePicker.files || []);
+        if (!newFiles.length) {
+          return;
         }
-      });
-
-      addPackageImageInputButton.addEventListener('click', () => {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.name = 'images';
-        input.className = 'form-control';
-        input.accept = 'image/*';
-        input.multiple = true;
-        packageImageInputs.appendChild(input);
+        selectedPackageFiles = selectedPackageFiles.concat(newFiles);
+        syncPackageFilesInput();
         renderPackageImagePreviews();
+        packageImagePicker.value = '';
       });
 
+      syncPackageFilesInput();
       renderPackageImagePreviews();
     }
+
+    removeCheckboxes.forEach((checkbox) => {
+      const card = checkbox.closest('.js-image-card');
+      if (!card) {
+        return;
+      }
+
+      const syncPendingState = () => {
+        card.classList.toggle('pending-remove', checkbox.checked);
+      };
+
+      checkbox.addEventListener('change', syncPendingState);
+      syncPendingState();
+    });
 
     document.querySelectorAll('input[name="primary_image_id"]').forEach((radio) => {
       radio.addEventListener('change', updateCoverFromSelectedPrimary);
