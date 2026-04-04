@@ -4,7 +4,7 @@ from django import template
 from django.db.models import Count
 from django.db.models.functions import TruncMonth
 
-from app.models import Booking, CustomUser, Destination, HotSale, Inquiry, Package
+from app.models import Activity, Booking, CustomUser, Destination, HotSale, Inquiry, Package
 
 try:
     from vendor.models import VendorProfile
@@ -22,6 +22,16 @@ def dashboard_package_count():
 @register.simple_tag
 def dashboard_active_package_count():
     return Package.objects.filter(is_active=True).count()
+
+
+@register.simple_tag
+def dashboard_activity_count():
+    return Activity.objects.count()
+
+
+@register.simple_tag
+def dashboard_active_activity_count():
+    return Activity.objects.filter(is_active=True).count()
 
 
 @register.simple_tag
@@ -61,6 +71,17 @@ def dashboard_inquiry_reply_rate():
 @register.simple_tag
 def dashboard_hot_sale_count():
     return HotSale.objects.count()
+
+
+@register.simple_tag
+def dashboard_hot_sale_breakdown():
+    package_count = HotSale.objects.filter(package__isnull=False).count()
+    activity_count = HotSale.objects.filter(activity__isnull=False).count()
+    return {
+        'total': package_count + activity_count,
+        'packages': package_count,
+        'activities': activity_count,
+    }
 
 
 @register.simple_tag
@@ -112,6 +133,105 @@ def dashboard_top_packages(limit=5):
         .annotate(total_bookings=Count('bookings'))
         .order_by('-total_bookings', 'title')[:limit]
     )
+
+
+@register.simple_tag
+def dashboard_top_activities(limit=5):
+    return (
+        Activity.objects
+        .select_related('vendor', 'category')
+        .annotate(total_hot_sales=Count('hot_sale_entries'))
+        .order_by('-total_hot_sales', 'name')[:limit]
+    )
+
+
+@register.simple_tag
+def dashboard_top_products(limit=10):
+    limit = max(int(limit), 1)
+
+    package_rows = (
+        Package.objects
+        .select_related('vendor')
+        .annotate(total_bookings=Count('bookings'))
+        .values('title', 'vendor__company_name', 'total_bookings', 'rating')
+    )
+
+    activity_rows = (
+        Activity.objects
+        .select_related('vendor')
+        .values('name', 'vendor__company_name')
+    )
+
+    rows = []
+    for row in package_rows:
+        rows.append({
+            'product_name': row['title'],
+            'product_type': 'Package',
+            'vendor_name': row['vendor__company_name'] or '-',
+            'bookings': row['total_bookings'] or 0,
+            'rating_display': f"{row['rating']:.1f}" if row['rating'] is not None else '-',
+        })
+
+    for row in activity_rows:
+        rows.append({
+            'product_name': row['name'],
+            'product_type': 'Activity',
+            'vendor_name': row['vendor__company_name'] or '-',
+            # Activity bookings are not modeled yet in Booking, so keep at zero.
+            'bookings': 0,
+            'rating_display': '-',
+        })
+
+    rows.sort(key=lambda item: (-item['bookings'], item['product_name'].lower()))
+    return rows[:limit]
+
+
+@register.simple_tag
+def dashboard_product_trends(months=6):
+    months = max(int(months), 1)
+
+    today = date.today()
+    month_cursor = date(today.year, today.month, 1)
+    keys = []
+    labels = []
+
+    for _ in range(months):
+        keys.append((month_cursor.year, month_cursor.month))
+        labels.append(month_cursor.strftime('%b %Y'))
+        if month_cursor.month == 1:
+            month_cursor = date(month_cursor.year - 1, 12, 1)
+        else:
+            month_cursor = date(month_cursor.year, month_cursor.month - 1, 1)
+
+    keys.reverse()
+    labels.reverse()
+    start_year, start_month = keys[0]
+    start_date = date(start_year, start_month, 1)
+
+    package_monthly = (
+        Booking.objects
+        .filter(created_at__date__gte=start_date)
+        .annotate(month=TruncMonth('created_at'))
+        .values('month')
+        .annotate(total=Count('id'))
+    )
+    package_map = {(row['month'].year, row['month'].month): row['total'] for row in package_monthly}
+
+    points = []
+    for label, key in zip(labels, keys):
+        package_total = package_map.get(key, 0)
+        activity_total = 0
+        points.append({
+            'label': label,
+            'package_bookings': package_total,
+            'activity_bookings': activity_total,
+        })
+
+    return {
+        'points': points,
+        'total_package_bookings': sum(point['package_bookings'] for point in points),
+        'total_activity_bookings': sum(point['activity_bookings'] for point in points),
+    }
 
 
 @register.simple_tag

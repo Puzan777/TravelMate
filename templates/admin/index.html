@@ -225,6 +225,38 @@
     margin-top: 8px;
   }
 
+  .trend-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+  }
+
+  .trend-switch {
+    display: inline-flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .trend-switch-btn {
+    border: 1px solid #c9dff3;
+    background: #f8fbff;
+    color: #1b2a40;
+    border-radius: 999px;
+    padding: 5px 10px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .trend-switch-btn.is-active {
+    background: var(--brand);
+    border-color: var(--brand);
+    color: #fff;
+  }
+
   .trend-col {
     display: flex;
     flex-direction: column;
@@ -363,8 +395,9 @@
 
 {% block content %}
 <div id="content-main">
-  {% dashboard_monthly_bookings 6 as monthly_bookings %}
-  {% dashboard_top_packages 6 as top_packages %}
+  {% dashboard_hot_sale_breakdown as hot_sale_breakdown %}
+  {% dashboard_top_products 10 as top_products %}
+  {% dashboard_product_trends 6 as product_trends %}
   {% dashboard_recent_users 8 as recent_users %}
   {% dashboard_recent_bookings 10 as recent_bookings %}
   {% dashboard_recent_inquiries 10 as recent_inquiries %}
@@ -384,6 +417,7 @@
         <h3 class="side-heading">Catalog</h3>
         <ul class="side-links">
           <li><a href="{% url 'activity_category_list' %}">Activity Categories</a></li>
+          <li><a href="{% url 'admin:app_activity_changelist' %}">Activities</a></li>
           <li><a href="{% url 'admin:app_destination_changelist' %}">Destinations</a></li>
           <li><a href="{% url 'admin:app_package_changelist' %}">Packages</a></li>
           <li><a href="{% url 'admin:app_hotsale_changelist' %}">Hot Sales</a></li>
@@ -441,8 +475,22 @@
         </article>
 
         <article class="kpi-card">
+          <p class="kpi-label">Total Activities</p>
+          <p class="kpi-value">{% dashboard_activity_count %}</p>
+          <a class="kpi-link" href="{% url 'admin:app_activity_changelist' %}">Open activities</a>
+        </article>
+
+        <article class="kpi-card">
+          <p class="kpi-label">Active Activities</p>
+          <p class="kpi-value">{% dashboard_active_activity_count %}</p>
+          <a class="kpi-link" href="{% url 'admin:app_activity_changelist' %}?is_active__exact=1">Inspect active</a>
+        </article>
+
+        <article class="kpi-card">
           <p class="kpi-label">Hot Sales</p>
-          <p class="kpi-value">{% dashboard_hot_sale_count %}</p>
+          <p class="kpi-value" style="font-size: 1.05rem; line-height: 1.4;">
+            Hot Sales: {{ hot_sale_breakdown.total }} total ({{ hot_sale_breakdown.packages }} packages, {{ hot_sale_breakdown.activities }} activities)
+          </p>
           <a class="kpi-link" href="{% url 'admin:app_hotsale_changelist' %}">Manage offers</a>
         </article>
 
@@ -461,23 +509,30 @@
 
       <div class="main-grid">
         <section class="dash-main-card">
-          <h2 class="card-title">Booking Trend (Last 6 Months)</h2>
-          {% if monthly_bookings %}
-            {% with max_total=0 %}{% endwith %}
-            {% for point in monthly_bookings %}
-              {% if point.total > max_total %}{% with max_total=point.total %}{% endwith %}{% endif %}
-            {% endfor %}
-            <div class="trend-wrap">
-              {% for point in monthly_bookings %}
-                <div class="trend-col">
-                  <div class="trend-total">{{ point.total }}</div>
-                  <div class="trend-bar" style="height:{% if point.total == 0 %}6px{% else %}{% widthratio point.total 1 18 %}px{% endif %};"></div>
+          <h2 class="card-title">Product Trends (Last 6 Months)</h2>
+          <div class="trend-toolbar">
+            <p id="trend-summary" class="muted" style="margin: 0;">
+            Package bookings (last 6 months): {{ product_trends.total_package_bookings }}
+            </p>
+            <div class="trend-switch" role="group" aria-label="Product trend mode">
+              <button type="button" class="trend-switch-btn is-active" data-trend-mode="package" aria-pressed="true">Packages</button>
+              <button type="button" class="trend-switch-btn" data-trend-mode="activity" aria-pressed="false">Activities</button>
+            </div>
+          </div>
+          {% if product_trends.points %}
+            <div id="product-trends-card" class="trend-wrap">
+              {% for point in product_trends.points %}
+                <div class="trend-col"
+                     data-package-bookings="{{ point.package_bookings }}"
+                     data-activity-bookings="{{ point.activity_bookings }}">
+                  <div class="trend-total">{{ point.package_bookings }}</div>
+                  <div class="trend-bar" style="height:6px;"></div>
                   <div class="trend-label">{{ point.label }}</div>
                 </div>
               {% endfor %}
             </div>
           {% else %}
-            <p class="muted">No booking trend data available yet.</p>
+            <p class="muted">No product trend data available yet.</p>
           {% endif %}
         </section>
 
@@ -485,6 +540,7 @@
           <h2 class="card-title">Quick Actions</h2>
           <div class="actions-grid">
             <a class="action-link" href="{% url 'activity_category_list' %}">Manage Activity Categories</a>
+            <a class="action-link" href="{% url 'admin:app_activity_changelist' %}">Manage Activities</a>
             <a class="action-link" href="{% url 'admin:vendor_vendorprofile_changelist' %}?verification_status__exact=PENDING">Review Vendor Queue</a>
             <a class="action-link" href="{% url 'admin:app_customuser_add' %}">Create User</a>
             <a class="action-link" href="{% url 'admin:app_booking_changelist' %}">Manage Bookings</a>
@@ -496,40 +552,34 @@
       </div>
 
       <section class="dash-main-card" style="margin-bottom: 14px;">
-        <h2 class="card-title">Top Packages by Booking Volume</h2>
-        {% if top_packages %}
+        <h2 class="card-title">Top Products by Booking Volume</h2>
+        {% if top_products %}
           <div class="table-wrap">
             <table class="simple-table">
               <thead>
                 <tr>
-                  <th>Package</th>
+                  <th>Product Name</th>
+                  <th>Type</th>
                   <th>Vendor</th>
-                  <th>Destination</th>
-                  <th>Total Bookings</th>
-                  <th>Status</th>
+                  <th>Bookings</th>
+                  <th>Rating</th>
                 </tr>
               </thead>
               <tbody>
-                {% for package in top_packages %}
+                {% for product in top_products %}
                   <tr>
-                    <td>{{ package.title }}</td>
-                    <td>{% if package.vendor %}{{ package.vendor.company_name }}{% else %}-{% endif %}</td>
-                    <td>{% if package.destination %}{{ package.destination.name }}{% else %}-{% endif %}</td>
-                    <td>{{ package.total_bookings }}</td>
-                    <td>
-                      {% if package.is_active %}
-                        <span class="pill pill-good">Active</span>
-                      {% else %}
-                        <span class="pill pill-bad">Inactive</span>
-                      {% endif %}
-                    </td>
+                    <td>{{ product.product_name }}</td>
+                    <td>{{ product.product_type }}</td>
+                    <td>{{ product.vendor_name }}</td>
+                    <td>{{ product.bookings }}</td>
+                    <td>{{ product.rating_display }}</td>
                   </tr>
                 {% endfor %}
               </tbody>
             </table>
           </div>
         {% else %}
-          <p class="muted">No package data found.</p>
+          <p class="muted">No product data found.</p>
         {% endif %}
       </section>
 
@@ -688,4 +738,86 @@
     </main>
   </div>
 </div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const trendWrap = document.getElementById('product-trends-card');
+    if (!trendWrap) {
+      return;
+    }
+
+    const summary = document.getElementById('trend-summary');
+    const buttons = Array.from(document.querySelectorAll('.trend-switch-btn'));
+    const columns = Array.from(trendWrap.querySelectorAll('.trend-col'));
+
+    function readValue(column, mode) {
+      if (mode === 'activity') {
+        return parseInt(column.dataset.activityBookings || '0', 10);
+      }
+      return parseInt(column.dataset.packageBookings || '0', 10);
+    }
+
+    function seriesTotals() {
+      let packages = 0;
+      let activities = 0;
+
+      columns.forEach(function (column) {
+        packages += readValue(column, 'package');
+        activities += readValue(column, 'activity');
+      });
+
+      return { packages, activities };
+    }
+
+    function updateTrend(mode) {
+      let maxValue = 0;
+      columns.forEach(function (column) {
+        maxValue = Math.max(maxValue, readValue(column, mode));
+      });
+
+      columns.forEach(function (column, index) {
+        const value = readValue(column, mode);
+        const totalEl = column.querySelector('.trend-total');
+        const barEl = column.querySelector('.trend-bar');
+        const labelEl = column.querySelector('.trend-label');
+
+        totalEl.textContent = String(value);
+        if (maxValue === 0) {
+          barEl.style.height = '6px';
+        } else {
+          barEl.style.height = String(Math.max(6, Math.round((value / maxValue) * 72))) + 'px';
+        }
+
+        if (columns.length > 10 && index % 5 !== 0 && index !== columns.length - 1) {
+          labelEl.style.opacity = '0';
+        } else {
+          labelEl.style.opacity = '1';
+        }
+      });
+
+      buttons.forEach(function (button) {
+        const active = button.dataset.trendMode === mode;
+        button.classList.toggle('is-active', active);
+        button.setAttribute('aria-pressed', active ? 'true' : 'false');
+      });
+
+      const totals = seriesTotals();
+      if (summary) {
+        if (mode === 'package') {
+          summary.textContent = 'Package bookings (last 6 months): ' + totals.packages;
+        } else if (mode === 'activity') {
+          summary.textContent = 'Activity bookings (last 6 months): ' + totals.activities;
+        }
+      }
+    }
+
+    buttons.forEach(function (button) {
+      button.addEventListener('click', function () {
+        updateTrend(button.dataset.trendMode || 'package');
+      });
+    });
+
+    updateTrend('package');
+  });
+</script>
 {% endblock %}

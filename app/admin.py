@@ -101,6 +101,39 @@ class PackageAdmin(admin.ModelAdmin):
         return request.user.is_active and request.user.is_staff
 
 
+@admin.register(Activity)
+class ActivityAdmin(admin.ModelAdmin):
+    list_display = ('name', 'vendor', 'category', 'price', 'difficulty_level', 'is_active', 'created_at')
+    list_filter = ('vendor', 'category', 'difficulty_level', 'is_active', 'created_at')
+    search_fields = ('name', 'description', 'vendor__company_name', 'category__name')
+    readonly_fields = ('created_at',)
+    list_editable = ('is_active',)
+
+    fieldsets = (
+        (None, {'fields': ('vendor', 'category', 'name', 'description', 'price', 'is_active')}),
+        ('Trip details', {'fields': ('duration', 'difficulty_level', 'max_group_size', 'min_age')}),
+        ('Safety', {'fields': ('min_weight', 'max_weight', 'equipment_provided', 'safety_notes')}),
+        ('System', {'fields': ('created_at',)}),
+    )
+
+    def get_queryset(self, request):
+        if _is_platform_admin(request.user):
+            return super().get_queryset(request)
+        return super().get_queryset(request).none()
+
+    def has_add_permission(self, request):
+        return _is_platform_admin(request.user)
+
+    def has_change_permission(self, request, obj=None):
+        return _is_platform_admin(request.user)
+
+    def has_delete_permission(self, request, obj=None):
+        return _is_platform_admin(request.user)
+
+    def has_view_permission(self, request, obj=None):
+        return _is_platform_admin(request.user)
+
+
 @admin.register(HotSale)
 class HotSaleAdmin(admin.ModelAdmin):
     list_display = ('target_type', 'target_name', 'original_price', 'sale_price', 'savings', 'is_active', 'created_at')
