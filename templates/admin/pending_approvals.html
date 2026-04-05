@@ -1,0 +1,142 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block title %}Pending Approvals | TravelMate Admin{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+    :root {
+        --bg-page: #f4f7fb;
+        --bg-card: #ffffff;
+        --text-main: #101828;
+        --text-muted: #5f6c80;
+        --line-soft: #e9eef5;
+        --brand: #0a4f8a;
+        --good: #0f8b4c;
+        --bad: #b42318;
+        --radius-lg: 16px;
+    }
+    #content-main {
+        background: var(--bg-card);
+        border: 1px solid var(--line-soft);
+        border-radius: var(--radius-lg);
+        padding: 24px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    h1 {
+        margin-top: 0;
+        color: var(--brand);
+        font-weight: 700;
+        font-size: 1.5rem;
+    }
+    .simple-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+    .simple-table th, .simple-table td {
+        padding: 12px;
+        border-bottom: 1px solid var(--line-soft);
+        text-align: left;
+    }
+    .simple-table th {
+        background: #f8fafc;
+        font-weight: 700;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        font-size: 0.85rem;
+    }
+    .btn {
+        display: inline-block;
+        padding: 6px 12px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.85rem;
+        cursor: pointer;
+        border: none;
+    }
+    .btn-approve {
+        background: #e9f8ef;
+        color: var(--good);
+        border: 1px solid #b9e6cc;
+    }
+    .btn-approve:hover {
+        background: var(--good);
+        color: white;
+    }
+    .btn-reject {
+        background: #fdecec;
+        color: var(--bad);
+        border: 1px solid #f7c7c7;
+        margin-left: 8px;
+    }
+    .btn-reject:hover {
+        background: var(--bad);
+        color: white;
+    }
+    .btn-view {
+        background: #f0f4f8;
+        color: var(--brand);
+        border: 1px solid #cadaeb;
+        margin-right: 8px;
+    }
+    .btn-view:hover {
+        background: var(--brand);
+        color: white;
+    }
+    .form-inline {
+        display: inline;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    <h1>Pending Packages & Activities</h1>
+    <p style="color: var(--text-muted);">Review vendor submissions before they go live on the site.</p>
+    
+    {% if items %}
+    <table class="simple-table">
+        <thead>
+            <tr>
+                <th>Product Name</th>
+                <th>Type</th>
+                <th>Vendor</th>
+                <th>Submitted Date</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr>
+                <td><strong>{{ item.name }}</strong></td>
+                <td>{{ item.type_label }}</td>
+                <td>{{ item.vendor }}</td>
+                <td>{{ item.submitted|date:"M d, Y H:i" }}</td>
+                <td>
+                    <a href="{{ item.admin_url }}" target="_blank" class="btn btn-view">View details</a>
+                    <form method="POST" class="form-inline">
+                        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                        <input type="hidden" name="item_type" value="{{ item.item_type }}">
+                        <input type="hidden" name="item_id" value="{{ item.pk }}">
+                        <button type="submit" name="action" value="approve" class="btn btn-approve">Approve</button>
+                    </form>
+                    <form method="POST" class="form-inline">
+                        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                        <input type="hidden" name="item_type" value="{{ item.item_type }}">
+                        <input type="hidden" name="item_id" value="{{ item.pk }}">
+                        <input type="text" name="rejection_reason" placeholder="Reason (required)" required style="padding: 4px; border-radius: 4px; border: 1px solid var(--line-soft); margin-left: 8px;">
+                        <button type="submit" name="action" value="reject" class="btn btn-reject">Reject</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="margin-top: 20px; font-style: italic; color: var(--text-muted);">No pending approvals at this time.</p>
+    {% endif %}
+</div>
+{% endblock %}

@@ -4,7 +4,7 @@ from django.db import transaction
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 
-from app.models import Activity, ActivityImage, Booking, HotSale, Inquiry, Package, PackageImage
+from app.models import Activity, ActivityImage, ApprovalStatus, Booking, HotSale, Inquiry, Package, PackageImage
 from .forms import (
 	PackageItineraryFormSet,
 	VendorActivityForm,
@@ -99,6 +99,8 @@ def dashboard(request):
 			.select_related('package', 'package__destination', 'activity')
 			.prefetch_related('activity__images')
 			.order_by('-updated_at')[:8],
+		'rejected_package_count': Package.objects.filter(vendor=vendor_profile, approval_status=ApprovalStatus.REJECTED).count(),
+		'rejected_activity_count': Activity.objects.filter(vendor=vendor_profile, approval_status=ApprovalStatus.REJECTED).count(),
 	}
 	return render(request, 'vendor/dashboard.html', context)
 
@@ -189,6 +191,7 @@ def activity_create(request):
 			with transaction.atomic():
 				activity = form.save(commit=False)
 				activity.vendor = vendor_profile
+				activity.approval_status = ApprovalStatus.PENDING
 				activity.save()
 				primary_index = selected_new_primary_index if selected_new_primary_index is not None else 0
 				for index, image_file in enumerate(image_files):
@@ -243,7 +246,11 @@ def activity_edit(request, pk):
 
 		if form.is_valid():
 			with transaction.atomic():
-				form.save()
+				activity = form.save()
+				if activity.approval_status == ApprovalStatus.REJECTED:
+					activity.approval_status = ApprovalStatus.PENDING
+					activity.rejection_reason = None
+					activity.save(update_fields=['approval_status', 'rejection_reason'])
 				images_to_remove.delete()
 
 				has_existing_images = activity.images.exists()
@@ -334,6 +341,7 @@ def package_create(request):
 				primary_index = selected_new_primary_index if selected_new_primary_index is not None else 0
 				package = form.save(commit=False)
 				package.vendor = vendor_profile
+				package.approval_status = ApprovalStatus.PENDING
 				package.image = image_files[primary_index]
 				package.save()
 				for index, image_file in enumerate(image_files):
@@ -394,8 +402,12 @@ def package_edit(request, pk):
 			form.add_error(None, 'Please keep at least one package image.')
 		if form.is_valid() and formset.is_valid():
 			with transaction.atomic():
-				form.save()
+				package = form.save()
 				formset.save()
+				if package.approval_status == ApprovalStatus.REJECTED:
+					package.approval_status = ApprovalStatus.PENDING
+					package.rejection_reason = None
+					package.save(update_fields=['approval_status', 'rejection_reason'])
 				images_to_remove.delete()
 
 				has_existing_images = package.images.exists()

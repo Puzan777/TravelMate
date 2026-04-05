@@ -307,6 +307,22 @@
       </aside>
 
       <div class="dashboard-main">
+        {% if rejected_package_count > 0 or rejected_activity_count > 0 %}
+        <div class="alert alert-danger shadow-sm d-flex justify-content-between align-items-center" style="border-radius: 12px; margin-bottom: 20px;">
+          <div>
+            <strong>Action Required:</strong> You have 
+            {% if rejected_package_count > 0 %}<strong>{{ rejected_package_count }}</strong> rejected package(s){% endif %}
+            {% if rejected_package_count > 0 and rejected_activity_count > 0 %} and {% endif %}
+            {% if rejected_activity_count > 0 %}<strong>{{ rejected_activity_count }}</strong> rejected activity(s){% endif %}
+            that were declined by an admin. Please review the notes and update your items.
+          </div>
+          <div>
+            {% if rejected_package_count > 0 %}<a href="{% url 'vendor:package_list' %}" class="btn btn-sm btn-outline-danger shadow-sm">View Packages</a>{% endif %}
+            {% if rejected_activity_count > 0 %}<a href="{% url 'vendor:activity_list' %}" class="btn btn-sm btn-outline-danger shadow-sm">View Activities</a>{% endif %}
+          </div>
+        </div>
+        {% endif %}
+
         <section class="quick-actions">
           <h2>Quick Actions</h2>
           <div class="quick-actions-grid">

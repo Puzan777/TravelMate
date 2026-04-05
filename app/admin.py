@@ -1,6 +1,18 @@
-from django.contrib import admin
+from itertools import chain
+from operator import attrgetter
+
+from django.contrib import admin, messages
 from django.db.models import Q
-from .models import Activity, Booking, CustomUser, Destination, HotSale, Inquiry, Package, PackageItinerary
+from django.shortcuts import redirect
+from django.template.response import TemplateResponse
+from django.urls import path, reverse
+from django.utils import timezone
+from django.utils.html import format_html
+
+from .models import (
+    Activity, ActivityImage, ApprovalStatus, Booking, CustomUser, Destination,
+    HotSale, Inquiry, Package, PackageImage, PackageItinerary,
+)
 
 # Hide default Django admin nav sidebar; custom dashboard provides navigation.
 admin.site.enable_nav_sidebar = False
@@ -50,10 +62,27 @@ class DestinationAdmin(admin.ModelAdmin):
         return _is_platform_admin(request.user)
 
 
+class PackageImageInline(admin.TabularInline):
+    model = PackageImage
+    extra = 0
+    fields = ('image_preview', 'image', 'is_primary')
+    readonly_fields = ('image_preview', 'image', 'is_primary')
+    can_delete = False
+
+    @admin.display(description='Preview')
+    def image_preview(self, obj):
+        if obj.image:
+            return format_html('<img src="{}" style="max-height: 100px; max-width: 150px; border-radius: 4px;" />', obj.image.url)
+        return "-"
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
 @admin.register(Package)
 class PackageAdmin(admin.ModelAdmin):
-    list_display = ('title', 'vendor', 'category', 'price', 'rating', 'is_active', 'created_at')
-    list_filter = ('vendor', 'category', 'is_active')
+    inlines = [PackageImageInline]
+    list_display = ('title', 'vendor', 'category', 'price', 'rating', 'approval_status', 'is_active', 'created_at')
+    list_filter = ('vendor', 'category', 'approval_status', 'is_active')
     search_fields = ('title', 'slug', 'destination__name', 'description')
     prepopulated_fields = {'slug': ('title',)}
     readonly_fields = ('created_at', 'updated_at')
@@ -64,7 +93,7 @@ class PackageAdmin(admin.ModelAdmin):
         ('Trip info', {'fields': ('duration', 'max_people', 'trip_difficulty', 'activity', 'max_elevation')}),
         ('Logistics', {'fields': ('accommodation', 'meal', 'vehicle')}),
         ('Optional', {'fields': ('major_highlights', 'itinerary')}),
-        ('Status', {'fields': ('is_active',)}),
+        ('Status', {'fields': ('approval_status', 'is_active',)}),
     )
 
     def get_queryset(self, request):
@@ -101,16 +130,33 @@ class PackageAdmin(admin.ModelAdmin):
         return request.user.is_active and request.user.is_staff
 
 
+class ActivityImageInline(admin.TabularInline):
+    model = ActivityImage
+    extra = 0
+    fields = ('image_preview', 'image', 'is_primary')
+    readonly_fields = ('image_preview', 'image', 'is_primary')
+    can_delete = False
+
+    @admin.display(description='Preview')
+    def image_preview(self, obj):
+        if obj.image:
+            return format_html('<img src="{}" style="max-height: 100px; max-width: 150px; border-radius: 4px;" />', obj.image.url)
+        return "-"
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
 @admin.register(Activity)
 class ActivityAdmin(admin.ModelAdmin):
-    list_display = ('name', 'vendor', 'category', 'price', 'difficulty_level', 'is_active', 'created_at')
-    list_filter = ('vendor', 'category', 'difficulty_level', 'is_active', 'created_at')
+    inlines = [ActivityImageInline]
+    list_display = ('name', 'vendor', 'category', 'price', 'difficulty_level', 'approval_status', 'is_active', 'created_at')
+    list_filter = ('vendor', 'category', 'difficulty_level', 'approval_status', 'is_active', 'created_at')
     search_fields = ('name', 'description', 'vendor__company_name', 'category__name')
     readonly_fields = ('created_at',)
     list_editable = ('is_active',)
 
     fieldsets = (
-        (None, {'fields': ('vendor', 'category', 'name', 'description', 'price', 'is_active')}),
+        (None, {'fields': ('vendor', 'category', 'name', 'description', 'price', 'approval_status', 'is_active')}),
         ('Trip details', {'fields': ('duration', 'difficulty_level', 'max_group_size', 'min_age')}),
         ('Safety', {'fields': ('min_weight', 'max_weight', 'equipment_provided', 'safety_notes')}),
         ('System', {'fields': ('created_at',)}),
@@ -314,3 +360,134 @@ class InquiryAdmin(admin.ModelAdmin):
     @admin.display(description='Reply Status')
     def reply_status(self, obj):
         return 'Replied' if obj.admin_reply else 'Pending'
+
+
+# ────────────────────────────────────────────────────────────────────
+# Custom admin views: Pending Approvals & Live Products
+# ────────────────────────────────────────────────────────────────────
+
+def _pending_approvals_view(request):
+    if not (request.user.is_active and request.user.is_staff):
+        from django.core.exceptions import PermissionDenied
+        raise PermissionDenied
+
+    if request.method == 'POST':
+        item_type = request.POST.get('item_type')
+        item_id = request.POST.get('item_id')
+        action = request.POST.get('action')
+        if item_type and item_id and action in ('approve', 'reject'):
+            if action == 'reject':
+                rejection_reason = request.POST.get('rejection_reason', '').strip()
+                if not rejection_reason:
+                    messages.error(request, 'Please provide a reason for rejection.')
+                    return redirect('admin:pending_approvals')
+            else:
+                rejection_reason = None
+            
+            new_status = ApprovalStatus.APPROVED if action == 'approve' else ApprovalStatus.REJECTED
+            
+            if item_type == 'package':
+                Package.objects.filter(pk=item_id).update(approval_status=new_status, rejection_reason=rejection_reason)
+            elif item_type == 'activity':
+                Activity.objects.filter(pk=item_id).update(approval_status=new_status, rejection_reason=rejection_reason)
+            
+            if action == 'approve':
+                messages.success(request, 'Item approved successfully.')
+            else:
+                messages.warning(request, 'Item rejected.')
+        return redirect('admin:pending_approvals')
+
+    pending_packages = Package.objects.filter(
+        approval_status=ApprovalStatus.PENDING,
+    ).select_related('vendor').order_by('-created_at')
+    pending_activities = Activity.objects.filter(
+        approval_status=ApprovalStatus.PENDING,
+    ).select_related('vendor').order_by('-created_at')
+
+    items = []
+    for p in pending_packages:
+        items.append({
+            'name': p.title,
+            'item_type': 'package',
+            'type_label': 'Package',
+            'vendor': p.vendor.company_name if p.vendor else '-',
+            'submitted': p.created_at,
+            'status': p.approval_status,
+            'pk': p.pk,
+            'admin_url': reverse('admin:app_package_change', args=[p.pk]),
+        })
+    for a in pending_activities:
+        items.append({
+            'name': a.name,
+            'item_type': 'activity',
+            'type_label': 'Activity',
+            'vendor': a.vendor.company_name if a.vendor else '-',
+            'submitted': a.created_at,
+            'status': a.approval_status,
+            'pk': a.pk,
+            'admin_url': reverse('admin:app_activity_change', args=[a.pk]),
+        })
+    items.sort(key=lambda x: x['submitted'], reverse=True)
+
+    context = {
+        **admin.site.each_context(request),
+        'title': 'Pending Approvals',
+        'items': items,
+        'opts': Package._meta,
+    }
+    return TemplateResponse(request, 'admin/pending_approvals.html', context)
+
+
+def _live_products_view(request):
+    if not (request.user.is_active and request.user.is_staff):
+        from django.core.exceptions import PermissionDenied
+        raise PermissionDenied
+
+    live_packages = Package.objects.filter(
+        approval_status=ApprovalStatus.APPROVED, is_active=True,
+    ).select_related('vendor', 'destination').order_by('-updated_at')
+    live_activities = Activity.objects.filter(
+        approval_status=ApprovalStatus.APPROVED, is_active=True,
+    ).select_related('vendor', 'category').order_by('-created_at')
+
+    items = []
+    for p in live_packages:
+        items.append({
+            'name': p.title,
+            'type_label': 'Package',
+            'vendor': p.vendor.company_name if p.vendor else '-',
+            'category': p.get_category_display() if p.category else '-',
+            'price': p.price,
+            'created': p.created_at,
+        })
+    for a in live_activities:
+        items.append({
+            'name': a.name,
+            'type_label': 'Activity',
+            'vendor': a.vendor.company_name if a.vendor else '-',
+            'category': a.category.name if a.category else '-',
+            'price': a.price,
+            'created': a.created_at,
+        })
+    items.sort(key=lambda x: x['created'], reverse=True)
+
+    context = {
+        **admin.site.each_context(request),
+        'title': 'Live Products',
+        'items': items,
+        'opts': Package._meta,
+    }
+    return TemplateResponse(request, 'admin/live_products.html', context)
+
+
+# Register custom admin URLs
+_original_get_urls = admin.AdminSite.get_urls
+
+def _custom_get_urls(self):
+    custom_urls = [
+        path('pending-approvals/', self.admin_view(_pending_approvals_view), name='pending_approvals'),
+        path('live-products/', self.admin_view(_live_products_view), name='live_products'),
+    ]
+    return custom_urls + _original_get_urls(self)
+
+admin.AdminSite.get_urls = _custom_get_urls

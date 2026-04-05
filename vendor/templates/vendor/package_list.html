@@ -116,10 +116,19 @@
               <td>{{ package.get_category_display }}</td>
               <td>Rs. {{ package.price }}</td>
               <td>
-                {% if package.is_active %}
-                <span class="badge text-bg-success">Active</span>
-                {% else %}
-                <span class="badge text-bg-secondary">Inactive</span>
+                {% if package.approval_status == 'APPROVED' %}
+                  {% if package.is_active %}
+                  <span class="badge text-bg-success">Live</span>
+                  {% else %}
+                  <span class="badge text-bg-secondary">Paused</span>
+                  {% endif %}
+                {% elif package.approval_status == 'PENDING' %}
+                  <span class="badge text-bg-warning text-dark">Under Review</span>
+                {% elif package.approval_status == 'REJECTED' %}
+                  <span class="badge text-bg-danger">Rejected</span>
+                  {% if package.rejection_reason %}
+                  <div class="mt-1 small text-danger">Note: {{ package.rejection_reason }}</div>
+                  {% endif %}
                 {% endif %}
               </td>
               <td class="text-end">

@@ -49,6 +49,12 @@ class Destination(models.Model):
         return self.name
 
 
+class ApprovalStatus(models.TextChoices):
+    PENDING = 'PENDING', 'Pending'
+    APPROVED = 'APPROVED', 'Approved'
+    REJECTED = 'REJECTED', 'Rejected'
+
+
 class Package(models.Model):
     class Category(models.TextChoices):
         LUXURY = 'LUXURY', 'Luxury'
@@ -97,6 +103,17 @@ class Package(models.Model):
 
     is_hot_sale = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
+    approval_status = models.CharField(
+        max_length=20,
+        choices=ApprovalStatus.choices,
+        default=ApprovalStatus.PENDING,
+        help_text='Admin approval status. Only approved packages are shown on the site.',
+    )
+    rejection_reason = models.TextField(
+        blank=True,
+        null=True,
+        help_text='Reason provided by admin if the package is rejected. Vendor will see this.',
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -209,6 +226,17 @@ class Activity(models.Model):
     max_weight = models.PositiveIntegerField(blank=True, null=True)
     min_weight = models.PositiveIntegerField(blank=True, null=True)
     is_active = models.BooleanField(default=True)
+    approval_status = models.CharField(
+        max_length=20,
+        choices=ApprovalStatus.choices,
+        default=ApprovalStatus.PENDING,
+        help_text='Admin approval status. Only approved activities are shown on the site.',
+    )
+    rejection_reason = models.TextField(
+        blank=True,
+        null=True,
+        help_text='Reason provided by admin if the activity is rejected. Vendor will see this.',
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

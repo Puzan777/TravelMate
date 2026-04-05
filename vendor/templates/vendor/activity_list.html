@@ -41,10 +41,19 @@
               <td>{{ activity.duration }}</td>
               <td>{{ activity.get_difficulty_level_display }}</td>
               <td>
-                {% if activity.is_active %}
-                <span class="badge text-bg-success">Active</span>
-                {% else %}
-                <span class="badge text-bg-secondary">Inactive</span>
+                {% if activity.approval_status == 'APPROVED' %}
+                  {% if activity.is_active %}
+                  <span class="badge text-bg-success">Live</span>
+                  {% else %}
+                  <span class="badge text-bg-secondary">Paused</span>
+                  {% endif %}
+                {% elif activity.approval_status == 'PENDING' %}
+                  <span class="badge text-bg-warning text-dark">Under Review</span>
+                {% elif activity.approval_status == 'REJECTED' %}
+                  <span class="badge text-bg-danger">Rejected</span>
+                  {% if activity.rejection_reason %}
+                  <div class="mt-1 small text-danger">Note: {{ activity.rejection_reason }}</div>
+                  {% endif %}
                 {% endif %}
               </td>
               <td class="text-end">
