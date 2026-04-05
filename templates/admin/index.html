@@ -425,6 +425,14 @@
       </div>
 
       <div class="side-block">
+        <h3 class="side-heading">Approvals</h3>
+        <ul class="side-links">
+          <li><a href="{% url 'admin:pending_approvals' %}">Pending Approvals</a></li>
+          <li><a href="{% url 'admin:live_products' %}">Live Products</a></li>
+        </ul>
+      </div>
+
+      <div class="side-block">
         <h3 class="side-heading">Commerce</h3>
         <ul class="side-links">
           <li><a href="{% url 'admin:app_booking_changelist' %}">Bookings</a></li>
@@ -463,9 +471,21 @@
         </article>
 
         <article class="kpi-card">
+          <p class="kpi-label">Pending Products</p>
+          <p class="kpi-value">{% dashboard_pending_product_count %}</p>
+          <a class="kpi-link" href="{% url 'admin:pending_approvals' %}">Review list</a>
+        </article>
+
+        <article class="kpi-card">
           <p class="kpi-label">Approved Vendors</p>
           <p class="kpi-value">{% dashboard_approved_vendor_count %}</p>
           <a class="kpi-link" href="{% url 'admin:vendor_vendorprofile_changelist' %}">Vendor records</a>
+        </article>
+
+        <article class="kpi-card">
+          <p class="kpi-label">Live Products</p>
+          <p class="kpi-value">{% dashboard_live_product_count %}</p>
+          <a class="kpi-link" href="{% url 'admin:live_products' %}">View live</a>
         </article>
 
         <article class="kpi-card">

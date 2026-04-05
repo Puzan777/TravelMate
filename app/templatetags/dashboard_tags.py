@@ -4,7 +4,7 @@ from django import template
 from django.db.models import Count
 from django.db.models.functions import TruncMonth
 
-from app.models import Activity, Booking, CustomUser, Destination, HotSale, Inquiry, Package
+from app.models import Activity, ApprovalStatus, Booking, CustomUser, Destination, HotSale, Inquiry, Package
 
 try:
     from vendor.models import VendorProfile
@@ -20,8 +20,34 @@ def dashboard_package_count():
 
 
 @register.simple_tag
+def dashboard_pending_product_count():
+    pending_packages = Package.objects.filter(approval_status=ApprovalStatus.PENDING).count()
+    pending_activities = Activity.objects.filter(approval_status=ApprovalStatus.PENDING).count()
+    return pending_packages + pending_activities
+
+@register.simple_tag
+def dashboard_live_product_count():
+    live_packages = Package.objects.filter(approval_status=ApprovalStatus.APPROVED, is_active=True).count()
+    live_activities = Activity.objects.filter(approval_status=ApprovalStatus.APPROVED, is_active=True).count()
+    return live_packages + live_activities
+
+
+@register.simple_tag
 def dashboard_active_package_count():
     return Package.objects.filter(is_active=True).count()
+
+
+@register.simple_tag
+def dashboard_pending_product_count():
+    pending_packages = Package.objects.filter(approval_status=ApprovalStatus.PENDING).count()
+    pending_activities = Activity.objects.filter(approval_status=ApprovalStatus.PENDING).count()
+    return pending_packages + pending_activities
+
+@register.simple_tag
+def dashboard_live_product_count():
+    live_packages = Package.objects.filter(approval_status=ApprovalStatus.APPROVED, is_active=True).count()
+    live_activities = Activity.objects.filter(approval_status=ApprovalStatus.APPROVED, is_active=True).count()
+    return live_packages + live_activities
 
 
 @register.simple_tag

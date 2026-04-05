@@ -7,7 +7,7 @@ from django.contrib import messages
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 from .forms import ActivityCategoryForm, SignUpForm, LoginForm, BookingForm, InquiryForm
-from .models import ActivityCategory, Booking, CustomUser, Destination, HotSale, Inquiry, Package
+from .models import ActivityCategory, ApprovalStatus, Booking, CustomUser, Destination, HotSale, Inquiry, Package
 
 
 def _redirect_after_login(request, user):
@@ -150,7 +150,7 @@ def home(request):
     destinations = Destination.objects.all()[:6]  # limit to 6
     
     # Show active packages (best packages)
-    packages = Package.objects.filter(is_active=True)[:6]  # limit to 6
+    packages = Package.objects.filter(is_active=True, approval_status=ApprovalStatus.APPROVED)[:6]  # limit to 6
 
     return render(request, "home.html", {
         "featured_destinations": destinations,
@@ -172,7 +172,8 @@ def destination_detail(request, pk):
     # Get only active packages for this destination (country)
     packages = Package.objects.filter(
         destination=destination,
-        is_active=True
+        is_active=True,
+        approval_status=ApprovalStatus.APPROVED,
     ).order_by('-created_at')
     
     return render(request, 'destination_detail.html', {
@@ -183,7 +184,7 @@ def destination_detail(request, pk):
 
 # ----------------- Package views -----------------
 def package_list(request, category=None, hot_sales=False):
-    qs = Package.objects.filter(is_active=True)
+    qs = Package.objects.filter(is_active=True, approval_status=ApprovalStatus.APPROVED)
     title = 'Packages'
 
     if hot_sales:
@@ -205,7 +206,8 @@ def hot_sale_list(request):
     hot_sales = HotSale.objects.filter(
         is_active=True,
     ).filter(
-        Q(package__is_active=True) | Q(activity__is_active=True),
+        Q(package__is_active=True, package__approval_status=ApprovalStatus.APPROVED)
+        | Q(activity__is_active=True, activity__approval_status=ApprovalStatus.APPROVED),
     ).select_related('package', 'package__destination', 'activity').prefetch_related('activity__images')
 
     return render(request, 'hot_sales.html', {
@@ -219,6 +221,7 @@ def package_detail(request, slug):
         Package.objects.prefetch_related('itinerary_entries'),
         slug=slug,
         is_active=True,
+        approval_status=ApprovalStatus.APPROVED,
     )
     is_favorite = False
     itinerary_days = list(package.itinerary_entries.all())
@@ -302,7 +305,7 @@ def toggle_favorite_package(request, slug):
     if request.method != 'POST':
         return redirect('package_detail', slug=slug)
 
-    package = get_object_or_404(Package, slug=slug, is_active=True)
+    package = get_object_or_404(Package, slug=slug, is_active=True, approval_status=ApprovalStatus.APPROVED)
     if request.user.favorite_packages.filter(pk=package.pk).exists():
         request.user.favorite_packages.remove(package)
         messages.info(request, 'Removed from favorites.')

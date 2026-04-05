@@ -1,0 +1,95 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block title %}Live Products | TravelMate Admin{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+    :root {
+        --bg-page: #f4f7fb;
+        --bg-card: #ffffff;
+        --text-main: #101828;
+        --text-muted: #5f6c80;
+        --line-soft: #e9eef5;
+        --brand: #0a4f8a;
+        --good: #0f8b4c;
+        --radius-lg: 16px;
+    }
+    #content-main {
+        background: var(--bg-card);
+        border: 1px solid var(--line-soft);
+        border-radius: var(--radius-lg);
+        padding: 24px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    h1 {
+        margin-top: 0;
+        color: var(--brand);
+        font-weight: 700;
+        font-size: 1.5rem;
+    }
+    .simple-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+    .simple-table th, .simple-table td {
+        padding: 12px;
+        border-bottom: 1px solid var(--line-soft);
+        text-align: left;
+    }
+    .simple-table th {
+        background: #f8fafc;
+        font-weight: 700;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        font-size: 0.85rem;
+    }
+    .pill-good {
+        background: #e9f8ef;
+        color: var(--good);
+        border: 1px solid #b9e6cc;
+        border-radius: 999px;
+        padding: 3px 8px;
+        font-size: 0.75rem;
+        font-weight: 700;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    <h1>Live Products</h1>
+    <p style="color: var(--text-muted);">All approved and active packages and activities currently visible to customers.</p>
+    
+    {% if items %}
+    <table class="simple-table">
+        <thead>
+            <tr>
+                <th>Product Name</th>
+                <th>Type</th>
+                <th>Vendor</th>
+                <th>Category</th>
+                <th>Price</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr>
+                <td><strong>{{ item.name }}</strong></td>
+                <td>{{ item.type_label }}</td>
+                <td>{{ item.vendor }}</td>
+                <td>{{ item.category }}</td>
+                <td>{% if item.price %}Rs. {{ item.price }}{% else %}-{% endif %}</td>
+                <td><span class="pill-good">Live</span></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="margin-top: 20px; font-style: italic; color: var(--text-muted);">No live products at this time.</p>
+    {% endif %}
+</div>
+{% endblock %}
