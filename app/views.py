@@ -81,69 +81,6 @@ def logout_view(request):
     return redirect("login")
 
 
-@login_required
-def activity_category_list(request):
-    _ensure_platform_admin(request.user)
-    categories = ActivityCategory.objects.order_by('name')
-    return render(request, 'admin_portal/activity_category_list.html', {'categories': categories})
-
-
-@login_required
-def activity_category_create(request):
-    _ensure_platform_admin(request.user)
-    if request.method == 'POST':
-        form = ActivityCategoryForm(request.POST)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Activity category created successfully.')
-            return redirect('activity_category_list')
-    else:
-        form = ActivityCategoryForm()
-    return render(
-        request,
-        'admin_portal/activity_category_form.html',
-        {
-            'form': form,
-            'page_title': 'Create Activity Category',
-            'submit_label': 'Create Category',
-        },
-    )
-
-
-@login_required
-def activity_category_edit(request, pk):
-    _ensure_platform_admin(request.user)
-    category = get_object_or_404(ActivityCategory, pk=pk)
-    if request.method == 'POST':
-        form = ActivityCategoryForm(request.POST, instance=category)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Activity category updated successfully.')
-            return redirect('activity_category_list')
-    else:
-        form = ActivityCategoryForm(instance=category)
-    return render(
-        request,
-        'admin_portal/activity_category_form.html',
-        {
-            'form': form,
-            'page_title': 'Edit Activity Category',
-            'submit_label': 'Save Changes',
-            'category': category,
-        },
-    )
-
-
-@login_required
-def activity_category_delete(request, pk):
-    _ensure_platform_admin(request.user)
-    category = get_object_or_404(ActivityCategory, pk=pk)
-    if request.method == 'POST':
-        category.delete()
-        messages.success(request, 'Activity category deleted successfully.')
-        return redirect('activity_category_list')
-    return render(request, 'admin_portal/activity_category_confirm_delete.html', {'category': category})
-
 
 def home(request):
     # Show all destinations (countries)

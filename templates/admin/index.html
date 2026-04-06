@@ -5,21 +5,22 @@
 {{ block.super }}
 <style>
   :root {
-    --bg-page: #f4f7fb;
+    --bg-page: #f0f4f8;
     --bg-card: #ffffff;
-    --text-main: #101828;
-    --text-muted: #5f6c80;
-    --line: #d8e1ec;
-    --line-soft: #e9eef5;
-    --brand: #0a4f8a;
-    --brand-2: #0e6bb7;
-    --brand-soft: #e8f2fc;
+    --text-main: #1a2332;
+    --text-muted: #5e6e82;
+    --line: #dce4ee;
+    --line-soft: #e8eff7;
+    --brand: #0d7377;
+    --brand-2: #11998e;
+    --brand-soft: #e0f5f5;
+    --accent: #e8871e;
     --good: #0f8b4c;
-    --warn: #b45309;
-    --bad: #b42318;
+    --warn: #c27803;
+    --bad: #c0392b;
     --radius-lg: 16px;
     --radius-md: 12px;
-    --shadow-soft: 0 12px 28px rgba(15, 23, 42, 0.08);
+    --shadow-soft: 0 12px 28px rgba(26, 35, 50, 0.08);
   }
 
   #content-main {
@@ -42,7 +43,7 @@
     justify-content: space-between;
     align-items: center;
     gap: 16px;
-    background: linear-gradient(130deg, #0b3d69 0%, #0a4f8a 48%, #0e6bb7 100%);
+    background: linear-gradient(135deg, #063b3e 0%, #0d7377 55%, #11998e 100%);
     color: #fff;
     border-radius: var(--radius-lg);
     padding: 20px;
@@ -83,7 +84,7 @@
     padding: 14px;
   }
 
-  .side-block + .side-block {
+  .side-block+.side-block {
     margin-top: 14px;
     padding-top: 14px;
     border-top: 1px solid var(--line-soft);
@@ -104,7 +105,7 @@
     list-style: none;
   }
 
-  .side-links li + li {
+  .side-links li+li {
     margin-top: 6px;
   }
 
@@ -120,7 +121,7 @@
 
   .side-links a:hover {
     background: var(--brand-soft);
-    border-color: #c8ddf0;
+    border-color: #b0ddd0;
     color: var(--brand);
   }
 
@@ -201,19 +202,21 @@
   .action-link {
     display: block;
     text-decoration: none;
-    border: 1px solid #cadaeb;
+    border: 1px solid #c5ddd8;
     border-radius: 8px;
     padding: 10px;
-    color: #1b2a40;
+    color: #1a2332;
     font-weight: 600;
     font-size: 0.89rem;
-    background: #f8fbff;
+    background: #f5fafa;
+    transition: all 0.2s ease;
   }
 
   .action-link:hover {
-    border-color: #9ec2df;
+    border-color: #89c4b8;
     background: var(--brand-soft);
     color: var(--brand);
+    transform: translateY(-1px);
   }
 
   .trend-wrap {
@@ -241,20 +244,22 @@
   }
 
   .trend-switch-btn {
-    border: 1px solid #c9dff3;
-    background: #f8fbff;
-    color: #1b2a40;
+    border: 1px solid #c5ddd8;
+    background: #f5fafa;
+    color: #1a2332;
     border-radius: 999px;
     padding: 5px 10px;
     font-size: 0.8rem;
     font-weight: 700;
     cursor: pointer;
+    transition: all 0.2s ease;
   }
 
   .trend-switch-btn.is-active {
     background: var(--brand);
     border-color: var(--brand);
     color: #fff;
+    box-shadow: 0 2px 8px rgba(13, 115, 119, 0.2);
   }
 
   .trend-col {
@@ -268,9 +273,10 @@
     width: 100%;
     max-width: 56px;
     border-radius: 10px 10px 4px 4px;
-    background: linear-gradient(180deg, #4f9ad9, #0a4f8a);
+    background: linear-gradient(180deg, #11998e, #0d7377);
     min-height: 6px;
     box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.28);
+    transition: height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .trend-total {
@@ -361,18 +367,24 @@
   .section-actions a {
     text-decoration: none;
     color: var(--brand);
-    border: 1px solid #c9dff3;
+    border: 1px solid #b0ddd0;
     background: var(--brand-soft);
     border-radius: 8px;
     padding: 5px 9px;
     font-weight: 700;
     font-size: 0.82rem;
+    transition: all 0.2s ease;
+  }
+  .section-actions a:hover {
+    background: #c5ece5;
+    color: #095456;
   }
 
   @media (max-width: 1180px) {
     .dash-shell {
       grid-template-columns: 1fr;
     }
+
     .main-grid {
       grid-template-columns: 1fr;
     }
@@ -382,10 +394,12 @@
     #content-main {
       padding: 12px;
     }
+
     .dash-hero {
       flex-direction: column;
       align-items: flex-start;
     }
+
     .trend-wrap {
       grid-template-columns: repeat(3, minmax(56px, 1fr));
     }
@@ -400,14 +414,13 @@
   {% dashboard_product_trends 6 as product_trends %}
   {% dashboard_recent_users 8 as recent_users %}
   {% dashboard_recent_bookings 10 as recent_bookings %}
-  {% dashboard_recent_inquiries 10 as recent_inquiries %}
   {% dashboard_recent_vendor_applications 8 as vendor_applications %}
 
   <div class="dash-shell">
     <section class="dash-hero">
       <div>
         <h1>TravelMate Control Center</h1>
-        <p>Unified command view for catalog, vendors, inquiries, and booking operations.</p>
+        <p>Unified command view for catalog, vendors, and booking operations.</p>
       </div>
       <div class="hero-badge">Admin Operations</div>
     </section>
@@ -416,7 +429,7 @@
       <div class="side-block">
         <h3 class="side-heading">Catalog</h3>
         <ul class="side-links">
-          <li><a href="{% url 'activity_category_list' %}">Activity Categories</a></li>
+          <li><a href="{% url 'admin:app_activitycategory_changelist' %}">Activity Categories</a></li>
           <li><a href="{% url 'admin:app_activity_changelist' %}">Activities</a></li>
           <li><a href="{% url 'admin:app_destination_changelist' %}">Destinations</a></li>
           <li><a href="{% url 'admin:app_package_changelist' %}">Packages</a></li>
@@ -436,7 +449,6 @@
         <h3 class="side-heading">Commerce</h3>
         <ul class="side-links">
           <li><a href="{% url 'admin:app_booking_changelist' %}">Bookings</a></li>
-          <li><a href="{% url 'admin:app_inquiry_changelist' %}">Inquiries</a></li>
         </ul>
       </div>
 
@@ -445,7 +457,8 @@
         <ul class="side-links">
           <li><a href="{% url 'admin:app_customuser_changelist' %}">Users</a></li>
           <li><a href="{% url 'admin:vendor_vendorprofile_changelist' %}">Vendors</a></li>
-          <li><a href="{% url 'admin:vendor_vendorprofile_changelist' %}?verification_status__exact=PENDING">Pending Vendor Verification</a></li>
+          <li><a href="{% url 'admin:vendor_vendorprofile_changelist' %}?verification_status__exact=PENDING">Pending
+              Vendor Verification</a></li>
         </ul>
       </div>
     </aside>
@@ -459,15 +472,10 @@
         </article>
 
         <article class="kpi-card">
-          <p class="kpi-label">Inquiry Reply Rate</p>
-          <p class="kpi-value">{% dashboard_inquiry_reply_rate %}%</p>
-          <a class="kpi-link" href="{% url 'admin:app_inquiry_changelist' %}">Review inquiries</a>
-        </article>
-
-        <article class="kpi-card">
           <p class="kpi-label">Pending Vendors</p>
           <p class="kpi-value">{% dashboard_pending_vendor_count %}</p>
-          <a class="kpi-link" href="{% url 'admin:vendor_vendorprofile_changelist' %}?verification_status__exact=PENDING">Review queue</a>
+          <a class="kpi-link"
+            href="{% url 'admin:vendor_vendorprofile_changelist' %}?verification_status__exact=PENDING">Review queue</a>
         </article>
 
         <article class="kpi-card">
@@ -508,9 +516,7 @@
 
         <article class="kpi-card">
           <p class="kpi-label">Hot Sales</p>
-          <p class="kpi-value" style="font-size: 1.05rem; line-height: 1.4;">
-            Hot Sales: {{ hot_sale_breakdown.total }} total ({{ hot_sale_breakdown.packages }} packages, {{ hot_sale_breakdown.activities }} activities)
-          </p>
+          <p class="kpi-value">{{ hot_sale_breakdown.total }}</p>
           <a class="kpi-link" href="{% url 'admin:app_hotsale_changelist' %}">Manage offers</a>
         </article>
 
@@ -532,39 +538,41 @@
           <h2 class="card-title">Product Trends (Last 6 Months)</h2>
           <div class="trend-toolbar">
             <p id="trend-summary" class="muted" style="margin: 0;">
-            Package bookings (last 6 months): {{ product_trends.total_package_bookings }}
+              Package bookings (last 6 months): {{ product_trends.total_package_bookings }}
             </p>
             <div class="trend-switch" role="group" aria-label="Product trend mode">
-              <button type="button" class="trend-switch-btn is-active" data-trend-mode="package" aria-pressed="true">Packages</button>
-              <button type="button" class="trend-switch-btn" data-trend-mode="activity" aria-pressed="false">Activities</button>
+              <button type="button" class="trend-switch-btn is-active" data-trend-mode="package"
+                aria-pressed="true">Packages</button>
+              <button type="button" class="trend-switch-btn" data-trend-mode="activity"
+                aria-pressed="false">Activities</button>
             </div>
           </div>
           {% if product_trends.points %}
-            <div id="product-trends-card" class="trend-wrap">
-              {% for point in product_trends.points %}
-                <div class="trend-col"
-                     data-package-bookings="{{ point.package_bookings }}"
-                     data-activity-bookings="{{ point.activity_bookings }}">
-                  <div class="trend-total">{{ point.package_bookings }}</div>
-                  <div class="trend-bar" style="height:6px;"></div>
-                  <div class="trend-label">{{ point.label }}</div>
-                </div>
-              {% endfor %}
+          <div id="product-trends-card" class="trend-wrap">
+            {% for point in product_trends.points %}
+            <div class="trend-col" data-package-bookings="{{ point.package_bookings }}"
+              data-activity-bookings="{{ point.activity_bookings }}">
+              <div class="trend-total">{{ point.package_bookings }}</div>
+              <div class="trend-bar" style="height:6px;"></div>
+              <div class="trend-label">{{ point.label }}</div>
             </div>
+            {% endfor %}
+          </div>
           {% else %}
-            <p class="muted">No product trend data available yet.</p>
+          <p class="muted">No product trend data available yet.</p>
           {% endif %}
         </section>
 
         <section class="dash-main-card">
           <h2 class="card-title">Quick Actions</h2>
           <div class="actions-grid">
-            <a class="action-link" href="{% url 'activity_category_list' %}">Manage Activity Categories</a>
+            <a class="action-link" href="{% url 'admin:app_activitycategory_changelist' %}">Manage Activity Categories</a>
             <a class="action-link" href="{% url 'admin:app_activity_changelist' %}">Manage Activities</a>
-            <a class="action-link" href="{% url 'admin:vendor_vendorprofile_changelist' %}?verification_status__exact=PENDING">Review Vendor Queue</a>
+            <a class="action-link"
+              href="{% url 'admin:vendor_vendorprofile_changelist' %}?verification_status__exact=PENDING">Review Vendor
+              Queue</a>
             <a class="action-link" href="{% url 'admin:app_customuser_add' %}">Create User</a>
             <a class="action-link" href="{% url 'admin:app_booking_changelist' %}">Manage Bookings</a>
-            <a class="action-link" href="{% url 'admin:app_inquiry_changelist' %}">Manage Inquiries</a>
             <a class="action-link" href="{% url 'admin:app_package_changelist' %}">Manage Packages</a>
             <a class="action-link" href="{% url 'admin:app_hotsale_changelist' %}">Manage Hot Sales</a>
           </div>
@@ -574,108 +582,67 @@
       <section class="dash-main-card" style="margin-bottom: 14px;">
         <h2 class="card-title">Top Products by Booking Volume</h2>
         {% if top_products %}
-          <div class="table-wrap">
-            <table class="simple-table">
-              <thead>
-                <tr>
-                  <th>Product Name</th>
-                  <th>Type</th>
-                  <th>Vendor</th>
-                  <th>Bookings</th>
-                  <th>Rating</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for product in top_products %}
-                  <tr>
-                    <td>{{ product.product_name }}</td>
-                    <td>{{ product.product_type }}</td>
-                    <td>{{ product.vendor_name }}</td>
-                    <td>{{ product.bookings }}</td>
-                    <td>{{ product.rating_display }}</td>
-                  </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
+        <div class="table-wrap">
+          <table class="simple-table">
+            <thead>
+              <tr>
+                <th>Product Name</th>
+                <th>Type</th>
+                <th>Vendor</th>
+                <th>Bookings</th>
+                <th>Rating</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for product in top_products %}
+              <tr>
+                <td>{{ product.product_name }}</td>
+                <td>{{ product.product_type }}</td>
+                <td>{{ product.vendor_name }}</td>
+                <td>{{ product.bookings }}</td>
+                <td>{{ product.rating_display }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
         {% else %}
-          <p class="muted">No product data found.</p>
+        <p class="muted">No product data found.</p>
         {% endif %}
       </section>
 
       <section class="dash-main-card" style="margin-bottom: 14px;">
         <h2 class="card-title">Recent Bookings</h2>
         {% if recent_bookings %}
-          <div class="table-wrap">
-            <table class="simple-table">
-              <thead>
-                <tr>
-                  <th>Package</th>
-                  <th>Traveler</th>
-                  <th>Travel Date</th>
-                  <th>People</th>
-                  <th>Booked On</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for booking in recent_bookings %}
-                  <tr>
-                    <td>{{ booking.package.title }}</td>
-                    <td>{{ booking.full_name }}</td>
-                    <td>{{ booking.travel_date|date:"M d, Y" }}</td>
-                    <td>{{ booking.number_of_people }}</td>
-                    <td>{{ booking.created_at|date:"M d, Y" }}</td>
-                  </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
+        <div class="table-wrap">
+          <table class="simple-table">
+            <thead>
+              <tr>
+                <th>Package</th>
+                <th>Traveler</th>
+                <th>Travel Date</th>
+                <th>People</th>
+                <th>Booked On</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for booking in recent_bookings %}
+              <tr>
+                <td>{{ booking.package.title }}</td>
+                <td>{{ booking.full_name }}</td>
+                <td>{{ booking.travel_date|date:"M d, Y" }}</td>
+                <td>{{ booking.number_of_people }}</td>
+                <td>{{ booking.created_at|date:"M d, Y" }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
         {% else %}
-          <p class="muted">No bookings available.</p>
+        <p class="muted">No bookings available.</p>
         {% endif %}
         <div class="section-actions">
           <a href="{% url 'admin:app_booking_changelist' %}">Open Bookings</a>
-        </div>
-      </section>
-
-      <section class="dash-main-card" style="margin-bottom: 14px;">
-        <h2 class="card-title">Recent Inquiries</h2>
-        {% if recent_inquiries %}
-          <div class="table-wrap">
-            <table class="simple-table">
-              <thead>
-                <tr>
-                  <th>Package</th>
-                  <th>Name</th>
-                  <th>Email</th>
-                  <th>Reply</th>
-                  <th>Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for inquiry in recent_inquiries %}
-                  <tr>
-                    <td>{{ inquiry.package.title }}</td>
-                    <td>{{ inquiry.full_name }}</td>
-                    <td>{{ inquiry.email }}</td>
-                    <td>
-                      {% if inquiry.admin_reply %}
-                        <span class="pill pill-good">Replied</span>
-                      {% else %}
-                        <span class="pill pill-warn">Pending</span>
-                      {% endif %}
-                    </td>
-                    <td>{{ inquiry.created_at|date:"M d, Y" }}</td>
-                  </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-        {% else %}
-          <p class="muted">No inquiries available.</p>
-        {% endif %}
-        <div class="section-actions">
-          <a href="{% url 'admin:app_inquiry_changelist' %}">Open Inquiries</a>
         </div>
       </section>
 
@@ -683,38 +650,38 @@
         <section class="dash-main-card">
           <h2 class="card-title">Recent Vendor Applications</h2>
           {% if vendor_applications %}
-            <div class="table-wrap">
-              <table class="simple-table" style="min-width: 560px;">
-                <thead>
-                  <tr>
-                    <th>Company</th>
-                    <th>Owner</th>
-                    <th>Status</th>
-                    <th>Submitted</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for vendor in vendor_applications %}
-                    <tr>
-                      <td>{{ vendor.company_name }}</td>
-                      <td>{{ vendor.owner_full_name|default:"-" }}</td>
-                      <td>
-                        {% if vendor.verification_status == 'APPROVED' %}
-                          <span class="pill pill-good">Approved</span>
-                        {% elif vendor.verification_status == 'REJECTED' %}
-                          <span class="pill pill-bad">Rejected</span>
-                        {% else %}
-                          <span class="pill pill-warn">Pending</span>
-                        {% endif %}
-                      </td>
-                      <td>{% if vendor.submitted_at %}{{ vendor.submitted_at|date:"M d, Y" }}{% else %}-{% endif %}</td>
-                    </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
+          <div class="table-wrap">
+            <table class="simple-table" style="min-width: 560px;">
+              <thead>
+                <tr>
+                  <th>Company</th>
+                  <th>Owner</th>
+                  <th>Status</th>
+                  <th>Submitted</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for vendor in vendor_applications %}
+                <tr>
+                  <td>{{ vendor.company_name }}</td>
+                  <td>{{ vendor.owner_full_name|default:"-" }}</td>
+                  <td>
+                    {% if vendor.verification_status == 'APPROVED' %}
+                    <span class="pill pill-good">Approved</span>
+                    {% elif vendor.verification_status == 'REJECTED' %}
+                    <span class="pill pill-bad">Rejected</span>
+                    {% else %}
+                    <span class="pill pill-warn">Pending</span>
+                    {% endif %}
+                  </td>
+                  <td>{% if vendor.submitted_at %}{{ vendor.submitted_at|date:"M d, Y" }}{% else %}-{% endif %}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
           {% else %}
-            <p class="muted">No vendor applications found.</p>
+          <p class="muted">No vendor applications found.</p>
           {% endif %}
           <div class="section-actions">
             <a href="{% url 'admin:vendor_vendorprofile_changelist' %}">Open Vendor Profiles</a>
@@ -724,30 +691,30 @@
         <section class="dash-main-card">
           <h2 class="card-title">Recent Users</h2>
           {% if recent_users %}
-            <div class="table-wrap">
-              <table class="simple-table" style="min-width: 520px;">
-                <thead>
-                  <tr>
-                    <th>Username</th>
-                    <th>Email</th>
-                    <th>Role</th>
-                    <th>Joined</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for user in recent_users %}
-                    <tr>
-                      <td>{{ user.username }}</td>
-                      <td>{{ user.email|default:"-" }}</td>
-                      <td>{{ user.role|default:"-" }}</td>
-                      <td>{{ user.date_joined|date:"M d, Y" }}</td>
-                    </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
+          <div class="table-wrap">
+            <table class="simple-table" style="min-width: 520px;">
+              <thead>
+                <tr>
+                  <th>Username</th>
+                  <th>Email</th>
+                  <th>Role</th>
+                  <th>Joined</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for user in recent_users %}
+                <tr>
+                  <td>{{ user.username }}</td>
+                  <td>{{ user.email|default:"-" }}</td>
+                  <td>{{ user.role|default:"-" }}</td>
+                  <td>{{ user.date_joined|date:"M d, Y" }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
           {% else %}
-            <p class="muted">No users found.</p>
+          <p class="muted">No users found.</p>
           {% endif %}
           <div class="section-actions">
             <a href="{% url 'admin:app_customuser_changelist' %}">Open Users</a>

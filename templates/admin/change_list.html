@@ -1,0 +1,153 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static admin_list %}
+
+{% block title %}{% if cl.formset and cl.formset.errors %}{% translate "Error:" %} {% endif %}{{ block.super }}{% endblock %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <style>
+    /* Reset Django's default messy changelist blocks */
+    #changelist { display: block !important; margin: 0 !important; }
+    #changelist .changelist-form-container, #changelist form { margin: 0 !important; width: 100% !important; }
+    
+    /* Toolbar encompassing unified search and filters */
+    .unified-toolbar {
+        background: var(--tm-surface);
+        padding: 20px;
+        border-radius: var(--tm-radius-lg);
+        box-shadow: var(--tm-shadow);
+        border: 1px solid var(--tm-line);
+        margin-bottom: 24px;
+    }
+
+    /* Page Header */
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    .page-header h1 { margin: 0; color: var(--tm-primary); font-size: 1.6rem; font-weight: 700; }
+    
+    .object-tools { margin:0; padding:0; list-style:none; display:flex; gap:10px; }
+    .object-tools li { list-style-type: none; }
+    .object-tools a {
+        background: var(--tm-accent);
+        color: white; border-radius: 8px; padding: 10px 20px;
+        text-decoration: none; font-weight: 600; font-size: 0.9rem;
+        transition: background var(--tm-transition); display: block;
+    }
+    .object-tools a:hover { background: #cf7518; }
+    
+    /* Result List Table overrriding Django */
+    #changelist .results { overflow-x: auto; }
+    #changelist table {
+      min-width: 1200px;
+      width: max-content;
+      border-collapse: collapse;
+      background: var(--tm-surface);
+      border-radius: var(--tm-radius-lg);
+      overflow: hidden;
+      box-shadow: var(--tm-shadow);
+    }
+    #changelist th {
+      background: #f0f5f5 !important;
+      color: var(--tm-text-muted) !important;
+      padding: 14px 18px !important;
+      text-align: left;
+      white-space: nowrap;
+    }
+    #changelist td {
+      padding: 14px 18px !important;
+      border-bottom: 1px solid var(--tm-line-soft);
+      white-space: nowrap;
+    }
+    #changelist th.column-title,
+    #changelist td.field-title {
+      min-width: 360px;
+      max-width: 620px;
+      white-space: normal !important;
+      word-break: break-word;
+    }
+    #changelist tr:last-child td { border-bottom: none; }
+  </style>
+{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+{{ media.js }}
+{% endblock %}
+
+{% block bodyclass %}{{ block.super }} app-{{ opts.app_label }} model-{{ opts.model_name }} change-list{% endblock %}
+
+{# Intentionally left blank to avoid showing duplicated page titles from Django default base #}
+{% block content_title %}{% endblock %}
+
+{% block content %}
+  <div id="content-main">
+
+    <div class="page-header">
+        <h1>{{ cl.opts.verbose_name_plural|capfirst }}</h1>
+        {% block object-tools %}
+            <ul class="object-tools">
+                {% block object-tools-items %}
+                    {% change_list_object_tools %}
+                {% endblock %}
+            </ul>
+        {% endblock %}
+    </div>
+
+    {% if cl.formset and cl.formset.errors %}
+        <p class="errornote">
+        {% blocktranslate count counter=cl.formset.total_error_count %}Please correct the error below.{% plural %}Please correct the errors below.{% endblocktranslate %}
+        </p>
+        {{ cl.formset.non_form_errors }}
+    {% endif %}
+
+    <div class="module{% if cl.has_filters %} filtered{% endif %}" id="changelist">
+      
+      {# ─── UNIFIED SEARCH & FILTER TOOLBAR ─── #}
+      {% if cl.search_fields or cl.has_filters %}
+      <div class="unified-toolbar">
+         <form id="changelist-search" method="get">
+            {# 1. Search Box Full Width On Top #}
+            {% block search %}{% search_form cl %}{% endblock %}
+            
+            {# 2. Filter Dropdowns Below Search #}
+            {% block filters %}
+              {% if cl.has_filters %}
+                <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;">
+                  {% for spec in cl.filter_specs %}{% admin_list_filter cl spec %}{% endfor %}
+                  {% if cl.has_active_filters %}
+                      <a href="{{ cl.clear_all_filters_qs }}" style="margin-left: auto; color: var(--tm-danger); text-decoration: none; font-weight: 600; font-size: 0.85rem; display: flex; align-items: center;">
+                          &#10006; {% translate "Clear filters" %}
+                      </a>
+                  {% endif %}
+                </div>
+              {% endif %}
+            {% endblock %}
+         </form>
+      </div>
+      {% endif %}
+      {# ────────────────────────────────────── #}
+
+      <div class="changelist-form-container">
+        {% block date_hierarchy %}{% if cl.date_hierarchy %}{% date_hierarchy cl %}{% endif %}{% endblock %}
+
+        <form id="changelist-form" method="post"{% if cl.formset and cl.formset.is_multipart %} enctype="multipart/form-data"{% endif %} novalidate>{% csrf_token %}
+        {% if cl.formset %}
+          <div>{{ cl.formset.management_form }}</div>
+        {% endif %}
+
+        {% block result_list %}
+          {% if action_form and actions_on_top and cl.show_admin_actions %}{% admin_actions %}{% endif %}
+          {% result_list cl %}
+          {% if action_form and actions_on_bottom and cl.show_admin_actions %}{% admin_actions %}{% endif %}
+        {% endblock %}
+        
+        {% block pagination %}{% pagination cl %}{% endblock %}
+        </form>
+      </div>
+    </div>
+  </div>
+{% endblock %}

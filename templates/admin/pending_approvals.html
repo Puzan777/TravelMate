@@ -7,14 +7,14 @@
 {{ block.super }}
 <style>
     :root {
-        --bg-page: #f4f7fb;
+        --bg-page: #f0f4f8;
         --bg-card: #ffffff;
-        --text-main: #101828;
-        --text-muted: #5f6c80;
-        --line-soft: #e9eef5;
-        --brand: #0a4f8a;
+        --text-main: #1a2332;
+        --text-muted: #5e6e82;
+        --line-soft: #e8eff7;
+        --brand: #0d7377;
         --good: #0f8b4c;
-        --bad: #b42318;
+        --bad: #c0392b;
         --radius-lg: 16px;
     }
     #content-main {
@@ -89,6 +89,65 @@
     .form-inline {
         display: inline;
     }
+    .toolbar {
+        margin-top: 16px;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+    .toolbar input, .toolbar select {
+        padding: 0 10px;
+        border: 1px solid var(--line-soft);
+        border-radius: 6px;
+        min-width: 170px;
+        box-sizing: border-box;
+        height: 42px;
+        font-size: 15px;
+        line-height: 1.2;
+    }
+    .toolbar select {
+        min-width: 220px;
+        width: auto;
+        padding: 0 34px 0 12px;
+        line-height: 1.2;
+        vertical-align: middle;
+    }
+    .toolbar .btn-filter {
+        background: #f0f4f8;
+        color: var(--brand);
+        border: 1px solid #cadaeb;
+    }
+    .toolbar .btn-filter:hover {
+        background: var(--brand);
+        color: #fff;
+    }
+    .toolbar .btn-clear {
+        color: var(--text-muted);
+        text-decoration: none;
+        font-weight: 600;
+    }
+    .meta {
+        margin-top: 12px;
+        color: var(--text-muted);
+        font-size: 0.9rem;
+    }
+    .pagination {
+        margin-top: 14px;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+    .pagination a {
+        padding: 5px 10px;
+        border-radius: 6px;
+        border: 1px solid #cadaeb;
+        color: var(--brand);
+        text-decoration: none;
+        font-weight: 600;
+        background: #f0f4f8;
+    }
 </style>
 {% endblock %}
 
@@ -96,8 +155,26 @@
 <div id="content-main">
     <h1>Pending Packages & Activities</h1>
     <p style="color: var(--text-muted);">Review vendor submissions before they go live on the site.</p>
+
+    <form method="get" class="toolbar">
+        <select name="vendor">
+            <option value="all"{% if selected_vendor == 'all' %} selected{% endif %}>All vendors</option>
+            {% for vendor in vendor_options %}
+            <option value="{{ vendor.id }}"{% if selected_vendor == vendor.id %} selected{% endif %}>{{ vendor.name }}</option>
+            {% endfor %}
+        </select>
+        <select name="type">
+            <option value="all"{% if selected_type == 'all' %} selected{% endif %}>All types</option>
+            <option value="package"{% if selected_type == 'package' %} selected{% endif %}>Packages</option>
+            <option value="activity"{% if selected_type == 'activity' %} selected{% endif %}>Activities</option>
+        </select>
+        <button type="submit" class="btn btn-filter">Apply</button>
+        <a href="{% url 'admin:pending_approvals' %}" class="btn-clear">Clear</a>
+    </form>
+
+    <p class="meta">Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} of {{ page_obj.paginator.count }} pending items.</p>
     
-    {% if items %}
+    {% if page_obj.object_list %}
     <table class="simple-table">
         <thead>
             <tr>
@@ -109,7 +186,7 @@
             </tr>
         </thead>
         <tbody>
-            {% for item in items %}
+            {% for item in page_obj.object_list %}
             <tr>
                 <td><strong>{{ item.name }}</strong></td>
                 <td>{{ item.type_label }}</td>
@@ -118,13 +195,15 @@
                 <td>
                     <a href="{{ item.admin_url }}" target="_blank" class="btn btn-view">View details</a>
                     <form method="POST" class="form-inline">
-                        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{{ request.get_full_path }}">
                         <input type="hidden" name="item_type" value="{{ item.item_type }}">
                         <input type="hidden" name="item_id" value="{{ item.pk }}">
                         <button type="submit" name="action" value="approve" class="btn btn-approve">Approve</button>
                     </form>
                     <form method="POST" class="form-inline">
-                        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{{ request.get_full_path }}">
                         <input type="hidden" name="item_type" value="{{ item.item_type }}">
                         <input type="hidden" name="item_id" value="{{ item.pk }}">
                         <input type="text" name="rejection_reason" placeholder="Reason (required)" required style="padding: 4px; border-radius: 4px; border: 1px solid var(--line-soft); margin-left: 8px;">
@@ -135,6 +214,18 @@
             {% endfor %}
         </tbody>
     </table>
+
+    {% if page_obj.has_other_pages %}
+    <div class="pagination">
+        {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}{% if query_string %}&{{ query_string }}{% endif %}">Previous</a>
+        {% endif %}
+        <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if query_string %}&{{ query_string }}{% endif %}">Next</a>
+        {% endif %}
+    </div>
+    {% endif %}
     {% else %}
     <p style="margin-top: 20px; font-style: italic; color: var(--text-muted);">No pending approvals at this time.</p>
     {% endif %}

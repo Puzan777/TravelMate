@@ -2,20 +2,28 @@ from itertools import chain
 from operator import attrgetter
 
 from django.contrib import admin, messages
+from django.core.paginator import Paginator
 from django.db.models import Q
 from django.shortcuts import redirect
 from django.template.response import TemplateResponse
 from django.urls import path, reverse
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils import timezone
 from django.utils.html import format_html
 
 from .models import (
-    Activity, ActivityImage, ApprovalStatus, Booking, CustomUser, Destination,
+    Activity, ActivityCategory, ActivityImage, ApprovalStatus, Booking, CustomUser, Destination,
     HotSale, Inquiry, Package, PackageImage, PackageItinerary,
 )
 
 # Hide default Django admin nav sidebar; custom dashboard provides navigation.
 admin.site.enable_nav_sidebar = False
+
+@admin.register(ActivityCategory)
+class ActivityCategoryAdmin(admin.ModelAdmin):
+    list_display = ('name',)
+    search_fields = ('name',)
+
 
 
 def _current_vendor_profile(user):
@@ -81,6 +89,7 @@ class PackageImageInline(admin.TabularInline):
 @admin.register(Package)
 class PackageAdmin(admin.ModelAdmin):
     inlines = [PackageImageInline]
+    list_per_page = 20
     list_display = ('title', 'vendor', 'category', 'price', 'rating', 'approval_status', 'is_active', 'created_at')
     list_filter = ('vendor', 'category', 'approval_status', 'is_active')
     search_fields = ('title', 'slug', 'destination__name', 'description')
@@ -149,6 +158,7 @@ class ActivityImageInline(admin.TabularInline):
 @admin.register(Activity)
 class ActivityAdmin(admin.ModelAdmin):
     inlines = [ActivityImageInline]
+    list_per_page = 20
     list_display = ('name', 'vendor', 'category', 'price', 'difficulty_level', 'approval_status', 'is_active', 'created_at')
     list_filter = ('vendor', 'category', 'difficulty_level', 'approval_status', 'is_active', 'created_at')
     search_fields = ('name', 'description', 'vendor__company_name', 'category__name')
@@ -182,6 +192,7 @@ class ActivityAdmin(admin.ModelAdmin):
 
 @admin.register(HotSale)
 class HotSaleAdmin(admin.ModelAdmin):
+    list_per_page = 20
     list_display = ('target_type', 'target_name', 'original_price', 'sale_price', 'savings', 'is_active', 'created_at')
     list_filter = ('is_active', 'created_at')
     search_fields = ('package__title', 'package__slug', 'activity__name', 'note')
@@ -286,9 +297,10 @@ class PackageItineraryAdmin(admin.ModelAdmin):
 
 @admin.register(Booking)
 class BookingAdmin(admin.ModelAdmin):
-    list_display = ('package', 'full_name', 'email', 'phone', 'number_of_people', 'travel_date', 'created_at')
-    list_filter = ('travel_date', 'created_at')
-    search_fields = ('package__title', 'user__username', 'full_name', 'email', 'phone', 'nationality', 'pickup_location')
+    list_per_page = 20
+    list_display = ('package_short_title', 'vendor_name', 'full_name', 'number_of_people', 'total_price', 'travel_date', 'created_at')
+    list_filter = ('package__vendor', 'travel_date', 'created_at')
+    search_fields = ('package__title', 'package__vendor__company_name', 'user__username', 'full_name', 'nationality', 'pickup_location')
     readonly_fields = ('created_at',)
     fieldsets = (
         ('Booking', {'fields': ('package', 'user', 'travel_date', 'number_of_people')}),
@@ -297,13 +309,34 @@ class BookingAdmin(admin.ModelAdmin):
     )
 
     def get_queryset(self, request):
-        qs = super().get_queryset(request)
+        qs = super().get_queryset(request).select_related('package', 'package__vendor', 'user')
         if request.user.is_superuser:
             return qs
         vendor_profile = _current_vendor_profile(request.user)
         if vendor_profile:
             return qs.filter(package__vendor=vendor_profile)
         return qs.none()
+
+    @admin.display(description='Vendor')
+    def vendor_name(self, obj):
+        if obj.package and obj.package.vendor:
+            return obj.package.vendor.company_name
+        return '-'
+
+    @admin.display(description='Package')
+    def package_short_title(self, obj):
+        if not obj.package:
+            return '-'
+        title = obj.package.title or ''
+        if len(title) <= 17:
+            return title
+        return f"{title[:17]}..."
+
+    @admin.display(description='Total Price')
+    def total_price(self, obj):
+        if not obj.package or obj.package.price is None:
+            return '-'
+        return obj.package.price * obj.number_of_people
 
 
 class InquiryReplyStatusFilter(admin.SimpleListFilter):
@@ -324,8 +357,8 @@ class InquiryReplyStatusFilter(admin.SimpleListFilter):
         return queryset
 
 
-@admin.register(Inquiry)
 class InquiryAdmin(admin.ModelAdmin):
+    list_per_page = 20
     list_display = ('package', 'full_name', 'email', 'phone', 'inquiry_message', 'reply_status', 'user', 'created_at', 'replied_at')
     list_filter = (InquiryReplyStatusFilter, 'created_at', 'replied_at')
     search_fields = ('package__title', 'full_name', 'email', 'phone', 'message')
@@ -371,6 +404,16 @@ def _pending_approvals_view(request):
         from django.core.exceptions import PermissionDenied
         raise PermissionDenied
 
+    def _redirect_target():
+        next_url = request.POST.get('next')
+        if next_url and next_url.startswith('/admin/pending-approvals/') and url_has_allowed_host_and_scheme(
+            url=next_url,
+            allowed_hosts={request.get_host()},
+            require_https=request.is_secure(),
+        ):
+            return next_url
+        return 'admin:pending_approvals'
+
     if request.method == 'POST':
         item_type = request.POST.get('item_type')
         item_id = request.POST.get('item_id')
@@ -380,7 +423,7 @@ def _pending_approvals_view(request):
                 rejection_reason = request.POST.get('rejection_reason', '').strip()
                 if not rejection_reason:
                     messages.error(request, 'Please provide a reason for rejection.')
-                    return redirect('admin:pending_approvals')
+                    return redirect(_redirect_target())
             else:
                 rejection_reason = None
             
@@ -395,7 +438,10 @@ def _pending_approvals_view(request):
                 messages.success(request, 'Item approved successfully.')
             else:
                 messages.warning(request, 'Item rejected.')
-        return redirect('admin:pending_approvals')
+        return redirect(_redirect_target())
+
+    selected_vendor = request.GET.get('vendor', 'all')
+    selected_type = request.GET.get('type', 'all')
 
     pending_packages = Package.objects.filter(
         approval_status=ApprovalStatus.PENDING,
@@ -404,35 +450,66 @@ def _pending_approvals_view(request):
         approval_status=ApprovalStatus.PENDING,
     ).select_related('vendor').order_by('-created_at')
 
+    vendor_options_map = {}
+    for vendor_id, company_name in pending_packages.values_list('vendor_id', 'vendor__company_name'):
+        if vendor_id:
+            vendor_options_map[vendor_id] = company_name or f'Vendor {vendor_id}'
+    for vendor_id, company_name in pending_activities.values_list('vendor_id', 'vendor__company_name'):
+        if vendor_id:
+            vendor_options_map[vendor_id] = company_name or f'Vendor {vendor_id}'
+
+    vendor_options = [
+        {'id': str(vendor_id), 'name': name}
+        for vendor_id, name in sorted(vendor_options_map.items(), key=lambda item: (item[1] or '').lower())
+    ]
+
+    if selected_vendor != 'all' and selected_vendor.isdigit():
+        selected_vendor_id = int(selected_vendor)
+        pending_packages = pending_packages.filter(vendor_id=selected_vendor_id)
+        pending_activities = pending_activities.filter(vendor_id=selected_vendor_id)
+
     items = []
-    for p in pending_packages:
-        items.append({
-            'name': p.title,
-            'item_type': 'package',
-            'type_label': 'Package',
-            'vendor': p.vendor.company_name if p.vendor else '-',
-            'submitted': p.created_at,
-            'status': p.approval_status,
-            'pk': p.pk,
-            'admin_url': reverse('admin:app_package_change', args=[p.pk]),
-        })
-    for a in pending_activities:
-        items.append({
-            'name': a.name,
-            'item_type': 'activity',
-            'type_label': 'Activity',
-            'vendor': a.vendor.company_name if a.vendor else '-',
-            'submitted': a.created_at,
-            'status': a.approval_status,
-            'pk': a.pk,
-            'admin_url': reverse('admin:app_activity_change', args=[a.pk]),
-        })
+    if selected_type in ('all', 'package'):
+        for p in pending_packages:
+            items.append({
+                'name': p.title,
+                'item_type': 'package',
+                'type_label': 'Package',
+                'vendor': p.vendor.company_name if p.vendor else '-',
+                'submitted': p.created_at,
+                'status': p.approval_status,
+                'pk': p.pk,
+                'admin_url': reverse('admin:app_package_change', args=[p.pk]),
+            })
+
+    if selected_type in ('all', 'activity'):
+        for a in pending_activities:
+            items.append({
+                'name': a.name,
+                'item_type': 'activity',
+                'type_label': 'Activity',
+                'vendor': a.vendor.company_name if a.vendor else '-',
+                'submitted': a.created_at,
+                'status': a.approval_status,
+                'pk': a.pk,
+                'admin_url': reverse('admin:app_activity_change', args=[a.pk]),
+            })
+
     items.sort(key=lambda x: x['submitted'], reverse=True)
+
+    paginator = Paginator(items, 12)
+    page_obj = paginator.get_page(request.GET.get('page'))
+    query_params = request.GET.copy()
+    query_params.pop('page', None)
 
     context = {
         **admin.site.each_context(request),
         'title': 'Pending Approvals',
-        'items': items,
+        'page_obj': page_obj,
+        'vendor_options': vendor_options,
+        'selected_vendor': selected_vendor,
+        'selected_type': selected_type,
+        'query_string': query_params.urlencode(),
         'opts': Package._meta,
     }
     return TemplateResponse(request, 'admin/pending_approvals.html', context)
@@ -443,6 +520,10 @@ def _live_products_view(request):
         from django.core.exceptions import PermissionDenied
         raise PermissionDenied
 
+    selected_vendor = request.GET.get('vendor', 'all')
+    selected_type = request.GET.get('type', 'all')
+    sort_by = request.GET.get('sort', 'newest')
+
     live_packages = Package.objects.filter(
         approval_status=ApprovalStatus.APPROVED, is_active=True,
     ).select_related('vendor', 'destination').order_by('-updated_at')
@@ -450,31 +531,75 @@ def _live_products_view(request):
         approval_status=ApprovalStatus.APPROVED, is_active=True,
     ).select_related('vendor', 'category').order_by('-created_at')
 
+    vendor_options_map = {}
+    for vendor_id, company_name in live_packages.values_list('vendor_id', 'vendor__company_name'):
+        if vendor_id:
+            vendor_options_map[vendor_id] = company_name or f'Vendor {vendor_id}'
+    for vendor_id, company_name in live_activities.values_list('vendor_id', 'vendor__company_name'):
+        if vendor_id:
+            vendor_options_map[vendor_id] = company_name or f'Vendor {vendor_id}'
+
+    vendor_options = [
+        {'id': str(vendor_id), 'name': name}
+        for vendor_id, name in sorted(vendor_options_map.items(), key=lambda item: (item[1] or '').lower())
+    ]
+
+    if selected_vendor != 'all' and selected_vendor.isdigit():
+        selected_vendor_id = int(selected_vendor)
+        live_packages = live_packages.filter(vendor_id=selected_vendor_id)
+        live_activities = live_activities.filter(vendor_id=selected_vendor_id)
+
     items = []
-    for p in live_packages:
-        items.append({
-            'name': p.title,
-            'type_label': 'Package',
-            'vendor': p.vendor.company_name if p.vendor else '-',
-            'category': p.get_category_display() if p.category else '-',
-            'price': p.price,
-            'created': p.created_at,
-        })
-    for a in live_activities:
-        items.append({
-            'name': a.name,
-            'type_label': 'Activity',
-            'vendor': a.vendor.company_name if a.vendor else '-',
-            'category': a.category.name if a.category else '-',
-            'price': a.price,
-            'created': a.created_at,
-        })
-    items.sort(key=lambda x: x['created'], reverse=True)
+    if selected_type in ('all', 'package'):
+        for p in live_packages:
+            items.append({
+                'name': p.title,
+                'type_label': 'Package',
+                'vendor': p.vendor.company_name if p.vendor else '-',
+                'category': p.get_category_display() if p.category else '-',
+                'price': p.price,
+                'created': p.created_at,
+                'admin_url': reverse('admin:app_package_change', args=[p.pk]),
+            })
+
+    if selected_type in ('all', 'activity'):
+        for a in live_activities:
+            items.append({
+                'name': a.name,
+                'type_label': 'Activity',
+                'vendor': a.vendor.company_name if a.vendor else '-',
+                'category': a.category.name if a.category else '-',
+                'price': a.price,
+                'created': a.created_at,
+                'admin_url': reverse('admin:app_activity_change', args=[a.pk]),
+            })
+
+    if sort_by == 'oldest':
+        items.sort(key=lambda x: x['created'])
+    elif sort_by == 'price_low':
+        items.sort(key=lambda x: (x['price'] is None, x['price'] if x['price'] is not None else 0))
+    elif sort_by == 'price_high':
+        items.sort(key=lambda x: (x['price'] is None, -(x['price'] if x['price'] is not None else 0)))
+    elif sort_by == 'name':
+        items.sort(key=lambda x: x['name'].lower())
+    else:
+        sort_by = 'newest'
+        items.sort(key=lambda x: x['created'], reverse=True)
+
+    paginator = Paginator(items, 12)
+    page_obj = paginator.get_page(request.GET.get('page'))
+    query_params = request.GET.copy()
+    query_params.pop('page', None)
 
     context = {
         **admin.site.each_context(request),
         'title': 'Live Products',
-        'items': items,
+        'page_obj': page_obj,
+        'vendor_options': vendor_options,
+        'selected_vendor': selected_vendor,
+        'selected_type': selected_type,
+        'sort_by': sort_by,
+        'query_string': query_params.urlencode(),
         'opts': Package._meta,
     }
     return TemplateResponse(request, 'admin/live_products.html', context)

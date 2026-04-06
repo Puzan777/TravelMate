@@ -5,34 +5,531 @@
 
 {% block extrastyle %}
 {{ block.super }}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-	#header {
-		background: linear-gradient(120deg, #0b3d69, #0a4f8a 45%, #0e6bb7);
-		color: #ffffff;
-		border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-	}
-	#site-name a {
-		color: #ffffff;
-		text-decoration: none;
-		font-weight: 700;
-		letter-spacing: 0.02em;
-	}
-	#user-tools {
-		color: rgba(255, 255, 255, 0.92);
-		font-size: 0.85rem;
-	}
-	#user-tools a {
-		color: #ffffff;
-		text-decoration: none;
-		border: 1px solid rgba(255, 255, 255, 0.38);
-		border-radius: 999px;
-		padding: 4px 10px;
-		margin-left: 6px;
-		display: inline-block;
-	}
-	#user-tools a:hover {
-		background: rgba(255, 255, 255, 0.14);
-	}
+  /* ═══════════════════════════════════════════════════
+     TravelMate Admin — Global Theme
+     Color Palette: Deep Ocean Teal + Warm Amber
+     Inspired by: travel, adventure, mountain sunsets
+     ═══════════════════════════════════════════════════ */
+
+  :root {
+    /* Core palette */
+    --tm-bg: #f0f4f8;
+    --tm-surface: #ffffff;
+    --tm-surface-hover: #f7fafd;
+    --tm-text: #1a2332;
+    --tm-text-muted: #5e6e82;
+    --tm-line: #dce4ee;
+    --tm-line-soft: #e8eff7;
+
+    /* Brand — deep teal ocean */
+    --tm-primary: #0d7377;
+    --tm-primary-dark: #095456;
+    --tm-primary-light: #e0f5f5;
+    --tm-primary-glow: rgba(13, 115, 119, 0.12);
+
+    /* Accent — warm amber sunset */
+    --tm-accent: #e8871e;
+    --tm-accent-light: #fef3e2;
+
+    /* Status colors */
+    --tm-success: #0f8b4c;
+    --tm-success-bg: #e6f7ee;
+    --tm-warning: #c27803;
+    --tm-warning-bg: #fef7e6;
+    --tm-danger: #c0392b;
+    --tm-danger-bg: #fde8e8;
+
+    /* Layout */
+    --tm-radius: 10px;
+    --tm-radius-lg: 14px;
+    --tm-shadow: 0 2px 12px rgba(26, 35, 50, 0.06);
+    --tm-shadow-lg: 0 8px 30px rgba(26, 35, 50, 0.1);
+    --tm-transition: 0.2s ease;
+  }
+
+  /* ─── Global resets ─── */
+  * { box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+    background: var(--tm-bg) !important;
+    color: var(--tm-text) !important;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ─── Header ─── */
+  #header {
+    background: linear-gradient(135deg, #063b3e 0%, #0d7377 55%, #11998e 100%) !important;
+    padding: 14px 28px !important;
+    box-shadow: 0 4px 20px rgba(13, 115, 119, 0.25);
+    border-bottom: none !important;
+  }
+  #site-name a {
+    color: #fff !important;
+    font-weight: 800 !important;
+    font-size: 1.35rem !important;
+    letter-spacing: -0.02em;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  }
+  #user-tools {
+    color: rgba(255,255,255,0.88) !important;
+    font-size: 0.85rem;
+  }
+  #user-tools a {
+    color: #fff !important;
+    text-decoration: none;
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 999px;
+    padding: 5px 14px;
+    margin-left: 6px;
+    display: inline-block;
+    font-weight: 500;
+    font-size: 0.82rem;
+    transition: all var(--tm-transition);
+  }
+  #user-tools a:hover {
+    background: rgba(255,255,255,0.15);
+    border-color: rgba(255,255,255,0.5);
+  }
+
+  /* ─── Breadcrumbs ─── */
+  .breadcrumbs {
+    background: var(--tm-surface) !important;
+    border-bottom: 1px solid var(--tm-line) !important;
+    color: var(--tm-text-muted) !important;
+    padding: 10px 28px !important;
+    font-size: 0.85rem;
+  }
+  .breadcrumbs a { color: var(--tm-primary) !important; font-weight: 500; }
+  .breadcrumbs a:hover { color: var(--tm-primary-dark) !important; }
+
+  /* ─── Content area ─── */
+  #content {
+    padding: 24px 28px !important;
+  }
+  #content h1 {
+    font-weight: 700 !important;
+    color: var(--tm-text) !important;
+    font-size: 1.5rem !important;
+    margin-bottom: 16px;
+  }
+
+  /* ─── Messages ─── */
+  .messagelist li {
+    border-radius: var(--tm-radius) !important;
+    padding: 12px 18px !important;
+    font-size: 0.9rem;
+    margin: 8px 28px;
+    border: 1px solid;
+  }
+  .messagelist .success { background: var(--tm-success-bg) !important; color: var(--tm-success) !important; border-color: #b0e0c8 !important; }
+  .messagelist .warning { background: var(--tm-warning-bg) !important; color: var(--tm-warning) !important; border-color: #f5dca0 !important; }
+  .messagelist .error   { background: var(--tm-danger-bg)  !important; color: var(--tm-danger)  !important; border-color: #f0b0b0 !important; }
+
+  /* ─── Django Nav Sidebar ─── */
+  #nav-sidebar {
+    background: var(--tm-surface) !important;
+    border-right: 1px solid var(--tm-line) !important;
+    width: 260px !important;
+    box-shadow: var(--tm-shadow);
+  }
+  #nav-sidebar .module caption {
+    background: var(--tm-primary) !important;
+    color: #fff !important;
+    font-weight: 700;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 10px 16px !important;
+    border: none !important;
+  }
+  #nav-sidebar .module th {
+    display: none;
+  }
+  #nav-sidebar .module td {
+    padding: 0 !important;
+    border: none !important;
+  }
+  #nav-sidebar .module td a {
+    display: block;
+    padding: 9px 16px;
+    color: var(--tm-text) !important;
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    border-left: 3px solid transparent;
+    transition: all var(--tm-transition);
+  }
+  #nav-sidebar .module td a:hover {
+    background: var(--tm-primary-light) !important;
+    color: var(--tm-primary-dark) !important;
+    border-left-color: var(--tm-primary);
+  }
+  #nav-sidebar .module {
+    background: transparent !important;
+    border: none !important;
+    margin-bottom: 0 !important;
+    box-shadow: none !important;
+  }
+  /* Toggle sidebar button */
+  #toggle-nav-sidebar {
+    background: var(--tm-primary) !important;
+    color: #fff !important;
+    width: 22px !important;
+    border-radius: 0 6px 6px 0;
+  }
+
+  /* ─── Modules / Fieldsets ─── */
+  .module {
+    background: var(--tm-surface) !important;
+    border: 1px solid var(--tm-line) !important;
+    border-radius: var(--tm-radius-lg) !important;
+    box-shadow: var(--tm-shadow) !important;
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+  .module h2, .module caption {
+    background: linear-gradient(135deg, #0d7377, #11998e) !important;
+    color: #fff !important;
+    font-weight: 700 !important;
+    font-size: 0.85rem !important;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 12px 18px !important;
+    border: none !important;
+  }
+  fieldset {
+    border: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* ─── Tables (changelist, inline, etc.) ─── */
+  #changelist {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+  #changelist table,
+  .results table,
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  #result_list {
+    background: var(--tm-surface);
+    border: 1px solid var(--tm-line);
+    border-radius: var(--tm-radius-lg);
+    box-shadow: var(--tm-shadow);
+    overflow: hidden;
+  }
+  th {
+    background: #f0f5f5 !important;
+    color: var(--tm-text-muted) !important;
+    font-weight: 700 !important;
+    font-size: 0.78rem !important;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 12px 16px !important;
+    border-bottom: 2px solid var(--tm-line) !important;
+    white-space: nowrap;
+  }
+  th a:link, th a:visited {
+    color: var(--tm-text-muted) !important;
+  }
+  th.sorted { background: var(--tm-primary-light) !important; }
+  th.sorted a { color: var(--tm-primary-dark) !important; }
+
+  td {
+    padding: 11px 16px !important;
+    border-bottom: 1px solid var(--tm-line-soft) !important;
+    font-size: 0.9rem;
+    color: var(--tm-text);
+    vertical-align: middle;
+  }
+  tr:hover td {
+    background: var(--tm-surface-hover) !important;
+  }
+  tr:last-child td {
+    border-bottom: none !important;
+  }
+
+  /* Row coloring */
+  #result_list tr.row1 { background: #fff; }
+  #result_list tr.row2 { background: #fafcfe; }
+
+  /* ─── Links ─── */
+  a:link, a:visited {
+    color: var(--tm-primary);
+    text-decoration: none;
+    transition: color var(--tm-transition);
+  }
+  a:hover { color: var(--tm-accent); }
+
+  /* ─── Changelist Filter (right panel) ─── */
+  #changelist-filter {
+    background: var(--tm-surface) !important;
+    border: 1px solid var(--tm-line) !important;
+    border-radius: var(--tm-radius-lg) !important;
+    box-shadow: var(--tm-shadow) !important;
+    padding: 0 !important;
+    overflow: hidden;
+    width: 220px;
+    margin-left: 20px;
+  }
+  #changelist-filter h2 {
+    background: linear-gradient(135deg, #0d7377, #11998e) !important;
+    color: #fff !important;
+    font-weight: 700 !important;
+    font-size: 0.78rem !important;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 10px 16px !important;
+    margin: 0 !important;
+  }
+  #changelist-filter details {
+    border-bottom: 1px solid var(--tm-line-soft);
+    padding: 0;
+  }
+  #changelist-filter details:last-child {
+    border-bottom: none;
+  }
+  #changelist-filter details summary,
+  #changelist-filter h3 {
+    color: var(--tm-text) !important;
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 10px 16px !important;
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+  }
+  #changelist-filter ul {
+    margin: 0 !important;
+    padding: 0 0 6px 0 !important;
+    list-style: none;
+  }
+  #changelist-filter li {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  #changelist-filter li a {
+    display: block;
+    padding: 5px 16px;
+    font-size: 0.84rem;
+    color: var(--tm-text-muted) !important;
+    border-left: 3px solid transparent;
+    transition: all var(--tm-transition);
+    text-decoration: none;
+  }
+  #changelist-filter li a:hover {
+    background: var(--tm-primary-light);
+    border-left-color: var(--tm-primary);
+    color: var(--tm-primary-dark) !important;
+  }
+  #changelist-filter li.selected a {
+    background: var(--tm-primary-light) !important;
+    color: var(--tm-primary-dark) !important;
+    font-weight: 600;
+    border-left-color: var(--tm-primary);
+  }
+
+  /* ─── Input Fields ─── */
+  input[type="text"], input[type="password"], input[type="email"],
+  input[type="url"], input[type="number"], input[type="date"],
+  input[type="datetime-local"], select, textarea {
+    background: #fff !important;
+    border: 1.5px solid var(--tm-line) !important;
+    color: var(--tm-text) !important;
+    border-radius: 8px !important;
+    padding: 9px 14px !important;
+    font-family: 'Inter', sans-serif !important;
+    font-size: 0.9rem !important;
+    transition: border-color var(--tm-transition), box-shadow var(--tm-transition);
+  }
+  input[type="text"]:focus, input[type="password"]:focus, select:focus, textarea:focus {
+    border-color: var(--tm-primary) !important;
+    outline: none !important;
+    box-shadow: 0 0 0 3px var(--tm-primary-glow) !important;
+  }
+  textarea {
+    min-height: 80px;
+    resize: vertical;
+  }
+
+  /* ─── Checkboxes ─── */
+  input[type="checkbox"] {
+    width: 18px; height: 18px;
+    accent-color: var(--tm-primary);
+    cursor: pointer;
+  }
+
+  /* ─── Buttons ─── */
+  .button, input[type=submit], input[type=button], .submit-row input, a.button {
+    background: var(--tm-primary) !important;
+    border: none !important;
+    color: #fff !important;
+    border-radius: 8px !important;
+    font-family: 'Inter', sans-serif !important;
+    padding: 10px 22px !important;
+    font-weight: 600 !important;
+    font-size: 0.85rem !important;
+    cursor: pointer;
+    transition: all var(--tm-transition);
+    box-shadow: 0 2px 8px var(--tm-primary-glow);
+    letter-spacing: 0.02em;
+  }
+  .button:hover, input[type=submit]:hover {
+    background: var(--tm-primary-dark) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px var(--tm-primary-glow);
+  }
+  /* Secondary/delete buttons */
+  .button.default, input[type=submit].default, .submit-row input.default {
+    background: var(--tm-primary) !important;
+  }
+  a.button.cancel-link, .deletelink, .button.cancel {
+    background: var(--tm-danger) !important;
+    box-shadow: 0 2px 8px rgba(192, 57, 43, 0.15);
+  }
+
+  /* ─── Submit Row ─── */
+  .submit-row {
+    background: #f5f8fb !important;
+    border-top: 1px solid var(--tm-line) !important;
+    border-radius: 0 0 var(--tm-radius-lg) var(--tm-radius-lg);
+    padding: 14px 20px !important;
+  }
+
+  /* ─── Form rows ─── */
+  .form-row {
+    border-bottom: 1px solid var(--tm-line-soft) !important;
+    padding: 12px 18px !important;
+  }
+  .form-row:last-child {
+    border-bottom: none !important;
+  }
+  .aligned label {
+    color: var(--tm-text) !important;
+    font-weight: 600;
+    font-size: 0.88rem;
+  }
+  .help, .helptext {
+    color: var(--tm-text-muted) !important;
+    font-size: 0.8rem;
+    margin-top: 4px;
+  }
+
+  /* ─── Inline admin ─── */
+  .inline-group .tabular td { padding: 8px 12px !important; }
+  .inline-related h3 {
+    background: #f0f5f5 !important;
+    color: var(--tm-text) !important;
+    font-weight: 700;
+    font-size: 0.85rem;
+    padding: 10px 16px !important;
+    border-bottom: 1px solid var(--tm-line);
+    border-radius: var(--tm-radius) var(--tm-radius) 0 0;
+  }
+
+  /* ─── Action bar ─── */
+  .actions {
+    background: #f5f8fb !important;
+    border: 1px solid var(--tm-line) !important;
+    border-radius: var(--tm-radius) !important;
+    padding: 10px 16px !important;
+    margin-bottom: 12px;
+  }
+  .actions select {
+    max-width: 320px;
+  }
+  .actions label { font-weight: 600; font-size: 0.85rem; }
+
+  /* ─── Paginator ─── */
+  .paginator {
+    background: var(--tm-surface) !important;
+    border: 1px solid var(--tm-line) !important;
+    border-radius: var(--tm-radius) !important;
+    padding: 10px 16px !important;
+    font-size: 0.88rem;
+    color: var(--tm-text-muted);
+  }
+  .paginator a:link { color: var(--tm-primary) !important; font-weight: 600; }
+
+  /* ─── Object tools (top-right buttons) ─── */
+  .object-tools li a {
+    background: var(--tm-accent) !important;
+    border-radius: 8px !important;
+    font-weight: 600;
+    font-size: 0.82rem;
+    padding: 8px 16px !important;
+    color: #fff !important;
+    box-shadow: 0 2px 8px rgba(232, 135, 30, 0.2);
+    transition: all var(--tm-transition);
+  }
+  .object-tools li a:hover {
+    background: #cf7518 !important;
+    transform: translateY(-1px);
+  }
+
+  /* ─── Select2 overrides ─── */
+  .select2-container--admin-autocomplete .select2-selection--single,
+  .select2-container--admin-autocomplete .select2-selection--multiple {
+    border: 1.5px solid var(--tm-line) !important;
+    border-radius: 8px !important;
+    min-height: 38px !important;
+    background: #fff !important;
+  }
+  .select2-container--admin-autocomplete .select2-selection--single:focus-within {
+    border-color: var(--tm-primary) !important;
+    box-shadow: 0 0 0 3px var(--tm-primary-glow) !important;
+  }
+  .select2-container--admin-autocomplete .select2-selection__rendered {
+    color: var(--tm-text) !important;
+    padding: 6px 12px !important;
+  }
+
+  /* ─── Calendar & date shortcuts ─── */
+  .calendarbox, .clockbox {
+    border-radius: var(--tm-radius) !important;
+    box-shadow: var(--tm-shadow-lg) !important;
+    border: 1px solid var(--tm-line) !important;
+  }
+  .calendar caption {
+    background: var(--tm-primary) !important;
+    color: #fff !important;
+  }
+  .datetimeshortcuts a {
+    color: var(--tm-primary) !important;
+    font-weight: 600;
+    font-size: 0.82rem;
+  }
+
+  /* ─── Recent actions panel ─── */
+  #recent-actions-module {
+    border-radius: var(--tm-radius-lg) !important;
+  }
+
+  /* ─── Related widget wrapper ─── */
+  .related-widget-wrapper select { max-width: 280px; }
+
+  /* ─── Dashboard-specific index page module overrides ─── */
+  #content-main .module table th a {
+    color: var(--tm-text-muted) !important;
+  }
+
+  /* ─── Responsive ─── */
+  @media (max-width: 767px) {
+    #header { padding: 12px 16px !important; }
+    #content { padding: 14px 16px !important; }
+    .breadcrumbs { padding: 8px 16px !important; }
+    #nav-sidebar { width: 220px !important; }
+  }
 </style>
 {% endblock %}
 
@@ -43,9 +540,9 @@
 {% block usertools %}
 {% if has_permission %}
 <div id="user-tools">
-	<a href="{% url 'admin:index' %}">Home</a>
-	<a href="{% url 'home' %}">View site</a>
-	<a href="{% url 'admin:logout' %}">Logout</a>
+  <a href="{% url 'admin:index' %}">Dashboard</a>
+  <a href="{% url 'home' %}">View Site</a>
+  <a href="{% url 'admin:logout' %}">Log out</a>
 </div>
 {% endif %}
 {% endblock %}
