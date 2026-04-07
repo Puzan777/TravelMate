@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -142,3 +143,12 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'puzanthapa47@gmail.com'
 EMAIL_HOST_PASSWORD = 'pzwj jysp jfuf gxbn'
+
+
+ESEWA_USE_SANDBOX = True  # True for sandbox, False for production
+ESEWA_PRODUCT_CODE = "EPAYTEST"
+
+# Sandbox
+ESEWA_FORM_URL = "https://rc-epay.esewa.com.np/api/epay/main/v2/form"
+ESEWA_STATUS_URL = "https://rc.esewa.com.np/api/epay/transaction/status/"
+ESEWA_SECRET_KEY = "8gBm/:&EnhH.1/q"

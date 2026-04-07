@@ -462,6 +462,22 @@
                   <div class="text-danger small">{{ booking_form.number_of_people.errors|striptags }}</div>
                 {% endif %}
 
+                <div class="small text-muted">Estimated total: $<span id="bookingEstimatedTotal">{{ package.price }}</span></div>
+
+                <label for="id_payment_method" class="form-label mb-1">Payment method</label>
+                {{ booking_form.payment_method }}
+                {% if booking_form.payment_method.errors %}
+                  <div class="text-danger small">{{ booking_form.payment_method.errors|striptags }}</div>
+                {% endif %}
+
+                <div id="transactionReferenceField">
+                  <label for="id_transaction_reference" class="form-label mb-1">Transaction/reference ID <span id="transactionReferenceHint" class="text-muted">(required for bank transfer)</span></label>
+                  {{ booking_form.transaction_reference }}
+                  {% if booking_form.transaction_reference.errors %}
+                    <div class="text-danger small">{{ booking_form.transaction_reference.errors|striptags }}</div>
+                  {% endif %}
+                </div>
+
                 <label for="id_pickup_location" class="form-label mb-1">Pickup location or departure city <span class="text-muted">(optional)</span></label>
                 {{ booking_form.pickup_location }}
                 {% if booking_form.pickup_location.errors %}
@@ -535,4 +551,50 @@
   </div>
   </div>
 </div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const peopleInput = document.getElementById('id_number_of_people');
+    const totalEl = document.getElementById('bookingEstimatedTotal');
+    const paymentMethodInput = document.getElementById('id_payment_method');
+    const transactionReferenceInput = document.getElementById('id_transaction_reference');
+    const transactionReferenceHint = document.getElementById('transactionReferenceHint');
+    const packagePrice = parseFloat('{{ package.price|default:"0" }}');
+
+    if (!peopleInput || !totalEl || Number.isNaN(packagePrice)) {
+      return;
+    }
+
+    function updateEstimatedTotal() {
+      const people = parseInt(peopleInput.value || '1', 10);
+      const safePeople = Number.isNaN(people) || people < 1 ? 1 : people;
+      totalEl.textContent = (packagePrice * safePeople).toFixed(2);
+    }
+
+    peopleInput.addEventListener('input', updateEstimatedTotal);
+    updateEstimatedTotal();
+
+    function syncTransactionReferenceHint() {
+      if (!paymentMethodInput || !transactionReferenceHint || !transactionReferenceInput) {
+        return;
+      }
+
+      if (paymentMethodInput.value === 'BANK_TRANSFER') {
+        transactionReferenceHint.textContent = '(required for bank transfer)';
+        transactionReferenceInput.required = true;
+      } else if (paymentMethodInput.value === 'ESEWA') {
+        transactionReferenceHint.textContent = '(filled automatically after eSewa callback verification)';
+        transactionReferenceInput.required = false;
+      } else {
+        transactionReferenceHint.textContent = '(optional)';
+        transactionReferenceInput.required = false;
+      }
+    }
+
+    if (paymentMethodInput) {
+      paymentMethodInput.addEventListener('change', syncTransactionReferenceHint);
+      syncTransactionReferenceHint();
+    }
+  });
+</script>
 {% endblock %}

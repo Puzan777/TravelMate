@@ -6,6 +6,7 @@ from django.dispatch import receiver
 from django.urls import reverse
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.utils import timezone
 
 
 class CustomUser(AbstractUser):
@@ -357,6 +358,17 @@ class HotSale(models.Model):
 
 
 class Booking(models.Model):
+    class PaymentMethod(models.TextChoices):
+        CASH = 'CASH', 'Cash on arrival'
+        ESEWA = 'ESEWA', 'eSewa'
+        BANK_TRANSFER = 'BANK_TRANSFER', 'Bank transfer'
+
+    class PaymentStatus(models.TextChoices):
+        PENDING = 'PENDING', 'Pending'
+        PAID = 'PAID', 'Paid'
+        FAILED = 'FAILED', 'Failed'
+        REFUNDED = 'REFUNDED', 'Refunded'
+
     package = models.ForeignKey(Package, on_delete=models.CASCADE, related_name='bookings')
     user = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='bookings')
     full_name = models.CharField(max_length=120)
@@ -364,6 +376,11 @@ class Booking(models.Model):
     phone = models.CharField(max_length=30)
     travel_date = models.DateField()
     number_of_people = models.PositiveIntegerField(default=1)
+    payment_method = models.CharField(max_length=20, choices=PaymentMethod.choices, default=PaymentMethod.CASH)
+    payment_status = models.CharField(max_length=20, choices=PaymentStatus.choices, default=PaymentStatus.PENDING)
+    transaction_reference = models.CharField(max_length=120, blank=True)
+    total_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    paid_at = models.DateTimeField(null=True, blank=True)
     pickup_location = models.CharField(max_length=150, blank=True)
     nationality = models.CharField(max_length=80)
     emergency_contact = models.CharField(max_length=120)
@@ -374,6 +391,19 @@ class Booking(models.Model):
 
     def __str__(self):
         return f"{self.package.title} - {self.full_name} - {self.travel_date}"
+
+    def save(self, *args, **kwargs):
+        if self.package_id and self.number_of_people:
+            package_price = self.package.price
+            if package_price is not None:
+                self.total_amount = package_price * self.number_of_people
+
+        if self.payment_status == self.PaymentStatus.PAID and self.paid_at is None:
+            self.paid_at = timezone.now()
+        elif self.payment_status in (self.PaymentStatus.PENDING, self.PaymentStatus.FAILED):
+            self.paid_at = None
+
+        super().save(*args, **kwargs)
 
 
 class Inquiry(models.Model):
