@@ -639,12 +639,8 @@
     if (addButton && list && template && totalFormsInput) {
       addButton.addEventListener('click', addForm);
 
-      if (!list.children.length) {
-        addForm();
-      } else {
-        updateEmptyState();
-        list.querySelectorAll('.itinerary-card').forEach(bindCard);
-      }
+      updateEmptyState();
+      list.querySelectorAll('.itinerary-card').forEach(bindCard);
     }
 
     let selectedPackageFiles = [];

@@ -78,7 +78,13 @@ def dashboard(request):
 		return redirect('home')
 
 	package_qs = Package.objects.filter(vendor=vendor_profile)
-	recent_bookings = Booking.objects.filter(package__vendor=vendor_profile).select_related('package', 'user')[:5]
+	visible_booking_q = Q(payment_status=Booking.PaymentStatus.PAID) | ~Q(payment_method=Booking.PaymentMethod.ESEWA)
+	recent_bookings = (
+		Booking.objects
+		.filter(package__vendor=vendor_profile)
+		.filter(visible_booking_q)
+		.select_related('package', 'user')[:5]
+	)
 	recent_inquiries = Inquiry.objects.filter(package__vendor=vendor_profile).select_related('package', 'user')[:5]
 
 	context = {
@@ -89,7 +95,7 @@ def dashboard(request):
 			Q(package__vendor=vendor_profile) | Q(activity__vendor=vendor_profile),
 			is_active=True,
 		).count(),
-		'booking_count': Booking.objects.filter(package__vendor=vendor_profile).count(),
+		'booking_count': Booking.objects.filter(package__vendor=vendor_profile).filter(visible_booking_q).count(),
 		'inquiry_count': Inquiry.objects.filter(package__vendor=vendor_profile).count(),
 		'recent_bookings': recent_bookings,
 		'recent_inquiries': recent_inquiries,
@@ -379,6 +385,7 @@ def package_edit(request, pk):
 	if request.method == 'POST':
 		form = VendorPackageForm(request.POST, request.FILES, instance=package, vendor_profile=vendor_profile)
 		formset = PackageItineraryFormSet(request.POST, instance=package, prefix='itinerary')
+		was_rejected_before_edit = package.approval_status == ApprovalStatus.REJECTED
 		remove_image_ids = request.POST.getlist('remove_image_ids')
 		images_to_remove = package.images.filter(pk__in=remove_image_ids)
 		remaining_count = package.images.exclude(pk__in=images_to_remove.values_list('pk', flat=True)).count()
@@ -404,7 +411,7 @@ def package_edit(request, pk):
 			with transaction.atomic():
 				package = form.save()
 				formset.save()
-				if package.approval_status == ApprovalStatus.REJECTED:
+				if was_rejected_before_edit:
 					package.approval_status = ApprovalStatus.PENDING
 					package.rejection_reason = None
 					package.save(update_fields=['approval_status', 'rejection_reason'])
@@ -549,7 +556,13 @@ def booking_list(request):
 	if vendor_profile is None:
 		return redirect('home')
 
-	bookings = Booking.objects.filter(package__vendor=vendor_profile).select_related('package', 'user').order_by('-created_at')
+	bookings = (
+		Booking.objects
+		.filter(package__vendor=vendor_profile)
+		.filter(Q(payment_status=Booking.PaymentStatus.PAID) | ~Q(payment_method=Booking.PaymentMethod.ESEWA))
+		.select_related('package', 'user')
+		.order_by('-created_at')
+	)
 	return render(
 		request,
 		'vendor/booking_list.html',
