@@ -1,7 +1,7 @@
 {% extends "admin/base_site.html" %}
 {% load i18n admin_urls static admin_list %}
 
-{% block title %}{% if cl.formset and cl.formset.errors %}{% translate "Error:" %} {% endif %}{{ block.super }}{% endblock %}
+{% block title %}{% if cl.formset and cl.formset.errors %}{% translate "Error:" %} {% endif %}{{ title|default:cl.opts.verbose_name_plural|capfirst }} | {{ block.super }}{% endblock %}
 
 {% block extrastyle %}
   {{ block.super }}
@@ -87,7 +87,7 @@
   <div id="content-main">
 
     <div class="page-header">
-        <h1>{{ cl.opts.verbose_name_plural|capfirst }}</h1>
+      <h1>{{ title|default:cl.opts.verbose_name_plural|capfirst }}</h1>
         {% block object-tools %}
             <ul class="object-tools">
                 {% block object-tools-items %}

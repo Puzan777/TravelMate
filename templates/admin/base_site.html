@@ -350,7 +350,13 @@
     padding: 9px 14px !important;
     font-family: 'Inter', sans-serif !important;
     font-size: 0.9rem !important;
+    line-height: 1.35 !important;
     transition: border-color var(--tm-transition), box-shadow var(--tm-transition);
+  }
+  input[type="text"], input[type="password"], input[type="email"],
+  input[type="url"], input[type="number"], input[type="date"],
+  input[type="datetime-local"], select {
+    min-height: 40px;
   }
   input[type="text"]:focus, input[type="password"]:focus, select:focus, textarea:focus {
     border-color: var(--tm-primary) !important;
@@ -459,6 +465,20 @@
   }
   .actions select {
     max-width: 320px;
+    height: 40px !important;
+    min-height: 40px;
+    line-height: 1.35 !important;
+    padding: 0 12px !important;
+    vertical-align: middle;
+  }
+  .actions .button,
+  .actions input[type=submit],
+  .actions input[type=button] {
+    min-height: 40px;
+    line-height: 1.2 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
   }
   .actions label { font-weight: 600; font-size: 0.85rem; }
 

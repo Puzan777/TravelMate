@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from django.db.models import Q
 from django.utils import timezone
 
 
@@ -8,6 +9,10 @@ class VendorProfile(models.Model):
 		PENDING = 'PENDING', 'Pending'
 		APPROVED = 'APPROVED', 'Approved'
 		REJECTED = 'REJECTED', 'Rejected'
+
+	class AccountStatus(models.TextChoices):
+		ACTIVE = 'ACTIVE', 'Active'
+		DEACTIVATED = 'DEACTIVATED', 'Deactivated'
 
 	user = models.OneToOneField(
 		settings.AUTH_USER_MODEL,
@@ -31,6 +36,13 @@ class VendorProfile(models.Model):
 		choices=VerificationStatus.choices,
 		default=VerificationStatus.PENDING,
 	)
+	account_status = models.CharField(
+		max_length=20,
+		choices=AccountStatus.choices,
+		default=AccountStatus.ACTIVE,
+	)
+	status_reason = models.TextField(blank=True)
+	status_changed_at = models.DateTimeField(null=True, blank=True)
 	rejection_reason = models.TextField(blank=True)
 	is_approved = models.BooleanField(default=False)
 	created_at = models.DateTimeField(auto_now_add=True)
@@ -52,6 +64,15 @@ class VendorProfile(models.Model):
 		return f"{'*' * (len(number) - 4)}{number[-4:]}"
 
 	def save(self, *args, **kwargs):
+		previous_status = None
+		if self.pk:
+			previous_status = (
+				VendorProfile.objects
+				.filter(pk=self.pk)
+				.values_list('account_status', flat=True)
+				.first()
+			)
+
 		if self.submitted_at is None:
 			self.submitted_at = timezone.now()
 
@@ -69,4 +90,23 @@ class VendorProfile(models.Model):
 			self.verified_at = None
 			self.rejection_reason = ''
 
+		if previous_status != self.account_status:
+			self.status_changed_at = timezone.now()
+
+		if self.account_status == self.AccountStatus.ACTIVE:
+			self.status_reason = ''
+
 		super().save(*args, **kwargs)
+
+		if (
+			self.account_status == self.AccountStatus.DEACTIVATED
+			and previous_status != self.AccountStatus.DEACTIVATED
+		):
+			from app.models import Activity, HotSale, Package
+
+			Package.objects.filter(vendor=self, is_active=True).update(is_active=False)
+			Activity.objects.filter(vendor=self, is_active=True).update(is_active=False)
+			HotSale.objects.filter(
+				Q(package__vendor=self) | Q(activity__vendor=self),
+				is_active=True,
+			).update(is_active=False)

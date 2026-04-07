@@ -25,9 +25,29 @@ class RejectVendorsForm(forms.Form):
 		return reason
 
 
+class DeactivateVendorsForm(forms.Form):
+	_selected_action = forms.CharField(widget=forms.MultipleHiddenInput)
+	reason = forms.CharField(
+		label='Deactivation reason',
+		widget=forms.Textarea(attrs={'rows': 4}),
+		help_text='This reason will be stored for each selected vendor.',
+	)
+
+	def clean_reason(self):
+		reason = (self.cleaned_data.get('reason') or '').strip()
+		if not reason:
+			raise forms.ValidationError('Deactivation reason is required.')
+		return reason
+
+
 @admin.register(VendorProfile)
 class VendorProfileAdmin(admin.ModelAdmin):
-	actions = ('approve_selected_vendors', 'reject_selected_vendors')
+	actions = (
+		'approve_selected_vendors',
+		'reject_selected_vendors',
+		'deactivate_selected_vendors',
+		'reactivate_selected_vendors',
+	)
 
 	list_display = (
 		'company_name',
@@ -37,12 +57,14 @@ class VendorProfileAdmin(admin.ModelAdmin):
 		'pan_vat_number',
 		'user',
 		'verification_status',
+		'account_status',
 		'is_approved',
 		'submitted_at',
+		'status_changed_at',
 		'verified_at',
 		'view_details',
 	)
-	list_filter = ('verification_status', 'is_approved', 'submitted_at', 'verified_at', 'created_at')
+	list_filter = ('verification_status', 'account_status', 'is_approved', 'submitted_at', 'verified_at', 'created_at')
 	search_fields = (
 		'company_name',
 		'owner_full_name',
@@ -54,7 +76,7 @@ class VendorProfileAdmin(admin.ModelAdmin):
 		'user__email',
 		'contact_phone',
 	)
-	readonly_fields = ('submitted_at', 'verified_at', 'created_at', 'updated_at', 'business_certificate_preview')
+	readonly_fields = ('submitted_at', 'verified_at', 'created_at', 'updated_at', 'status_changed_at', 'business_certificate_preview')
 	fieldsets = (
 		('Vendor Identity', {
 			'fields': ('user', 'company_name', 'owner_full_name', 'owner_national_id', 'contact_phone', 'address'),
@@ -67,6 +89,9 @@ class VendorProfileAdmin(admin.ModelAdmin):
 		}),
 		('Verification', {
 			'fields': ('verification_status', 'rejection_reason', 'is_approved', 'submitted_at', 'verified_at'),
+		}),
+		('Account Status', {
+			'fields': ('account_status', 'status_reason', 'status_changed_at'),
 		}),
 		('System', {
 			'fields': ('created_at', 'updated_at'),
@@ -87,7 +112,45 @@ class VendorProfileAdmin(admin.ModelAdmin):
 
 	def get_queryset(self, request):
 		qs = super().get_queryset(request)
+		status_filter = (request.GET.get('verification_status__exact') or '').strip().upper()
+		allowed_statuses = {
+			VendorProfile.VerificationStatus.PENDING,
+			VendorProfile.VerificationStatus.APPROVED,
+			VendorProfile.VerificationStatus.REJECTED,
+		}
+		if status_filter in allowed_statuses:
+			return qs.filter(verification_status=status_filter)
 		return qs.filter(verification_status=VendorProfile.VerificationStatus.APPROVED)
+
+	def get_actions(self, request):
+		actions = super().get_actions(request)
+		status_filter = (request.GET.get('verification_status__exact') or '').strip().upper()
+		is_verification_page = status_filter in {
+			VendorProfile.VerificationStatus.PENDING,
+			VendorProfile.VerificationStatus.REJECTED,
+		}
+
+		if is_verification_page:
+			actions.pop('deactivate_selected_vendors', None)
+			actions.pop('reactivate_selected_vendors', None)
+		else:
+			actions.pop('approve_selected_vendors', None)
+			actions.pop('reject_selected_vendors', None)
+
+		return actions
+
+	def changelist_view(self, request, extra_context=None):
+		extra_context = extra_context or {}
+		status_filter = (request.GET.get('verification_status__exact') or '').strip().upper()
+
+		title_map = {
+			VendorProfile.VerificationStatus.PENDING: 'Vendor Verification Queue (Pending)',
+			VendorProfile.VerificationStatus.REJECTED: 'Vendor Verification Queue (Rejected)',
+			VendorProfile.VerificationStatus.APPROVED: 'Vendor Profiles (Approved)',
+		}
+		extra_context['title'] = title_map.get(status_filter, 'Vendor Profiles (Approved)')
+
+		return super().changelist_view(request, extra_context=extra_context)
 
 	@admin.display(description='Details')
 	def view_details(self, obj):
@@ -211,6 +274,57 @@ class VendorProfileAdmin(admin.ModelAdmin):
 			'title': 'Reject selected vendors',
 		}
 		return TemplateResponse(request, 'admin/vendor/reject_selected_vendors.html', context)
+
+	@admin.action(description='Deactivate selected vendors (requires reason)')
+	def deactivate_selected_vendors(self, request, queryset):
+		if 'apply' in request.POST:
+			form = DeactivateVendorsForm(request.POST)
+			if form.is_valid():
+				reason = form.cleaned_data['reason']
+				selected_ids = request.POST.getlist('_selected_action')
+				target_qs = VendorProfile.objects.filter(pk__in=selected_ids)
+
+				updated = 0
+				for profile in target_qs:
+					profile.account_status = VendorProfile.AccountStatus.DEACTIVATED
+					profile.status_reason = reason
+					profile.save()
+					updated += 1
+
+				self.message_user(
+					request,
+					f'{updated} vendor(s) deactivated. Packages, activities, and hot sales have been disabled automatically.',
+					level=messages.WARNING,
+				)
+				return None
+		else:
+			form = DeactivateVendorsForm(
+				initial={'_selected_action': request.POST.getlist(ACTION_CHECKBOX_NAME)}
+			)
+
+		context = {
+			**self.admin_site.each_context(request),
+			'opts': self.model._meta,
+			'vendors': queryset,
+			'form': form,
+			'title': 'Deactivate selected vendors',
+		}
+		return TemplateResponse(request, 'admin/vendor/deactivate_selected_vendors.html', context)
+
+	@admin.action(description='Reactivate selected vendors')
+	def reactivate_selected_vendors(self, request, queryset):
+		updated = 0
+		for profile in queryset:
+			profile.account_status = VendorProfile.AccountStatus.ACTIVE
+			profile.status_reason = ''
+			profile.save()
+			updated += 1
+
+		self.message_user(
+			request,
+			f'{updated} vendor(s) reactivated. Products remain inactive until manually re-enabled.',
+			level=messages.SUCCESS,
+		)
 
 	@admin.display(description='eSewa Number')
 	def masked_mobile_payment_number(self, obj):

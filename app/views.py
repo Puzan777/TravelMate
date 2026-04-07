@@ -228,6 +228,10 @@ def _redirect_after_login(request, user):
         from vendor.models import VendorProfile
 
         profile = VendorProfile.objects.filter(user=user).first()
+        if profile and profile.account_status == VendorProfile.AccountStatus.DEACTIVATED:
+            logout(request)
+            messages.error(request, 'Your vendor account has been deactivated. Please contact support for assistance.')
+            return redirect('login')
         if profile and profile.verification_status == VendorProfile.VerificationStatus.APPROVED:
             return redirect('vendor:dashboard')
         if profile and profile.verification_status == VendorProfile.VerificationStatus.REJECTED and profile.rejection_reason:

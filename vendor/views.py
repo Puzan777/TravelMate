@@ -123,6 +123,10 @@ def _get_approved_vendor_profile(request):
 		},
 	)
 
+	if request.user.role == 'VENDOR' and profile.account_status == VendorProfile.AccountStatus.DEACTIVATED:
+		messages.error(request, 'Your vendor account has been deactivated. Please contact support for assistance.')
+		return None
+
 	if request.user.role == 'VENDOR' and profile.verification_status != VendorProfile.VerificationStatus.APPROVED:
 		if profile.verification_status == VendorProfile.VerificationStatus.REJECTED and profile.rejection_reason:
 			messages.error(request, f'Your vendor account was rejected: {profile.rejection_reason}')
