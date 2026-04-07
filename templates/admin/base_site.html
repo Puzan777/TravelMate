@@ -379,6 +379,7 @@
     padding: 10px 22px !important;
     font-weight: 600 !important;
     font-size: 0.85rem !important;
+    line-height: 1.2 !important;
     cursor: pointer;
     transition: all var(--tm-transition);
     box-shadow: 0 2px 8px var(--tm-primary-glow);
@@ -396,6 +397,17 @@
   a.button.cancel-link, .deletelink, .button.cancel {
     background: var(--tm-danger) !important;
     box-shadow: 0 2px 8px rgba(192, 57, 43, 0.15);
+  }
+
+  .submit-row a.closelink,
+  .submit-row a.button,
+  .submit-row a.btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-height: 40px;
+    line-height: 1.2 !important;
+    box-sizing: border-box;
   }
 
   /* ─── Submit Row ─── */

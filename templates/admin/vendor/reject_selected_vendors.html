@@ -1,0 +1,43 @@
+{% extends 'admin/base_site.html' %}
+
+{% block content %}
+<div id="content-main">
+  <h1>{{ title }}</h1>
+
+  <p>You are rejecting {{ vendors|length }} vendor{{ vendors|length|pluralize }}.</p>
+
+  <div class="module" style="margin-bottom: 16px;">
+    <table style="width: 100%; border-collapse: collapse;">
+      <thead>
+        <tr>
+          <th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">Company</th>
+          <th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">Owner</th>
+          <th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">User</th>
+          <th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">Current Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for vendor in vendors %}
+        <tr>
+          <td style="padding: 8px; border-bottom: 1px solid #f0f0f0;">{{ vendor.company_name }}</td>
+          <td style="padding: 8px; border-bottom: 1px solid #f0f0f0;">{{ vendor.owner_full_name }}</td>
+          <td style="padding: 8px; border-bottom: 1px solid #f0f0f0;">{{ vendor.user.username }}</td>
+          <td style="padding: 8px; border-bottom: 1px solid #f0f0f0;">{{ vendor.get_verification_status_display }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <form method="post">{% csrf_token %}
+    {{ form.as_p }}
+    <input type="hidden" name="action" value="reject_selected_vendors">
+    <input type="hidden" name="select_across" value="0">
+
+    <div class="submit-row">
+      <input type="submit" name="apply" value="Reject selected vendors" class="default">
+      <a href="." class="button cancel-link">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

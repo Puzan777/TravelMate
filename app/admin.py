@@ -36,9 +36,26 @@ def _is_platform_admin(user):
 
 @admin.register(CustomUser)
 class CustomUserAdmin(admin.ModelAdmin):
-    list_display = ('username', 'email', 'role', 'is_staff', 'is_superuser', 'is_active')
+    list_display = ('username', 'email', 'role', 'is_staff', 'is_superuser', 'is_active', 'view_details')
     list_filter = ('role', 'is_staff', 'is_superuser', 'is_active')
     search_fields = ('username', 'email')
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return request.user.is_active and request.user.is_staff and obj is None
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_view_permission(self, request, obj=None):
+        return request.user.is_active and request.user.is_staff
+
+    @admin.display(description='Details')
+    def view_details(self, obj):
+        url = reverse('admin:app_customuser_change', args=[obj.pk])
+        return format_html('<a class="button" href="{}" target="_blank">View details</a>', url)
 
 
 @admin.register(Destination)
@@ -163,7 +180,6 @@ class ActivityAdmin(admin.ModelAdmin):
     list_filter = ('vendor', 'category', 'difficulty_level', 'approval_status', 'is_active', 'created_at')
     search_fields = ('name', 'description', 'vendor__company_name', 'category__name')
     readonly_fields = ('created_at',)
-    list_editable = ('is_active',)
 
     fieldsets = (
         (None, {'fields': ('vendor', 'category', 'name', 'description', 'price', 'approval_status', 'is_active')}),
@@ -178,13 +194,13 @@ class ActivityAdmin(admin.ModelAdmin):
         return super().get_queryset(request).none()
 
     def has_add_permission(self, request):
-        return _is_platform_admin(request.user)
+        return False
 
     def has_change_permission(self, request, obj=None):
-        return _is_platform_admin(request.user)
+        return _is_platform_admin(request.user) and obj is None
 
     def has_delete_permission(self, request, obj=None):
-        return _is_platform_admin(request.user)
+        return False
 
     def has_view_permission(self, request, obj=None):
         return _is_platform_admin(request.user)
@@ -298,24 +314,60 @@ class PackageItineraryAdmin(admin.ModelAdmin):
 @admin.register(Booking)
 class BookingAdmin(admin.ModelAdmin):
     list_per_page = 20
-    list_display = ('package_short_title', 'vendor_name', 'full_name', 'number_of_people', 'total_price', 'travel_date', 'created_at')
-    list_filter = ('package__vendor', 'travel_date', 'created_at')
-    search_fields = ('package__title', 'package__vendor__company_name', 'user__username', 'full_name', 'nationality', 'pickup_location')
-    readonly_fields = ('created_at',)
+    list_display = (
+        'package_short_title',
+        'vendor_name',
+        'full_name',
+        'number_of_people',
+        'payment_method',
+        'payment_status',
+        'total_price',
+        'travel_date',
+        'created_at',
+    )
+    list_filter = ('package__vendor', 'payment_method', 'payment_status', 'travel_date', 'created_at')
+    search_fields = (
+        'package__title',
+        'package__vendor__company_name',
+        'user__username',
+        'full_name',
+        'nationality',
+        'pickup_location',
+        'transaction_reference',
+    )
+    readonly_fields = ('total_amount', 'paid_at', 'created_at')
     fieldsets = (
         ('Booking', {'fields': ('package', 'user', 'travel_date', 'number_of_people')}),
         ('Traveler', {'fields': ('full_name', 'email', 'phone', 'nationality', 'emergency_contact', 'pickup_location')}),
+        ('Payment', {'fields': ('payment_method', 'transaction_reference', 'payment_status', 'total_amount', 'paid_at')}),
         ('System', {'fields': ('created_at',)}),
     )
 
     def get_queryset(self, request):
-        qs = super().get_queryset(request).select_related('package', 'package__vendor', 'user')
+        visible_booking_q = Q(payment_status=Booking.PaymentStatus.PAID) | ~Q(payment_method=Booking.PaymentMethod.ESEWA)
+        qs = (
+            super().get_queryset(request)
+            .select_related('package', 'package__vendor', 'user')
+            .filter(visible_booking_q)
+        )
         if request.user.is_superuser:
             return qs
         vendor_profile = _current_vendor_profile(request.user)
         if vendor_profile:
             return qs.filter(package__vendor=vendor_profile)
         return qs.none()
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return request.user.is_active and request.user.is_staff and obj is None
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_view_permission(self, request, obj=None):
+        return request.user.is_active and request.user.is_staff
 
     @admin.display(description='Vendor')
     def vendor_name(self, obj):
@@ -334,6 +386,8 @@ class BookingAdmin(admin.ModelAdmin):
 
     @admin.display(description='Total Price')
     def total_price(self, obj):
+        if obj.total_amount is not None:
+            return obj.total_amount
         if not obj.package or obj.package.price is None:
             return '-'
         return obj.package.price * obj.number_of_people

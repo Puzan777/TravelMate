@@ -4,6 +4,8 @@ from django.contrib import admin, messages
 from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
 from django.core.mail import send_mail
 from django.template.response import TemplateResponse
+from django.urls import reverse
+from django.utils.html import format_html
 
 from .models import VendorProfile
 
@@ -38,6 +40,7 @@ class VendorProfileAdmin(admin.ModelAdmin):
 		'is_approved',
 		'submitted_at',
 		'verified_at',
+		'view_details',
 	)
 	list_filter = ('verification_status', 'is_approved', 'submitted_at', 'verified_at', 'created_at')
 	search_fields = (
@@ -51,7 +54,7 @@ class VendorProfileAdmin(admin.ModelAdmin):
 		'user__email',
 		'contact_phone',
 	)
-	readonly_fields = ('submitted_at', 'verified_at', 'created_at', 'updated_at')
+	readonly_fields = ('submitted_at', 'verified_at', 'created_at', 'updated_at', 'business_certificate_preview')
 	fieldsets = (
 		('Vendor Identity', {
 			'fields': ('user', 'company_name', 'owner_full_name', 'owner_national_id', 'contact_phone', 'address'),
@@ -60,7 +63,7 @@ class VendorProfileAdmin(admin.ModelAdmin):
 			'fields': ('account_holder_name', 'mobile_payment_number'),
 		}),
 		('Business KYC', {
-			'fields': ('pan_vat_number', 'business_registration_number', 'business_registration_certificate'),
+			'fields': ('pan_vat_number', 'business_registration_number', 'business_registration_certificate', 'business_certificate_preview'),
 		}),
 		('Verification', {
 			'fields': ('verification_status', 'rejection_reason', 'is_approved', 'submitted_at', 'verified_at'),
@@ -69,6 +72,45 @@ class VendorProfileAdmin(admin.ModelAdmin):
 			'fields': ('created_at', 'updated_at'),
 		}),
 	)
+
+	def has_add_permission(self, request):
+		return False
+
+	def has_change_permission(self, request, obj=None):
+		return request.user.is_active and request.user.is_staff and obj is None
+
+	def has_delete_permission(self, request, obj=None):
+		return False
+
+	def has_view_permission(self, request, obj=None):
+		return request.user.is_active and request.user.is_staff
+
+	def get_queryset(self, request):
+		qs = super().get_queryset(request)
+		return qs.filter(verification_status=VendorProfile.VerificationStatus.APPROVED)
+
+	@admin.display(description='Details')
+	def view_details(self, obj):
+		url = reverse('admin:vendor_vendorprofile_change', args=[obj.pk])
+		return format_html('<a class="button" href="{}" target="_blank">View details</a>', url)
+
+	@admin.display(description='Certificate Preview')
+	def business_certificate_preview(self, obj):
+		file_field = getattr(obj, 'business_registration_certificate', None)
+		if not file_field:
+			return '-'
+
+		file_name = str(getattr(file_field, 'name', '') or '').lower()
+		file_url = getattr(file_field, 'url', '')
+		if not file_url:
+			return '-'
+
+		if file_name.endswith(('.png', '.jpg', '.jpeg', '.webp', '.gif')):
+			return format_html(
+				'<a href="{0}" target="_blank"><img src="{0}" style="max-height:120px; max-width:180px; border-radius:6px; border:1px solid #ddd;" /></a>',
+				file_url,
+			)
+		return format_html('<a href="{}" target="_blank">Open uploaded certificate</a>', file_url)
 
 	def _send_verification_email(self, profile, is_approved):
 		email = (profile.user.email or '').strip()
