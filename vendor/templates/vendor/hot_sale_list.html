@@ -58,6 +58,11 @@
     border-radius: 12px;
     box-shadow: var(--vd-shadow-soft);
   }
+  .filters-toolbar {
+    padding: 14px;
+    border-bottom: 1px solid var(--vd-line-soft);
+    background: #f8fbff;
+  }
   .table-wrap {
     overflow-x: auto;
   }
@@ -94,6 +99,35 @@
     </section>
 
     <div class="list-card">
+      <div class="filters-toolbar">
+        <form method="get" class="row g-2 align-items-end">
+          <div class="col-lg-6">
+            <label for="hotsale-search" class="form-label mb-1 small text-muted">Search</label>
+            <input id="hotsale-search" type="text" name="q" value="{{ search_query }}" class="form-control" placeholder="Offer name or note...">
+          </div>
+          <div class="col-lg-2 col-md-4">
+            <label for="hotsale-type" class="form-label mb-1 small text-muted">Type</label>
+            <select id="hotsale-type" name="type" class="form-select">
+              <option value="all"{% if selected_type == 'all' %} selected{% endif %}>All types</option>
+              <option value="package"{% if selected_type == 'package' %} selected{% endif %}>Package</option>
+              <option value="activity"{% if selected_type == 'activity' %} selected{% endif %}>Activity</option>
+            </select>
+          </div>
+          <div class="col-lg-2 col-md-4">
+            <label for="hotsale-status" class="form-label mb-1 small text-muted">Status</label>
+            <select id="hotsale-status" name="status" class="form-select">
+              <option value="all"{% if selected_status == 'all' %} selected{% endif %}>All</option>
+              <option value="active"{% if selected_status == 'active' %} selected{% endif %}>Active</option>
+              <option value="inactive"{% if selected_status == 'inactive' %} selected{% endif %}>Inactive</option>
+            </select>
+          </div>
+          <div class="col-lg-2 col-md-4 d-grid gap-2">
+            <button type="submit" class="btn btn-primary">Apply</button>
+            <a href="{% url 'vendor:hot_sale_list' %}" class="btn btn-outline-secondary">Clear</a>
+          </div>
+        </form>
+      </div>
+
       {% if hot_sales %}
       <div class="table-wrap">
         <table class="table align-middle">
@@ -132,7 +166,13 @@
         </table>
       </div>
       {% else %}
-      <div class="p-4 text-center text-muted">No hot sales yet. Add one to promote a package or activity separately.</div>
+      <div class="p-4 text-center text-muted">
+        {% if has_filters_applied %}
+        No hot sales match your current filters.
+        {% else %}
+        No hot sales yet. Add one to promote a package or activity separately.
+        {% endif %}
+      </div>
       {% endif %}
     </div>
   </div>

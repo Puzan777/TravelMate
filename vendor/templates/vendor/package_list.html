@@ -58,6 +58,11 @@
     border-radius: 12px;
     box-shadow: var(--vd-shadow-soft);
   }
+  .filters-toolbar {
+    padding: 14px;
+    border-bottom: 1px solid var(--vd-line-soft);
+    background: #f8fbff;
+  }
   .table-wrap {
     overflow-x: auto;
   }
@@ -94,6 +99,45 @@
     </section>
 
     <div class="list-card">
+      <div class="filters-toolbar">
+        <form method="get" class="row g-2 align-items-end">
+          <div class="col-lg-4">
+            <label for="package-search" class="form-label mb-1 small text-muted">Search</label>
+            <input id="package-search" type="text" name="q" value="{{ search_query }}" class="form-control" placeholder="Title, destination, city, region...">
+          </div>
+          <div class="col-lg-2 col-md-4">
+            <label for="package-status" class="form-label mb-1 small text-muted">Approval</label>
+            <select id="package-status" name="status" class="form-select">
+              <option value="all">All statuses</option>
+              {% for value, label in package_status_options %}
+              <option value="{{ value }}"{% if selected_status == value %} selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-lg-2 col-md-4">
+            <label for="package-active" class="form-label mb-1 small text-muted">Visibility</label>
+            <select id="package-active" name="active" class="form-select">
+              <option value="all"{% if selected_active == 'all' %} selected{% endif %}>All</option>
+              <option value="active"{% if selected_active == 'active' %} selected{% endif %}>Active</option>
+              <option value="inactive"{% if selected_active == 'inactive' %} selected{% endif %}>Inactive</option>
+            </select>
+          </div>
+          <div class="col-lg-2 col-md-4">
+            <label for="package-category" class="form-label mb-1 small text-muted">Category</label>
+            <select id="package-category" name="category" class="form-select">
+              <option value="all">All categories</option>
+              {% for value, label in package_category_options %}
+              <option value="{{ value }}"{% if selected_category == value %} selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-lg-2 col-md-12 d-grid gap-2">
+            <button type="submit" class="btn btn-primary">Apply</button>
+            <a href="{% url 'vendor:package_list' %}" class="btn btn-outline-secondary">Clear</a>
+          </div>
+        </form>
+      </div>
+
       {% if packages %}
       <div class="table-wrap">
         <table class="table align-middle">
@@ -140,7 +184,13 @@
         </table>
       </div>
       {% else %}
-      <div class="p-4 text-center text-muted">No packages yet. Add your first package to start selling trips.</div>
+      <div class="p-4 text-center text-muted">
+        {% if has_filters_applied %}
+        No packages match your current filters.
+        {% else %}
+        No packages yet. Add your first package to start selling trips.
+        {% endif %}
+      </div>
       {% endif %}
     </div>
   </div>

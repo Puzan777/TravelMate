@@ -4,384 +4,526 @@
 
 {% block extrastyle %}
 <style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Manrope:wght@400;500;600;700;800&display=swap');
+
   :root {
-    --bg-page: #f3f6fb;
-    --bg-surface: #ffffff;
-    --text-main: #0f172a;
-    --text-muted: #5b6475;
-    --line: #dbe2ec;
-    --line-soft: #e9eef5;
-    --brand: #0a4f8a;
-    --brand-soft: #e7f1fb;
-    --shadow-soft: 0 10px 24px rgba(17, 24, 39, 0.06);
+    --tm-cream-50: #fcf7ef;
+    --tm-cream-100: #f3e8d9;
+    --tm-ocean-900: #07324b;
+    --tm-ocean-700: #116084;
+    --tm-accent: #d38a45;
+    --tm-accent-strong: #b56f31;
+    --tm-text: #153243;
+    --tm-text-soft: #5f7380;
+    --tm-line: rgba(21, 50, 67, 0.13);
+    --tm-line-soft: rgba(21, 50, 67, 0.09);
+    --tm-shadow-soft: 0 16px 38px rgba(7, 50, 75, 0.12);
+    --tm-radius-xl: 24px;
+    --tm-radius-lg: 18px;
+    --tm-radius-md: 14px;
+    --tm-transition: 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
   }
 
   .vendor-wrap {
-    max-width: 1320px;
+    max-width: 1360px;
+    font-family: "Manrope", "Segoe UI", sans-serif;
+    color: var(--tm-text);
   }
 
-  .vendor-shell {
-    background: var(--bg-page);
-    border: 1px solid var(--line-soft);
-    border-radius: 14px;
-    padding: 18px;
+  .vendor-board {
+    border: 1px solid var(--tm-line-soft);
+    border-radius: var(--tm-radius-xl);
+    padding: 20px;
+    background:
+      radial-gradient(circle at top right, rgba(17, 96, 132, 0.14), transparent 30%),
+      radial-gradient(circle at left 82%, rgba(211, 138, 69, 0.12), transparent 32%),
+      linear-gradient(180deg, #fdfaf4 0%, var(--tm-cream-50) 58%, #f6ead7 100%);
+    box-shadow: var(--tm-shadow-soft);
   }
 
   .dashboard-hero {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    gap: 14px;
-    background: linear-gradient(120deg, #0b3d69, #0a4f8a 45%, #0e6bb7);
-    color: #ffffff;
-    border-radius: 14px;
-    padding: 18px 20px;
-    margin-bottom: 16px;
-    box-shadow: var(--shadow-soft);
+    align-items: flex-end;
+    gap: 16px;
+    padding: 24px;
+    margin-bottom: 18px;
+    border-radius: var(--tm-radius-lg);
+    background: linear-gradient(120deg, #072f47 0%, var(--tm-ocean-900) 44%, var(--tm-ocean-700) 100%);
+    color: #fdf8ef;
   }
+
   .dashboard-hero h1 {
     margin: 0;
-    font-size: 1.3rem;
-    font-weight: 700;
-    color: #ffffff;
+    font-family: "Fraunces", Georgia, serif;
+    font-size: clamp(1.35rem, 2.1vw, 2rem);
+    letter-spacing: -0.02em;
+    color: #fff8ec;
   }
+
   .dashboard-hero p {
-    margin: 5px 0 0;
-    font-size: 0.9rem;
-    color: rgba(255, 255, 255, 0.9);
+    margin: 8px 0 0;
+    max-width: 720px;
+    font-size: 0.95rem;
+    color: rgba(255, 249, 236, 0.9);
   }
+
   .hero-badge {
-    border: 1px solid rgba(255, 255, 255, 0.45);
+    border: 1px solid rgba(255, 248, 233, 0.4);
     border-radius: 999px;
-    padding: 6px 11px;
-    font-size: 0.8rem;
+    padding: 7px 13px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
     white-space: nowrap;
-    background: rgba(255, 255, 255, 0.12);
+    color: #fff5e6;
+    background: rgba(255, 255, 255, 0.14);
   }
 
   .dashboard-layout {
     display: grid;
-    grid-template-columns: 280px 1fr;
+    grid-template-columns: 280px minmax(0, 1fr);
     gap: 18px;
     align-items: start;
   }
-  .vendor-sidebar {
-    background: var(--bg-surface);
-    border: 1px solid var(--line);
-    border-radius: 12px;
+
+  .vendor-rail {
+    display: grid;
+    gap: 12px;
+    position: sticky;
+    top: 88px;
+  }
+
+  .rail-card {
     padding: 14px;
-    box-shadow: var(--shadow-soft);
-    color: var(--text-main);
+    border: 1px solid var(--tm-line);
+    border-radius: var(--tm-radius-md);
+    background: rgba(255, 252, 245, 0.92);
   }
-  .sidebar-section {
-    margin-bottom: 16px;
+
+  .rail-card h2,
+  .rail-card h3 {
+    margin: 0 0 8px;
+    font-weight: 700;
+    color: var(--tm-text);
   }
-  .sidebar-section:last-child {
-    margin-bottom: 0;
+
+  .rail-card h2 {
+    font-size: 1rem;
   }
-  .sidebar-heading {
-    margin: 0 0 9px;
-    font-size: 0.76rem;
+
+  .rail-card h3 {
+    font-size: 0.95rem;
+  }
+
+  .rail-label {
+    margin: 0 0 6px;
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: #5b6f8c;
+    color: #5f7888;
+    font-weight: 800;
+  }
+
+  .rail-copy {
+    margin: 0;
+    font-size: 0.86rem;
+    line-height: 1.48;
+    color: var(--tm-text-soft);
+  }
+
+  .rail-nav {
+    display: grid;
+    gap: 8px;
+  }
+
+  .rail-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    min-height: 38px;
+    padding: 8px 11px;
+    border: 1px solid rgba(17, 96, 132, 0.18);
+    border-radius: 9px;
+    text-decoration: none;
+    font-size: 0.86rem;
+    font-weight: 700;
+    color: #0f4461;
+    background: #f7fbff;
+    transition: transform var(--tm-transition), background var(--tm-transition), border-color var(--tm-transition);
+  }
+
+  .rail-link:hover {
+    transform: translateY(-1px);
+    border-color: rgba(17, 96, 132, 0.38);
+    background: #e9f3fa;
+  }
+
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: 0.78rem;
     font-weight: 700;
   }
-  .sidebar-links {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-  .sidebar-links li {
-    margin-bottom: 6px;
-  }
-  .sidebar-links li:last-child {
-    margin-bottom: 0;
-  }
-  .sidebar-links a {
-    display: block;
-    padding: 9px 10px;
-    border-radius: 8px;
+
+  .status-approved { color: #226d56; background: #eaf7f2; border: 1px solid #bddfce; }
+  .status-rejected { color: #9a433f; background: #faeceb; border: 1px solid #e7bfbc; }
+  .status-pending { color: #8b632f; background: #f9f1e1; border: 1px solid #e8d2ad; }
+
+  .ghost-link {
+    display: inline-flex;
+    margin-top: 10px;
+    color: var(--tm-ocean-700);
     text-decoration: none;
-    color: #14253d;
-    border: 1px solid transparent;
-    font-size: 0.9rem;
-    line-height: 1.35;
-    white-space: normal;
-    word-break: break-word;
-  }
-  .sidebar-links a:hover {
-    background: var(--brand-soft);
-    border-color: #c3d8ec;
-    color: #0c4d86;
-  }
-  .sidebar-links a:visited,
-  .sidebar-links a:active,
-  .sidebar-links a:focus-visible {
-    color: #14253d;
+    font-size: 0.84rem;
+    font-weight: 700;
   }
 
   .dashboard-main {
     min-width: 0;
+    display: grid;
+    gap: 16px;
   }
-  .dashboard-grid {
+
+  .alert-panel {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: 12px 14px;
+    border: 1px solid #e3b7b3;
+    border-radius: var(--tm-radius-md);
+    background: linear-gradient(180deg, #fdf0ef 0%, #f9e4e1 100%);
+  }
+
+  .alert-links { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .alert-links a {
+    border: 1px solid #d59f9a;
+    background: #fff3f1;
+    color: #8f3e3c;
+    text-decoration: none;
+    padding: 5px 10px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 700;
+  }
+
+  .action-panel,
+  .section-card,
+  .metric-card {
+    border: 1px solid var(--tm-line);
+    border-radius: var(--tm-radius-md);
+    background: rgba(255, 252, 246, 0.96);
+  }
+
+  .action-panel,
+  .section-card { padding: 16px; }
+
+  .action-panel-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+
+  .action-panel h2,
+  .section-card h2 {
+    margin: 0;
+    font-family: "Fraunces", Georgia, serif;
+    font-size: 1.04rem;
+    color: var(--tm-text);
+  }
+
+  .action-panel-head p,
+  .section-intro,
+  .small-note,
+  .empty-copy {
+    margin: 0;
+    font-size: 0.86rem;
+    color: var(--tm-text-soft);
+  }
+
+  .section-intro { margin: 8px 0 10px; }
+  .small-note { margin-top: 10px; font-size: 0.8rem; }
+
+  .action-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 8px;
+  }
+
+  .action-chip {
+    display: block;
+    padding: 9px 10px;
+    border-radius: 10px;
+    border: 1px solid rgba(17, 96, 132, 0.2);
+    background: #f8fcff;
+    color: #104864;
+    text-decoration: none;
+    font-size: 0.83rem;
+    font-weight: 700;
+    text-align: center;
+  }
+
+  .action-chip.is-accent {
+    background: linear-gradient(180deg, #f5d8bb 0%, #edc79f 100%);
+    border-color: #d5a97b;
+    color: #71431f;
+  }
+
+  .metric-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 16px;
-    margin: 0 0 20px;
+    gap: 12px;
   }
-  .dashboard-card {
-    background: var(--bg-surface);
-    border: 1px solid var(--line);
-    border-radius: 12px;
-    padding: 16px;
-    box-shadow: var(--shadow-soft);
+
+  .metric-card { position: relative; padding: 14px; }
+
+  .metric-card::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 3px;
+    background: linear-gradient(90deg, var(--tm-ocean-700), var(--tm-accent));
   }
-  .dashboard-title {
-    margin: 0 0 7px;
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: #74839b;
-    font-weight: 700;
-  }
-  .dashboard-value {
+
+  .metric-label {
     margin: 0;
-    font-size: 1.95rem;
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #617987;
+    font-weight: 800;
+  }
+
+  .metric-value {
+    margin: 6px 0 0;
+    font-family: "Fraunces", Georgia, serif;
+    font-size: clamp(1.5rem, 3.1vw, 2rem);
+    color: #163d54;
+  }
+
+  .metric-link,
+  .ghost-link,
+  .table-cell-link {
+    color: var(--tm-ocean-700);
+    text-decoration: none;
     font-weight: 700;
-    color: var(--text-main);
-  }
-  .dashboard-link {
-    display: inline-block;
-    margin-top: 11px;
-    font-size: 0.85rem;
-    text-decoration: none;
-    color: var(--brand);
-    font-weight: 600;
   }
 
-  .quick-actions {
-    background: var(--bg-surface);
-    border: 1px solid var(--line);
-    border-radius: 12px;
-    padding: 16px;
-    box-shadow: var(--shadow-soft);
-    margin-bottom: 20px;
-  }
-  .quick-actions h2 {
-    margin: 0 0 12px;
-    font-size: 1.02rem;
-    color: var(--text-main);
-  }
-  .quick-actions-grid {
+  .section-split {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-    gap: 10px;
-  }
-  .quick-action-link {
-    display: block;
-    padding: 10px 12px;
-    border: 1px solid #cdd9e8;
-    border-radius: 8px;
-    text-decoration: none;
-    color: #112036;
-    font-size: 0.9rem;
-    font-weight: 600;
-    background: #f8fbff;
-  }
-  .quick-action-link:hover {
-    border-color: #9dc0de;
-    background: var(--brand-soft);
-    color: #0d4f88;
+    gap: 14px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .dashboard-section {
-    background: var(--bg-surface);
-    border: 1px solid var(--line);
-    border-radius: 12px;
-    padding: 16px;
-    box-shadow: var(--shadow-soft);
-    margin-bottom: 20px;
-  }
-  .dashboard-section h2 {
-    margin: 0 0 10px;
-    font-size: 1.02rem;
-    color: var(--text-main);
-  }
   .table-wrap {
     overflow-x: auto;
-    border: 1px solid var(--line-soft);
-    border-radius: 10px;
+    border: 1px solid var(--tm-line-soft);
+    border-radius: 12px;
+    background: #fffdf9;
   }
-  .simple-table {
+
+  .data-table {
     width: 100%;
     border-collapse: collapse;
     min-width: 520px;
-    background: #ffffff;
+    background: #fffdf9;
   }
-  .simple-table th,
-  .simple-table td {
-    padding: 8px 10px;
-    border-bottom: 1px solid var(--line-soft);
+
+  .data-table th,
+  .data-table td {
+    padding: 9px 10px;
+    border-bottom: 1px solid var(--tm-line-soft);
     text-align: left;
-    font-size: 0.9rem;
+    font-size: 0.86rem;
   }
-  .simple-table tbody tr:hover {
-    background: #f8fbff;
-  }
-  .simple-table th {
-    color: var(--text-muted);
-    font-weight: 600;
-    font-size: 0.82rem;
+
+  .data-table th {
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
-    letter-spacing: 0.03em;
-    background: #f8fafc;
+    color: #607887;
+    background: #f8f2e8;
+    font-weight: 800;
   }
+
   .section-actions {
     margin-top: 10px;
     display: flex;
-    gap: 10px;
+    gap: 8px;
     flex-wrap: wrap;
   }
+
   .section-actions a {
-    font-size: 0.86rem;
+    font-size: 0.8rem;
     text-decoration: none;
-    color: var(--brand);
-    font-weight: 600;
-    background: var(--brand-soft);
-    border: 1px solid #c8def2;
-    border-radius: 7px;
-    padding: 5px 9px;
+    color: #0f4663;
+    font-weight: 700;
+    background: #eff6fb;
+    border: 1px solid #c8dcea;
+    border-radius: 8px;
+    padding: 6px 10px;
   }
-  .section-actions a:hover {
-    background: #d8eafb;
+
+  .profile-warning {
+    margin-top: 12px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid #e2b8b5;
+    background: #faeceb;
+    color: #8f403d;
+    font-size: 0.84rem;
+  }
+
+  .reveal { opacity: 0; transform: translateY(10px); animation: riseIn 560ms ease forwards; }
+  .reveal-1 { animation-delay: 40ms; }
+  .reveal-2 { animation-delay: 110ms; }
+  .reveal-3 { animation-delay: 170ms; }
+  .reveal-4 { animation-delay: 230ms; }
+  .reveal-5 { animation-delay: 290ms; }
+
+  @keyframes riseIn {
+    to { opacity: 1; transform: translateY(0); }
   }
 
   @media (max-width: 1024px) {
-    .dashboard-layout {
-      grid-template-columns: 1fr;
-    }
+    .dashboard-layout { grid-template-columns: 1fr; }
+    .vendor-rail { position: static; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+    .section-split { grid-template-columns: 1fr; }
   }
+
   @media (max-width: 640px) {
-    .vendor-shell {
-      padding: 12px;
-    }
-    .dashboard-hero {
-      flex-direction: column;
-      align-items: flex-start;
-    }
+    .vendor-board { padding: 12px; border-radius: 18px; }
+    .dashboard-hero { flex-direction: column; align-items: flex-start; padding: 18px; }
+    .action-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .data-table { min-width: 460px; }
   }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="container vendor-wrap py-4 py-md-5">
-  <div class="vendor-shell">
-    <section class="dashboard-hero">
+  <div class="vendor-board">
+    <section class="dashboard-hero reveal reveal-1">
       <div>
         <h1>{{ vendor_profile.company_name }} Vendor Dashboard</h1>
-        <p>Manage your catalog and customer activity from one place.</p>
+        <p>Track your inventory, revenue activity, and customer conversations from one focused control center.</p>
       </div>
-      <div class="hero-badge">Vendor Operations</div>
+      <div class="hero-badge">Ocean Command</div>
     </section>
 
     <div class="dashboard-layout">
-      <aside class="vendor-sidebar">
-        <div class="sidebar-section">
-          <h3 class="sidebar-heading">Catalog</h3>
-          <ul class="sidebar-links">
-            <li><a href="{% url 'vendor:activity_list' %}">Activities</a></li>
-            <li><a href="{% url 'vendor:booking_list' %}">Bookings</a></li>
-            <li><a href="{% url 'vendor:package_list' %}">Packages</a></li>
-            <li><a href="{% url 'vendor:hot_sale_list' %}">Hot Sales</a></li>
-            <li><a href="{% url 'vendor:inquiry_list' %}">Inquiries</a></li>
-          </ul>
+      <aside class="vendor-rail reveal reveal-2">
+        <div class="rail-card">
+          <p class="rail-label">Workspace</p>
+          <h2>{{ vendor_profile.company_name }}</h2>
+          <p class="rail-copy">A calm overview of your listings and incoming demand, designed for daily operations.</p>
         </div>
 
-        <div class="sidebar-section">
-          <h3 class="sidebar-heading">Account</h3>
-          <ul class="sidebar-links">
-            <li><a href="{% url 'home' %}">View Storefront</a></li>
-            <li>
-              {% if vendor_profile.verification_status == 'APPROVED' %}
-                <span class="badge text-bg-success">Approved Vendor</span>
-              {% elif vendor_profile.verification_status == 'REJECTED' %}
-                <span class="badge text-bg-danger">Rejected</span>
-              {% else %}
-                <span class="badge text-bg-warning">Pending Review</span>
-              {% endif %}
-            </li>
-          </ul>
+        <div class="rail-card">
+          <h3>Navigation</h3>
+          <div class="rail-nav">
+            <a class="rail-link" href="{% url 'vendor:activity_list' %}">Activities <span>-&gt;</span></a>
+            <a class="rail-link" href="{% url 'vendor:booking_list' %}">Bookings <span>-&gt;</span></a>
+            <a class="rail-link" href="{% url 'vendor:package_list' %}">Packages <span>-&gt;</span></a>
+            <a class="rail-link" href="{% url 'vendor:hot_sale_list' %}">Hot Sales <span>-&gt;</span></a>
+            <a class="rail-link" href="{% url 'vendor:inquiry_list' %}">Inquiries <span>-&gt;</span></a>
+          </div>
+        </div>
+
+        <div class="rail-card">
+          <h3>Account Status</h3>
+          {% if vendor_profile.verification_status == 'APPROVED' %}
+            <span class="status-badge status-approved">Approved Vendor</span>
+          {% elif vendor_profile.verification_status == 'REJECTED' %}
+            <span class="status-badge status-rejected">Rejected</span>
+          {% else %}
+            <span class="status-badge status-pending">Pending Review</span>
+          {% endif %}
+          <br>
+          <a class="ghost-link" href="{% url 'home' %}">View Storefront</a>
         </div>
       </aside>
 
       <div class="dashboard-main">
         {% if rejected_package_count > 0 or rejected_activity_count > 0 %}
-        <div class="alert alert-danger shadow-sm d-flex justify-content-between align-items-center" style="border-radius: 12px; margin-bottom: 20px;">
-          <div>
-            <strong>Action Required:</strong> You have 
+        <div class="alert-panel reveal reveal-3">
+          <p>
+            <strong>Action required:</strong> You currently have
             {% if rejected_package_count > 0 %}<strong>{{ rejected_package_count }}</strong> rejected package(s){% endif %}
             {% if rejected_package_count > 0 and rejected_activity_count > 0 %} and {% endif %}
             {% if rejected_activity_count > 0 %}<strong>{{ rejected_activity_count }}</strong> rejected activity(s){% endif %}
-            that were declined by an admin. Please review the notes and update your items.
-          </div>
-          <div>
-            {% if rejected_package_count > 0 %}<a href="{% url 'vendor:package_list' %}" class="btn btn-sm btn-outline-danger shadow-sm">View Packages</a>{% endif %}
-            {% if rejected_activity_count > 0 %}<a href="{% url 'vendor:activity_list' %}" class="btn btn-sm btn-outline-danger shadow-sm">View Activities</a>{% endif %}
+            that need revision before publishing.
+          </p>
+          <div class="alert-links">
+            {% if rejected_package_count > 0 %}<a href="{% url 'vendor:package_list' %}">View Packages</a>{% endif %}
+            {% if rejected_activity_count > 0 %}<a href="{% url 'vendor:activity_list' %}">View Activities</a>{% endif %}
           </div>
         </div>
         {% endif %}
 
-        <section class="quick-actions">
-          <h2>Quick Actions</h2>
-          <div class="quick-actions-grid">
-            <a class="quick-action-link" href="{% url 'vendor:activity_create' %}">+ Add Activity</a>
-            <a class="quick-action-link" href="{% url 'vendor:package_create' %}">+ Add Package</a>
-            <a class="quick-action-link" href="{% url 'vendor:hot_sale_create' %}">+ Add Hot Sale</a>
-            <a class="quick-action-link" href="{% url 'vendor:activity_list' %}">Manage Activities</a>
-            <a class="quick-action-link" href="{% url 'vendor:package_list' %}">Manage Packages</a>
-            <a class="quick-action-link" href="{% url 'vendor:hot_sale_list' %}">Manage Hot Sales</a>
-            <a class="quick-action-link" href="{% url 'vendor:booking_list' %}">Manage Bookings</a>
-            <a class="quick-action-link" href="{% url 'vendor:inquiry_list' %}">Manage Inquiries</a>
+        <section class="action-panel reveal reveal-3">
+          <div class="action-panel-head">
+            <h2>Quick Actions</h2>
+            <p>Move from overview to action in one click.</p>
+          </div>
+          <div class="action-grid">
+            <a class="action-chip is-accent" href="{% url 'vendor:activity_create' %}">+ Add Activity</a>
+            <a class="action-chip is-accent" href="{% url 'vendor:package_create' %}">+ Add Package</a>
+            <a class="action-chip" href="{% url 'vendor:hot_sale_create' %}">+ Add Hot Sale</a>
+            <a class="action-chip" href="{% url 'vendor:activity_list' %}">Manage Activities</a>
+            <a class="action-chip" href="{% url 'vendor:package_list' %}">Manage Packages</a>
+            <a class="action-chip" href="{% url 'vendor:hot_sale_list' %}">Manage Hot Sales</a>
+            <a class="action-chip" href="{% url 'vendor:booking_list' %}">Manage Bookings</a>
+            <a class="action-chip" href="{% url 'vendor:inquiry_list' %}">Manage Inquiries</a>
           </div>
         </section>
 
-        <div class="dashboard-grid">
-          <div class="dashboard-card">
-            <p class="dashboard-title">Total Packages</p>
-            <p class="dashboard-value">{{ package_count }}</p>
-            <a class="dashboard-link" href="{% url 'vendor:package_list' %}">Manage packages</a>
+        <div class="metric-grid reveal reveal-4">
+          <div class="metric-card">
+            <p class="metric-label">Total Packages</p>
+            <p class="metric-value">{{ package_count }}</p>
+            <a class="metric-link" href="{% url 'vendor:package_list' %}">Manage packages</a>
           </div>
-
-          <div class="dashboard-card">
-            <p class="dashboard-title">Active Packages</p>
-            <p class="dashboard-value">{{ active_package_count }}</p>
-            <a class="dashboard-link" href="{% url 'vendor:package_list' %}">View active</a>
+          <div class="metric-card">
+            <p class="metric-label">Active Packages</p>
+            <p class="metric-value">{{ active_package_count }}</p>
+            <a class="metric-link" href="{% url 'vendor:package_list' %}">View active</a>
           </div>
-
-          <div class="dashboard-card">
-            <p class="dashboard-title">Bookings</p>
-            <p class="dashboard-value">{{ booking_count }}</p>
-            <a class="dashboard-link" href="{% url 'vendor:booking_list' %}">Manage bookings</a>
+          <div class="metric-card">
+            <p class="metric-label">Bookings</p>
+            <p class="metric-value">{{ booking_count }}</p>
+            <a class="metric-link" href="{% url 'vendor:booking_list' %}">Manage bookings</a>
           </div>
-
-          <div class="dashboard-card">
-            <p class="dashboard-title">Hot Sales</p>
-            <p class="dashboard-value">{{ hot_sale_count }}</p>
-            <a class="dashboard-link" href="{% url 'vendor:hot_sale_list' %}">Manage hot sales</a>
+          <div class="metric-card">
+            <p class="metric-label">Hot Sales</p>
+            <p class="metric-value">{{ hot_sale_count }}</p>
+            <a class="metric-link" href="{% url 'vendor:hot_sale_list' %}">Manage hot sales</a>
           </div>
-
-          <div class="dashboard-card">
-            <p class="dashboard-title">Inquiries</p>
-            <p class="dashboard-value">{{ inquiry_count }}</p>
-            <a class="dashboard-link" href="#inquiries">Recent inquiries</a>
+          <div class="metric-card">
+            <p class="metric-label">Inquiries</p>
+            <p class="metric-value">{{ inquiry_count }}</p>
+            <a class="metric-link" href="#inquiries">Recent inquiries</a>
           </div>
         </div>
 
-        <section class="dashboard-section">
+        <section class="section-card reveal reveal-5">
           <h2>Vendor Profile</h2>
+          <p class="section-intro">Operational profile and payout-facing identity details.</p>
           <div class="table-wrap">
-            <table class="simple-table" style="min-width: 420px;">
+            <table class="data-table" style="min-width: 420px;">
               <tbody>
                 <tr><th>Company</th><td>{{ vendor_profile.company_name }}</td></tr>
                 <tr><th>Owner</th><td>{{ vendor_profile.owner_full_name|default:'-' }}</td></tr>
@@ -391,87 +533,89 @@
               </tbody>
             </table>
           </div>
-          <p class="text-muted small mt-3 mb-0">Full payout details are hidden on the vendor dashboard and are only visible to admin during payout processing.</p>
+          <p class="small-note">Full payout details are hidden on the vendor dashboard and are only visible to admin during payout processing.</p>
           {% if vendor_profile.verification_status == 'REJECTED' and vendor_profile.rejection_reason %}
-            <div class="alert alert-danger mt-3 mb-0" role="alert">
+            <div class="profile-warning" role="alert">
               <strong>Rejection Reason:</strong> {{ vendor_profile.rejection_reason }}
             </div>
           {% endif %}
         </section>
 
-        <section class="dashboard-section" id="bookings">
-          <h2>Recent Bookings</h2>
-          {% if recent_bookings %}
-            <div class="table-wrap">
-              <table class="simple-table">
-                <thead>
-                  <tr>
-                    <th>Package</th>
-                    <th>Traveler</th>
-                    <th>Travel Date</th>
-                    <th>People</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for booking in recent_bookings %}
+        <div class="section-split reveal reveal-5">
+          <section class="section-card" id="bookings">
+            <h2>Recent Bookings</h2>
+            {% if recent_bookings %}
+              <div class="table-wrap">
+                <table class="data-table">
+                  <thead>
                     <tr>
-                      <td>{{ booking.package.title }}</td>
-                      <td>{{ booking.full_name }}</td>
-                      <td>{{ booking.travel_date|date:"M d, Y" }}</td>
-                      <td>{{ booking.number_of_people }}</td>
+                      <th>Package</th>
+                      <th>Traveler</th>
+                      <th>Travel Date</th>
+                      <th>People</th>
                     </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {% for booking in recent_bookings %}
+                      <tr>
+                        <td>{{ booking.package.title }}</td>
+                        <td>{{ booking.full_name }}</td>
+                        <td>{{ booking.travel_date|date:"M d, Y" }}</td>
+                        <td>{{ booking.number_of_people }}</td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            {% else %}
+              <p class="empty-copy">No bookings yet.</p>
+            {% endif %}
+            <div class="section-actions">
+              <a href="{% url 'vendor:booking_list' %}">Manage Bookings</a>
             </div>
-          {% else %}
-            <p>No bookings yet.</p>
-          {% endif %}
-          <div class="section-actions">
-            <a href="{% url 'vendor:booking_list' %}">Manage Bookings</a>
-          </div>
-        </section>
+          </section>
 
-        <section class="dashboard-section" id="inquiries">
-          <h2>Recent Inquiries</h2>
-          {% if recent_inquiries %}
-            <div class="table-wrap">
-              <table class="simple-table">
-                <thead>
-                  <tr>
-                    <th>Package</th>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>Date</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for inquiry in recent_inquiries %}
+          <section class="section-card" id="inquiries">
+            <h2>Recent Inquiries</h2>
+            {% if recent_inquiries %}
+              <div class="table-wrap">
+                <table class="data-table">
+                  <thead>
                     <tr>
-                      <td>{{ inquiry.package.title }}</td>
-                      <td>{{ inquiry.full_name }}</td>
-                      <td>{{ inquiry.email }}</td>
-                      <td>{{ inquiry.created_at|date:"M d, Y" }}</td>
-                      <td><a href="{% url 'vendor:inquiry_reply' inquiry.pk %}">Reply</a></td>
+                      <th>Package</th>
+                      <th>Name</th>
+                      <th>Email</th>
+                      <th>Date</th>
+                      <th>Action</th>
                     </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {% for inquiry in recent_inquiries %}
+                      <tr>
+                        <td>{{ inquiry.package.title }}</td>
+                        <td>{{ inquiry.full_name }}</td>
+                        <td>{{ inquiry.email }}</td>
+                        <td>{{ inquiry.created_at|date:"M d, Y" }}</td>
+                        <td><a class="table-cell-link" href="{% url 'vendor:inquiry_reply' inquiry.pk %}">Reply</a></td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            {% else %}
+              <p class="empty-copy">No inquiries yet.</p>
+            {% endif %}
+            <div class="section-actions">
+              <a href="{% url 'vendor:inquiry_list' %}">Manage Inquiries</a>
             </div>
-          {% else %}
-            <p>No inquiries yet.</p>
-          {% endif %}
-          <div class="section-actions">
-            <a href="{% url 'vendor:inquiry_list' %}">Manage Inquiries</a>
-          </div>
-        </section>
+          </section>
+        </div>
 
-        <section class="dashboard-section">
+        <section class="section-card reveal reveal-5">
           <h2>Recent Hot Sales</h2>
           {% if recent_hot_sales %}
             <div class="table-wrap">
-              <table class="simple-table">
+              <table class="data-table">
                 <thead>
                   <tr>
                     <th>Type</th>
@@ -495,14 +639,13 @@
               </table>
             </div>
           {% else %}
-            <p>No hot sales yet.</p>
+            <p class="empty-copy">No hot sales yet.</p>
           {% endif %}
           <div class="section-actions">
             <a href="{% url 'vendor:hot_sale_create' %}">+ Add Hot Sale</a>
             <a href="{% url 'vendor:hot_sale_list' %}">Manage Hot Sales</a>
           </div>
         </section>
-
       </div>
     </div>
   </div>
