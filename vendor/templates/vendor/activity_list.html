@@ -115,6 +115,7 @@
                 {% endif %}
               </td>
               <td class="text-end">
+                <a href="{% url 'vendor:activity_availability' activity.pk %}" class="btn btn-sm btn-outline-secondary">Availability</a>
                 <a href="{% url 'vendor:activity_edit' activity.pk %}" class="btn btn-sm btn-outline-primary">Edit</a>
                 <a href="{% url 'vendor:activity_delete' activity.pk %}" class="btn btn-sm btn-outline-danger">Delete</a>
               </td>

@@ -53,6 +53,10 @@ class LoginForm(AuthenticationForm):
 
 
 class BookingForm(forms.ModelForm):
+    def __init__(self, *args, package=None, **kwargs):
+        self.package = package
+        super().__init__(*args, **kwargs)
+
     class Meta:
         model = Booking
         fields = (
@@ -84,6 +88,8 @@ class BookingForm(forms.ModelForm):
         travel_date = self.cleaned_data["travel_date"]
         if travel_date < timezone.localdate():
             raise forms.ValidationError("Please choose today or a future date.")
+        if self.package and self.package.unavailable_dates.filter(date=travel_date).exists():
+            raise forms.ValidationError("This date is unavailable for booking. Please select another date.")
         return travel_date
 
     def clean_number_of_people(self):

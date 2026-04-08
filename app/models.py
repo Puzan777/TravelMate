@@ -259,6 +259,46 @@ class Activity(models.Model):
             raise ValidationError(errors)
 
 
+class PackageUnavailableDate(models.Model):
+    package = models.ForeignKey(Package, on_delete=models.CASCADE, related_name='unavailable_dates')
+    date = models.DateField(db_index=True)
+    reason = models.CharField(max_length=200, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['date']
+        constraints = [
+            models.UniqueConstraint(fields=['package', 'date'], name='unique_package_unavailable_date'),
+        ]
+
+    def __str__(self):
+        return f"{self.package.title} unavailable on {self.date}"
+
+    def clean(self):
+        if self.date and self.date < timezone.localdate():
+            raise ValidationError({'date': 'Unavailable date cannot be in the past.'})
+
+
+class ActivityUnavailableDate(models.Model):
+    activity = models.ForeignKey(Activity, on_delete=models.CASCADE, related_name='unavailable_dates')
+    date = models.DateField(db_index=True)
+    reason = models.CharField(max_length=200, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['date']
+        constraints = [
+            models.UniqueConstraint(fields=['activity', 'date'], name='unique_activity_unavailable_date'),
+        ]
+
+    def __str__(self):
+        return f"{self.activity.name} unavailable on {self.date}"
+
+    def clean(self):
+        if self.date and self.date < timezone.localdate():
+            raise ValidationError({'date': 'Unavailable date cannot be in the past.'})
+
+
 class ActivityImage(models.Model):
     activity = models.ForeignKey(Activity, on_delete=models.CASCADE, related_name='images')
     image = models.ImageField(upload_to='activities/')

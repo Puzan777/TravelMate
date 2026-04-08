@@ -178,6 +178,29 @@
       font-size: 0.8rem;
       color: #5f738a;
     }
+    .blocked-dates-list {
+      margin: 0 0 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .blocked-date-chip {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      border: 1px solid #f3c2c2;
+      background: #fff2f2;
+      color: #8f2f2f;
+      font-size: 0.74rem;
+      font-weight: 600;
+      padding: 3px 8px;
+    }
+    .blocked-date-warning {
+      display: none;
+      margin-top: 6px;
+      font-size: 0.78rem;
+      color: #b42318;
+    }
     .inquiry-toggle-btn {
       margin-top: 10px;
       border-radius: 10px;
@@ -452,6 +475,18 @@
 
                 <label for="id_travel_date" class="form-label mb-1">Choose travel date</label>
                 {{ booking_form.travel_date }}
+                {% if blocked_dates %}
+                  <div class="small text-muted mt-1">Unavailable dates:</div>
+                  <div class="blocked-dates-list">
+                    {% for blocked in blocked_dates|slice:":8" %}
+                      <span class="blocked-date-chip">{{ blocked.date|date:"M d" }}</span>
+                    {% endfor %}
+                    {% if blocked_dates|length > 8 %}
+                      <span class="blocked-date-chip">+{{ blocked_dates|length|add:"-8" }} more</span>
+                    {% endif %}
+                  </div>
+                  <div id="blockedDateWarning" class="blocked-date-warning">This date is unavailable. Please choose another date.</div>
+                {% endif %}
                 {% if booking_form.travel_date.errors %}
                   <div class="text-danger small">{{ booking_form.travel_date.errors|striptags }}</div>
                 {% endif %}
@@ -552,6 +587,7 @@
   </div>
 </div>
 
+{{ blocked_dates_iso|json_script:"blockedDatesData" }}
 <script>
   document.addEventListener('DOMContentLoaded', function () {
     const peopleInput = document.getElementById('id_number_of_people');
@@ -559,19 +595,32 @@
     const paymentMethodInput = document.getElementById('id_payment_method');
     const transactionReferenceInput = document.getElementById('id_transaction_reference');
     const transactionReferenceHint = document.getElementById('transactionReferenceHint');
+    const travelDateInput = document.getElementById('id_travel_date');
+    const blockedDateWarning = document.getElementById('blockedDateWarning');
     const packagePrice = parseFloat('{{ package.price|default:"0" }}');
 
-    if (!peopleInput || !totalEl || Number.isNaN(packagePrice)) {
-      return;
+    let blockedDates = new Set();
+    const blockedDatesData = document.getElementById('blockedDatesData');
+    if (blockedDatesData) {
+      try {
+        blockedDates = new Set(JSON.parse(blockedDatesData.textContent || '[]'));
+      } catch (error) {
+        blockedDates = new Set();
+      }
     }
 
     function updateEstimatedTotal() {
+      if (!peopleInput || !totalEl || Number.isNaN(packagePrice)) {
+        return;
+      }
       const people = parseInt(peopleInput.value || '1', 10);
       const safePeople = Number.isNaN(people) || people < 1 ? 1 : people;
       totalEl.textContent = (packagePrice * safePeople).toFixed(2);
     }
 
-    peopleInput.addEventListener('input', updateEstimatedTotal);
+    if (peopleInput) {
+      peopleInput.addEventListener('input', updateEstimatedTotal);
+    }
     updateEstimatedTotal();
 
     function syncTransactionReferenceHint() {
@@ -594,6 +643,24 @@
     if (paymentMethodInput) {
       paymentMethodInput.addEventListener('change', syncTransactionReferenceHint);
       syncTransactionReferenceHint();
+    }
+
+    function syncTravelDateAvailability() {
+      if (!travelDateInput) {
+        return;
+      }
+      const selectedDate = travelDateInput.value;
+      const isBlocked = selectedDate && blockedDates.has(selectedDate);
+      travelDateInput.setCustomValidity(isBlocked ? 'This date is unavailable. Please choose another date.' : '');
+      if (blockedDateWarning) {
+        blockedDateWarning.style.display = isBlocked ? 'block' : 'none';
+      }
+    }
+
+    if (travelDateInput) {
+      travelDateInput.addEventListener('change', syncTravelDateAvailability);
+      travelDateInput.addEventListener('input', syncTravelDateAvailability);
+      syncTravelDateAvailability();
     }
   });
 </script>

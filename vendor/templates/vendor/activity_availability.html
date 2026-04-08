@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+
+{% block title %}Activity Availability{% endblock %}
+
+{% block extrastyle %}
+<style>
+  .availability-shell {
+    max-width: 960px;
+  }
+  .availability-card {
+    border: 1px solid #dbe5f1;
+    border-radius: 14px;
+    box-shadow: 0 10px 24px rgba(17, 24, 39, 0.06);
+  }
+  .availability-head {
+    background: linear-gradient(120deg, #0b3d69, #0a4f8a 45%, #0e6bb7);
+    color: #fff;
+    border-top-left-radius: 14px;
+    border-top-right-radius: 14px;
+    padding: 16px 18px;
+  }
+  .availability-head h1 {
+    margin: 0;
+    font-size: 1.2rem;
+  }
+  .availability-head p {
+    margin: 6px 0 0;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.9rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container availability-shell py-4 py-md-5">
+  <div class="availability-card bg-white overflow-hidden">
+    <div class="availability-head d-flex justify-content-between align-items-start gap-3">
+      <div>
+        <h1>Block Dates for Activity</h1>
+        <p>{{ activity.name }}</p>
+      </div>
+      <div class="d-flex gap-2">
+        <a href="{% url 'vendor:activity_list' %}" class="btn btn-outline-light btn-sm">Back to Activities</a>
+      </div>
+    </div>
+
+    <div class="p-3 p-md-4 border-bottom">
+      <form method="post" class="row g-2 align-items-end">
+        {% csrf_token %}
+        <div class="col-md-3">
+          <label for="id_date_from" class="form-label mb-1 small text-muted">From date</label>
+          {{ form.date_from }}
+          {% if form.date_from.errors %}
+          <div class="text-danger small mt-1">{{ form.date_from.errors|striptags }}</div>
+          {% endif %}
+        </div>
+        <div class="col-md-3">
+          <label for="id_date_to" class="form-label mb-1 small text-muted">To date</label>
+          {{ form.date_to }}
+          {% if form.date_to.errors %}
+          <div class="text-danger small mt-1">{{ form.date_to.errors|striptags }}</div>
+          {% endif %}
+        </div>
+        <div class="col-md-4">
+          <label for="id_reason" class="form-label mb-1 small text-muted">Reason (optional)</label>
+          {{ form.reason }}
+          {% if form.reason.errors %}
+          <div class="text-danger small mt-1">{{ form.reason.errors|striptags }}</div>
+          {% endif %}
+        </div>
+        <div class="col-md-2 d-grid">
+          <button type="submit" class="btn btn-primary">Block Range</button>
+        </div>
+        <div class="col-12 small text-muted">For a single-day block, set From and To to the same date.</div>
+      </form>
+    </div>
+
+    <div class="p-3 p-md-4">
+      <h2 class="h6 mb-3">Blocked Dates</h2>
+      {% if blocked_dates %}
+      <div class="table-responsive">
+        <table class="table align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Date</th>
+              <th>Reason</th>
+              <th class="text-end">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for entry in blocked_dates %}
+            <tr>
+              <td>{{ entry.date|date:"M d, Y" }}</td>
+              <td>{{ entry.reason|default:"-" }}</td>
+              <td class="text-end">
+                <form method="post" class="d-inline">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="delete">
+                  <input type="hidden" name="entry_id" value="{{ entry.id }}">
+                  <button type="submit" class="btn btn-sm btn-outline-danger">Remove</button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <p class="text-muted mb-0">No blocked dates yet for this activity.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block footer %}{% endblock %}

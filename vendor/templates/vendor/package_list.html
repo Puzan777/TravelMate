@@ -176,6 +176,7 @@
                 {% endif %}
               </td>
               <td class="text-end">
+                <a href="{% url 'vendor:package_availability' package.pk %}" class="btn btn-sm btn-outline-primary">Availability</a>
                 <a href="{% url 'vendor:package_edit' package.pk %}" class="btn btn-sm btn-outline-secondary">Edit</a>
               </td>
             </tr>

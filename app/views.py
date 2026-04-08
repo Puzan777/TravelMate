@@ -377,6 +377,8 @@ def package_detail(request, slug):
     )
     is_favorite = False
     itinerary_days = list(package.itinerary_entries.all())
+    blocked_dates = list(package.unavailable_dates.filter(date__gte=timezone.localdate()).order_by('date'))
+    blocked_dates_iso = [entry.date.isoformat() for entry in blocked_dates]
 
     if request.user.is_authenticated:
         is_favorite = request.user.favorite_packages.filter(pk=package.pk).exists()
@@ -400,7 +402,7 @@ def package_detail(request, slug):
             if not request.user.is_authenticated:
                 return redirect('login')
 
-            booking_form = BookingForm(request.POST)
+            booking_form = BookingForm(request.POST, package=package)
             inquiry_form = InquiryForm(initial=inquiry_initial)
             if booking_form.is_valid():
                 booking = booking_form.save(commit=False)
@@ -425,7 +427,7 @@ def package_detail(request, slug):
                     messages.success(request, 'Your booking request has been submitted successfully.')
                 return redirect('package_detail', slug=slug)
         elif form_type == 'inquiry':
-            booking_form = BookingForm(initial=booking_initial)
+            booking_form = BookingForm(initial=booking_initial, package=package)
             inquiry_form = InquiryForm(request.POST)
             if inquiry_form.is_valid():
                 inquiry = inquiry_form.save(commit=False)
@@ -436,10 +438,10 @@ def package_detail(request, slug):
                 messages.success(request, 'Your inquiry has been sent. Our team will contact you soon.')
                 return redirect('package_detail', slug=slug)
         else:
-            booking_form = BookingForm(initial=booking_initial)
+            booking_form = BookingForm(initial=booking_initial, package=package)
             inquiry_form = InquiryForm(initial=inquiry_initial)
     else:
-        booking_form = BookingForm(initial=booking_initial)
+        booking_form = BookingForm(initial=booking_initial, package=package)
         inquiry_form = InquiryForm(initial=inquiry_initial)
 
     return render(request, 'package_detail.html', {
@@ -448,6 +450,8 @@ def package_detail(request, slug):
         'inquiry_form': inquiry_form,
         'is_favorite': is_favorite,
         'itinerary_days': itinerary_days,
+        'blocked_dates': blocked_dates,
+        'blocked_dates_iso': blocked_dates_iso,
     })
 
 

@@ -1,5 +1,5 @@
 import csv
-from datetime import date
+from datetime import date, timedelta
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -9,12 +9,26 @@ from django.db.models import Q
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
-from app.models import Activity, ActivityCategory, ActivityImage, ApprovalStatus, Booking, HotSale, Inquiry, Package, PackageImage
+from app.models import (
+	Activity,
+	ActivityCategory,
+	ActivityImage,
+	ActivityUnavailableDate,
+	ApprovalStatus,
+	Booking,
+	HotSale,
+	Inquiry,
+	Package,
+	PackageImage,
+	PackageUnavailableDate,
+)
 from .forms import (
 	PackageItineraryFormSet,
+	VendorActivityUnavailableDateForm,
 	VendorActivityForm,
 	VendorHotSaleForm,
 	VendorInquiryReplyForm,
+	VendorPackageUnavailableDateForm,
 	VendorPackageForm,
 	VendorRegistrationForm,
 )
@@ -436,6 +450,67 @@ def activity_delete(request, pk):
 
 
 @login_required
+def activity_availability(request, pk):
+	vendor_profile = _get_approved_vendor_profile(request)
+	if vendor_profile is None:
+		return redirect('home')
+
+	activity = get_object_or_404(Activity, pk=pk, vendor=vendor_profile)
+	if request.method == 'POST' and request.POST.get('action') == 'delete':
+		entry = get_object_or_404(ActivityUnavailableDate, pk=request.POST.get('entry_id'), activity=activity)
+		entry.delete()
+		messages.success(request, 'Blocked date removed for this activity.')
+		return redirect('vendor:activity_availability', pk=activity.pk)
+
+	if request.method == 'POST':
+		form = VendorActivityUnavailableDateForm(request.POST)
+		if form.is_valid():
+			start_date = form.cleaned_data['date_from']
+			end_date = form.cleaned_data['date_to']
+			reason = (form.cleaned_data.get('reason') or '').strip()
+			created_count = 0
+			skipped_count = 0
+
+			current_date = start_date
+			while current_date <= end_date:
+				_, created = ActivityUnavailableDate.objects.get_or_create(
+					activity=activity,
+					date=current_date,
+					defaults={'reason': reason},
+				)
+				if created:
+					created_count += 1
+				else:
+					skipped_count += 1
+				current_date += timedelta(days=1)
+
+			if created_count and skipped_count:
+				messages.success(
+					request,
+					f'Blocked {created_count} day(s). {skipped_count} day(s) were already blocked.',
+				)
+			elif created_count:
+				messages.success(request, f'Blocked {created_count} day(s) successfully for this activity.')
+			else:
+				messages.info(request, 'All selected dates were already blocked for this activity.')
+
+			return redirect('vendor:activity_availability', pk=activity.pk)
+	else:
+		form = VendorActivityUnavailableDateForm()
+
+	blocked_dates = activity.unavailable_dates.order_by('date')
+	return render(
+		request,
+		'vendor/activity_availability.html',
+		{
+			'activity': activity,
+			'form': form,
+			'blocked_dates': blocked_dates,
+		},
+	)
+
+
+@login_required
 def package_create(request):
 	vendor_profile = _get_approved_vendor_profile(request)
 	if vendor_profile is None:
@@ -572,6 +647,67 @@ def package_edit(request, pk):
 			'package': package,
 			'package_images': package.images.all().order_by('-is_primary', 'created_at'),
 			'package_cover_image': package.images.filter(is_primary=True).first() or package.images.first(),
+		},
+	)
+
+
+@login_required
+def package_availability(request, pk):
+	vendor_profile = _get_approved_vendor_profile(request)
+	if vendor_profile is None:
+		return redirect('home')
+
+	package = get_object_or_404(Package, pk=pk, vendor=vendor_profile)
+	if request.method == 'POST' and request.POST.get('action') == 'delete':
+		entry = get_object_or_404(PackageUnavailableDate, pk=request.POST.get('entry_id'), package=package)
+		entry.delete()
+		messages.success(request, 'Blocked date removed for this package.')
+		return redirect('vendor:package_availability', pk=package.pk)
+
+	if request.method == 'POST':
+		form = VendorPackageUnavailableDateForm(request.POST)
+		if form.is_valid():
+			start_date = form.cleaned_data['date_from']
+			end_date = form.cleaned_data['date_to']
+			reason = (form.cleaned_data.get('reason') or '').strip()
+			created_count = 0
+			skipped_count = 0
+
+			current_date = start_date
+			while current_date <= end_date:
+				_, created = PackageUnavailableDate.objects.get_or_create(
+					package=package,
+					date=current_date,
+					defaults={'reason': reason},
+				)
+				if created:
+					created_count += 1
+				else:
+					skipped_count += 1
+				current_date += timedelta(days=1)
+
+			if created_count and skipped_count:
+				messages.success(
+					request,
+					f'Blocked {created_count} day(s). {skipped_count} day(s) were already blocked.',
+				)
+			elif created_count:
+				messages.success(request, f'Blocked {created_count} day(s) successfully for this package.')
+			else:
+				messages.info(request, 'All selected dates were already blocked for this package.')
+
+			return redirect('vendor:package_availability', pk=package.pk)
+	else:
+		form = VendorPackageUnavailableDateForm()
+
+	blocked_dates = package.unavailable_dates.order_by('date')
+	return render(
+		request,
+		'vendor/package_availability.html',
+		{
+			'package': package,
+			'form': form,
+			'blocked_dates': blocked_dates,
 		},
 	)
 

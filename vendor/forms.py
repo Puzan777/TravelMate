@@ -3,7 +3,16 @@ from django.contrib.auth.forms import UserCreationForm
 from django.forms import inlineformset_factory
 from django.utils import timezone
 
-from app.models import Activity, ActivityCategory, CustomUser, Destination, HotSale, Inquiry, Package, PackageItinerary
+from app.models import (
+    Activity,
+    ActivityCategory,
+    CustomUser,
+    Destination,
+    HotSale,
+    Inquiry,
+    Package,
+    PackageItinerary,
+)
 from .models import VendorProfile
 
 
@@ -265,3 +274,44 @@ class VendorInquiryReplyForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['admin_reply'].widget.attrs['class'] = 'form-control'
         self.fields['admin_reply'].label = 'Reply to customer'
+
+
+class _UnavailableDateRangeForm(forms.Form):
+    date_from = forms.DateField(
+        widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control'})
+    )
+    date_to = forms.DateField(
+        widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control'})
+    )
+    reason = forms.CharField(
+        required=False,
+        max_length=200,
+        widget=forms.TextInput(attrs={'class': 'form-control'}),
+    )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        start_date = cleaned_data.get('date_from')
+        end_date = cleaned_data.get('date_to')
+        today = timezone.localdate()
+
+        if start_date and start_date < today:
+            self.add_error('date_from', 'Please choose today or a future date.')
+        if end_date and end_date < today:
+            self.add_error('date_to', 'Please choose today or a future date.')
+        if start_date and end_date and end_date < start_date:
+            self.add_error('date_to', 'To date must be on or after From date.')
+
+        return cleaned_data
+
+
+class VendorPackageUnavailableDateForm(_UnavailableDateRangeForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['reason'].widget.attrs['placeholder'] = 'Optional reason (holiday, maintenance, etc.)'
+
+
+class VendorActivityUnavailableDateForm(_UnavailableDateRangeForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['reason'].widget.attrs['placeholder'] = 'Optional reason (closed, private event, etc.)'
