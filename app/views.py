@@ -459,10 +459,7 @@ def profile_view(request):
     bookings = (
         Booking.objects
         .filter(user=request.user)
-        .filter(
-            Q(payment_status=Booking.PaymentStatus.PAID)
-            | ~Q(payment_method=Booking.PaymentMethod.ESEWA)
-        )
+        .visible_in_listings()
         .select_related('package', 'package__destination')
         .order_by('-created_at')
     )

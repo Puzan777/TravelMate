@@ -357,6 +357,11 @@ class HotSale(models.Model):
         return original_price - self.sale_price
 
 
+class BookingQuerySet(models.QuerySet):
+    def visible_in_listings(self):
+        return self.filter(Booking.visible_in_listings_q())
+
+
 class Booking(models.Model):
     class PaymentMethod(models.TextChoices):
         CASH = 'CASH', 'Cash on arrival'
@@ -385,9 +390,14 @@ class Booking(models.Model):
     nationality = models.CharField(max_length=80)
     emergency_contact = models.CharField(max_length=120)
     created_at = models.DateTimeField(auto_now_add=True)
+    objects = BookingQuerySet.as_manager()
 
     class Meta:
         ordering = ['-created_at']
+
+    @classmethod
+    def visible_in_listings_q(cls, prefix=''):
+        return models.Q(**{f'{prefix}payment_status': cls.PaymentStatus.PAID}) | ~models.Q(**{f'{prefix}payment_method': cls.PaymentMethod.ESEWA})
 
     def __str__(self):
         return f"{self.package.title} - {self.full_name} - {self.travel_date}"

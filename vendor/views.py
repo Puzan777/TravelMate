@@ -78,11 +78,10 @@ def dashboard(request):
 		return redirect('home')
 
 	package_qs = Package.objects.filter(vendor=vendor_profile)
-	visible_booking_q = Q(payment_status=Booking.PaymentStatus.PAID) | ~Q(payment_method=Booking.PaymentMethod.ESEWA)
+	visible_bookings = Booking.objects.visible_in_listings()
 	recent_bookings = (
-		Booking.objects
+		visible_bookings
 		.filter(package__vendor=vendor_profile)
-		.filter(visible_booking_q)
 		.select_related('package', 'user')[:5]
 	)
 	recent_inquiries = Inquiry.objects.filter(package__vendor=vendor_profile).select_related('package', 'user')[:5]
@@ -95,7 +94,7 @@ def dashboard(request):
 			Q(package__vendor=vendor_profile) | Q(activity__vendor=vendor_profile),
 			is_active=True,
 		).count(),
-		'booking_count': Booking.objects.filter(package__vendor=vendor_profile).filter(visible_booking_q).count(),
+		'booking_count': visible_bookings.filter(package__vendor=vendor_profile).count(),
 		'inquiry_count': Inquiry.objects.filter(package__vendor=vendor_profile).count(),
 		'recent_bookings': recent_bookings,
 		'recent_inquiries': recent_inquiries,
@@ -561,9 +560,8 @@ def booking_list(request):
 		return redirect('home')
 
 	bookings = (
-		Booking.objects
+		Booking.objects.visible_in_listings()
 		.filter(package__vendor=vendor_profile)
-		.filter(Q(payment_status=Booking.PaymentStatus.PAID) | ~Q(payment_method=Booking.PaymentMethod.ESEWA))
 		.select_related('package', 'user')
 		.order_by('-created_at')
 	)

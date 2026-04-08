@@ -67,7 +67,7 @@ def dashboard_destination_count():
 
 @register.simple_tag
 def dashboard_booking_count():
-    return Booking.objects.count()
+    return Booking.objects.visible_in_listings().count()
 
 
 @register.simple_tag
@@ -126,7 +126,7 @@ def dashboard_approved_vendor_count():
 
 @register.simple_tag
 def dashboard_recent_bookings(limit=5):
-    return Booking.objects.select_related('package', 'user').order_by('-created_at')[:limit]
+    return Booking.objects.visible_in_listings().select_related('package', 'user').order_by('-created_at')[:limit]
 
 
 @register.simple_tag
@@ -156,7 +156,7 @@ def dashboard_top_packages(limit=5):
     return (
         Package.objects
         .select_related('destination', 'vendor')
-        .annotate(total_bookings=Count('bookings'))
+        .annotate(total_bookings=Count('bookings', filter=Booking.visible_in_listings_q(prefix='bookings__')))
         .order_by('-total_bookings', 'title')[:limit]
     )
 
@@ -178,7 +178,7 @@ def dashboard_top_products(limit=10):
     package_rows = (
         Package.objects
         .select_related('vendor')
-        .annotate(total_bookings=Count('bookings'))
+        .annotate(total_bookings=Count('bookings', filter=Booking.visible_in_listings_q(prefix='bookings__')))
         .values('title', 'vendor__company_name', 'total_bookings', 'rating')
     )
 
@@ -235,7 +235,7 @@ def dashboard_product_trends(months=6):
     start_date = date(start_year, start_month, 1)
 
     package_monthly = (
-        Booking.objects
+        Booking.objects.visible_in_listings()
         .filter(created_at__date__gte=start_date)
         .annotate(month=TruncMonth('created_at'))
         .values('month')
@@ -283,7 +283,7 @@ def dashboard_monthly_bookings(months=6):
     start_date = date(start_year, start_month, 1)
 
     monthly_data = (
-        Booking.objects
+        Booking.objects.visible_in_listings()
         .filter(created_at__date__gte=start_date)
         .annotate(month=TruncMonth('created_at'))
         .values('month')

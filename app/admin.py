@@ -344,11 +344,9 @@ class BookingAdmin(admin.ModelAdmin):
     )
 
     def get_queryset(self, request):
-        visible_booking_q = Q(payment_status=Booking.PaymentStatus.PAID) | ~Q(payment_method=Booking.PaymentMethod.ESEWA)
         qs = (
-            super().get_queryset(request)
+            super().get_queryset(request).visible_in_listings()
             .select_related('package', 'package__vendor', 'user')
-            .filter(visible_booking_q)
         )
         if request.user.is_superuser:
             return qs
