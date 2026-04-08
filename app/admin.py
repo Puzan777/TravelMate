@@ -13,11 +13,12 @@ from django.utils.html import format_html
 
 from .models import (
     Activity, ActivityCategory, ActivityImage, ApprovalStatus, Booking, CustomUser, Destination,
-    HotSale, Inquiry, Package, PackageImage, PackageItinerary,
+    HotSale, Package, PackageImage, PackageItinerary,
 )
 
-# Hide default Django admin nav sidebar; custom dashboard provides navigation.
-admin.site.enable_nav_sidebar = False
+# Keep Django's nav sidebar enabled so navigation persists on changelists,
+# change forms, and custom admin views.
+admin.site.enable_nav_sidebar = True
 
 @admin.register(ActivityCategory)
 class ActivityCategoryAdmin(admin.ModelAdmin):
@@ -389,62 +390,6 @@ class BookingAdmin(admin.ModelAdmin):
         if not obj.package or obj.package.price is None:
             return '-'
         return obj.package.price * obj.number_of_people
-
-
-class InquiryReplyStatusFilter(admin.SimpleListFilter):
-    title = 'reply status'
-    parameter_name = 'reply_status'
-
-    def lookups(self, request, model_admin):
-        return (
-            ('replied', 'Replied'),
-            ('unreplied', 'Unreplied'),
-        )
-
-    def queryset(self, request, queryset):
-        if self.value() == 'replied':
-            return queryset.filter(replied_at__isnull=False)
-        if self.value() == 'unreplied':
-            return queryset.filter(replied_at__isnull=True)
-        return queryset
-
-
-class InquiryAdmin(admin.ModelAdmin):
-    list_per_page = 20
-    list_display = ('package', 'full_name', 'email', 'phone', 'inquiry_message', 'reply_status', 'user', 'created_at', 'replied_at')
-    list_filter = (InquiryReplyStatusFilter, 'created_at', 'replied_at')
-    search_fields = ('package__title', 'full_name', 'email', 'phone', 'message')
-    readonly_fields = (
-        'package', 'user', 'full_name', 'email', 'phone', 'message',
-        'created_at', 'replied_at',
-    )
-    fieldsets = (
-        ('Inquiry', {'fields': ('package', 'user', 'full_name', 'email', 'phone', 'message')}),
-        ('Reply', {'fields': ('admin_reply', 'replied_at')}),
-        ('System', {'fields': ('created_at',)}),
-    )
-
-    def get_queryset(self, request):
-        qs = super().get_queryset(request)
-        if request.user.is_superuser:
-            return qs
-        vendor_profile = _current_vendor_profile(request.user)
-        if vendor_profile:
-            return qs.filter(package__vendor=vendor_profile)
-        return qs.none()
-
-    def has_add_permission(self, request):
-        return False
-
-    @admin.display(description='Inquiry Message')
-    def inquiry_message(self, obj):
-        if len(obj.message) > 80:
-            return f"{obj.message[:80]}..."
-        return obj.message
-
-    @admin.display(description='Reply Status')
-    def reply_status(self, obj):
-        return 'Replied' if obj.admin_reply else 'Pending'
 
 
 # ────────────────────────────────────────────────────────────────────

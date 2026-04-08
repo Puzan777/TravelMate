@@ -1,7 +1,7 @@
 from datetime import date
 
 from django import template
-from django.db.models import Count
+from django.db.models import Count, Sum
 from django.db.models.functions import TruncMonth
 
 from app.models import Activity, ApprovalStatus, Booking, CustomUser, Destination, HotSale, Inquiry, Package
@@ -76,6 +76,11 @@ def dashboard_user_count():
 
 
 @register.simple_tag
+def dashboard_customer_count():
+    return CustomUser.objects.filter(role=CustomUser.Role.CUSTOMER).count()
+
+
+@register.simple_tag
 def dashboard_inquiry_count():
     return Inquiry.objects.count()
 
@@ -97,6 +102,11 @@ def dashboard_inquiry_reply_rate():
 @register.simple_tag
 def dashboard_hot_sale_count():
     return HotSale.objects.count()
+
+
+@register.simple_tag
+def dashboard_favorite_count():
+    return CustomUser.favorite_packages.through.objects.count()
 
 
 @register.simple_tag
@@ -122,6 +132,19 @@ def dashboard_approved_vendor_count():
     if VendorProfile is None:
         return 0
     return VendorProfile.objects.filter(verification_status=VendorProfile.VerificationStatus.APPROVED).count()
+
+
+@register.simple_tag
+def dashboard_vendor_count():
+    if VendorProfile is None:
+        return 0
+    return VendorProfile.objects.count()
+
+
+@register.simple_tag
+def dashboard_total_revenue():
+    total = Booking.objects.visible_in_listings().aggregate(total=Sum('total_amount'))['total']
+    return total or 0
 
 
 @register.simple_tag

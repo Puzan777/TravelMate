@@ -1,21 +1,18 @@
 {% load i18n static %}
 {% if cl.search_fields %}
-<div class="form-group custom-search-group" style="flex: 1; min-width: 250px; margin-bottom: 20px;">
-    <label style="font-size: 0.8rem; font-weight: 700; color: var(--tm-text-muted); text-transform: uppercase;">Search</label>
-    <div style="display: flex; gap: 8px;">
-        <input type="text" name="{{ search_var }}" value="{{ cl.query }}" id="searchbar" style="flex: 1; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--tm-line); font-size: 0.95rem; background: #fff;" autofocus placeholder="{% translate 'Search details...' %}">
-        
-        <button type="submit" style="padding: 10px 20px !important; background: var(--tm-primary); color: #fff; border-radius: 8px; font-weight: 600; cursor: pointer;">
-            {% translate 'Search' %}
-        </button>
+<div class="tm-admin-search">
+    <label class="tm-admin-search-label">{% translate "Search" %}</label>
+    <div class="tm-admin-search-row">
+        <input type="text" name="{{ search_var }}" value="{{ cl.query }}" id="searchbar" class="tm-admin-search-input" autofocus placeholder="{% translate 'Search details...' %}">
+        <button type="submit" class="tm-admin-search-submit">{% translate 'Search' %}</button>
         {% if show_result_count %}
-            <span class="small quiet" style="align-self: center; font-size: 0.8rem; color: var(--tm-text-muted);">
+            <span class="tm-admin-search-meta">
                 {% blocktranslate count counter=cl.result_count %}{{ counter }} result{% plural %}{{ counter }} results{% endblocktranslate %}
-                (<a href="?{% if cl.is_popup %}_popup=1{% endif %}" style="color: var(--tm-primary); text-decoration: none;">{% translate "clear" %}</a>)
+                (<a href="?{% if cl.is_popup %}_popup=1{% endif %}">{% translate "clear" %}</a>)
             </span>
         {% endif %}
     </div>
-    
+
     {% for pair in cl.params.items %}
         {% if pair.0 != search_var %}
             <input type="hidden" name="{{ pair.0 }}" value="{{ pair.1 }}">

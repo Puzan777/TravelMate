@@ -16,7 +16,7 @@
 {% block object-tools %}
   {% if original and original.approval_status == 'PENDING' %}
     <ul class="object-tools">
-      <li><a href="{% url 'admin:pending_approvals' %}" style="background: #0a4f8a; color: white;">&larr; Back to Pending Approvals</a></li>
+      <li><a href="{% url 'admin:pending_approvals' %}" class="tm-soft-button">&larr; Back to Pending Approvals</a></li>
     </ul>
   {% else %}
     {{ block.super }}

@@ -7,48 +7,184 @@
   {{ block.super }}
   <style>
     /* Reset Django's default messy changelist blocks */
+    #content-main {
+      padding: 24px !important;
+    }
+
     #changelist { display: block !important; margin: 0 !important; }
     #changelist .changelist-form-container, #changelist form { margin: 0 !important; width: 100% !important; }
     
     /* Toolbar encompassing unified search and filters */
     .unified-toolbar {
-        background: var(--tm-surface);
-        padding: 20px;
-        border-radius: var(--tm-radius-lg);
-        box-shadow: var(--tm-shadow);
-        border: 1px solid var(--tm-line);
-        margin-bottom: 24px;
+        padding: 8px 0 4px;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        box-shadow: none;
+        margin-bottom: 18px;
+    }
+
+    .tm-admin-search {
+      margin-bottom: 18px;
+    }
+
+    .tm-admin-search-label,
+    .tm-filter-label {
+      display: block;
+      margin: 0 0 8px;
+      color: var(--tm-text-soft);
+      font-size: 0.8rem;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      line-height: 1.2;
+    }
+
+    .tm-admin-search-row {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .tm-admin-search-input {
+      flex: 1 1 340px;
+      min-height: 42px;
+      padding: 0 14px;
+      border: 1px solid rgba(29, 120, 149, 0.26);
+      border-radius: 999px;
+      background: #fffdf9;
+      color: var(--tm-text);
+      font-size: 0.95rem;
+      box-shadow: inset 0 0 0 4px rgba(29, 120, 149, 0.08);
+    }
+
+    .tm-admin-search-submit {
+      min-height: 42px;
+      padding: 0 20px !important;
+      border-radius: 999px !important;
+      background: linear-gradient(135deg, var(--tm-ocean-700) 0%, var(--tm-ocean-500) 100%) !important;
+      color: #fff !important;
+      border: 0 !important;
+      font-weight: 800 !important;
+      box-shadow: var(--tm-shadow-button);
+    }
+
+    .tm-admin-search-meta {
+      color: var(--tm-text-soft);
+      font-size: 0.82rem;
+      white-space: nowrap;
+    }
+
+    .tm-admin-search-meta a {
+      color: var(--tm-ocean-600);
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .tm-filter-grid {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      align-items: flex-end;
+    }
+
+    .tm-filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-width: 220px;
+      flex: 1 1 220px;
+      max-width: 300px;
+    }
+
+    .tm-filter-select {
+      min-height: 42px;
+      padding: 0 12px;
+      border: 1px solid rgba(22, 48, 64, 0.14);
+      border-radius: 999px;
+      background: #fffdf9;
+      color: var(--tm-text);
+      font-size: 0.95rem;
+      width: 100%;
+      cursor: pointer;
+    }
+
+    .tm-clear-link {
+      margin-left: auto;
+      color: var(--tm-text-soft);
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 0.86rem;
+      align-self: center;
+      white-space: nowrap;
     }
 
     /* Page Header */
     .page-header {
         display: flex;
         justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
+        align-items: flex-start;
+        gap: 16px;
+        margin-bottom: 22px;
+        flex-wrap: wrap;
     }
-    .page-header h1 { margin: 0; color: var(--tm-primary); font-size: 1.6rem; font-weight: 700; }
+    .page-header h1 {
+        margin: 0;
+        color: var(--tm-text);
+        font-family: "Fraunces", Georgia, serif;
+        font-size: 1.7rem;
+        font-weight: 700;
+        letter-spacing: -0.03em;
+        line-height: 1.1;
+    }
     
-    .object-tools { margin:0; padding:0; list-style:none; display:flex; gap:10px; }
+    .object-tools {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
     .object-tools li { list-style-type: none; }
     .object-tools a {
-        background: var(--tm-accent);
-        color: white; border-radius: 8px; padding: 10px 20px;
-        text-decoration: none; font-weight: 600; font-size: 0.9rem;
-        transition: background var(--tm-transition); display: block;
+        min-height: 44px;
+        padding: 0 22px;
+        border-radius: 999px;
+        background: linear-gradient(135deg, var(--tm-accent) 0%, var(--tm-accent-strong) 100%);
+        color: white;
+        text-decoration: none;
+        font-weight: 800;
+        font-size: 0.9rem;
+        transition: transform var(--tm-transition), box-shadow var(--tm-transition), filter var(--tm-transition);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 16px 30px rgba(185, 111, 56, 0.22);
     }
-    .object-tools a:hover { background: #cf7518; }
+    .object-tools a:hover {
+        transform: translateY(-1px);
+        filter: saturate(1.04);
+        box-shadow: 0 18px 34px rgba(185, 111, 56, 0.26);
+    }
     
     /* Result List Table overrriding Django */
-    #changelist .results { overflow-x: auto; }
+    #changelist .results {
+      overflow-x: auto;
+      margin-top: 4px;
+      border-radius: 18px;
+    }
     #changelist table {
-      min-width: 1200px;
-      width: max-content;
+      width: 100%;
+      min-width: 760px;
+      table-layout: auto;
       border-collapse: collapse;
-      background: var(--tm-surface);
-      border-radius: var(--tm-radius-lg);
-      overflow: hidden;
-      box-shadow: var(--tm-shadow);
+      background: transparent;
+      border-radius: 0;
+      overflow: visible;
+      box-shadow: none;
     }
     #changelist th {
       background: #f0f5f5 !important;
@@ -64,10 +200,36 @@
     }
     #changelist th.column-title,
     #changelist td.field-title {
-      min-width: 360px;
-      max-width: 620px;
+      min-width: 220px;
+      max-width: 520px;
       white-space: normal !important;
       word-break: break-word;
+    }
+
+    @media (max-width: 900px) {
+      .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+      }
+
+      .object-tools {
+        justify-content: flex-start;
+      }
+
+      #changelist table {
+        min-width: 640px;
+      }
+    }
+
+    @media (max-width: 640px) {
+      #content-main {
+        padding: 18px !important;
+      }
+
+      #changelist table {
+        min-width: 520px;
+      }
     }
     #changelist tr:last-child td { border-bottom: none; }
   </style>
@@ -84,18 +246,18 @@
 {% block content_title %}{% endblock %}
 
 {% block content %}
-  <div id="content-main">
-
-    <div class="page-header">
-      <h1>{{ title|default:cl.opts.verbose_name_plural|capfirst }}</h1>
-        {% block object-tools %}
-            <ul class="object-tools">
-                {% block object-tools-items %}
-                    {% change_list_object_tools %}
-                {% endblock %}
-            </ul>
+  <div class="page-header">
+    <h1>{{ title|default:cl.opts.verbose_name_plural|capfirst }}</h1>
+    {% block object-tools %}
+      <ul class="object-tools">
+        {% block object-tools-items %}
+          {% change_list_object_tools %}
         {% endblock %}
-    </div>
+      </ul>
+    {% endblock %}
+  </div>
+
+  <div id="content-main">
 
     {% if cl.formset and cl.formset.errors %}
         <p class="errornote">
@@ -104,24 +266,19 @@
         {{ cl.formset.non_form_errors }}
     {% endif %}
 
-    <div class="module{% if cl.has_filters %} filtered{% endif %}" id="changelist">
+    <div id="changelist" class="{% if cl.has_filters %}filtered{% endif %}">
       
       {# ─── UNIFIED SEARCH & FILTER TOOLBAR ─── #}
       {% if cl.search_fields or cl.has_filters %}
       <div class="unified-toolbar">
          <form id="changelist-search" method="get">
-            {# 1. Search Box Full Width On Top #}
             {% block search %}{% search_form cl %}{% endblock %}
-            
-            {# 2. Filter Dropdowns Below Search #}
             {% block filters %}
               {% if cl.has_filters %}
-                <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;">
+                <div class="tm-filter-grid">
                   {% for spec in cl.filter_specs %}{% admin_list_filter cl spec %}{% endfor %}
                   {% if cl.has_active_filters %}
-                      <a href="{{ cl.clear_all_filters_qs }}" style="margin-left: auto; color: var(--tm-danger); text-decoration: none; font-weight: 600; font-size: 0.85rem; display: flex; align-items: center;">
-                          &#10006; {% translate "Clear filters" %}
-                      </a>
+                    <a href="{{ cl.clear_all_filters_qs }}" class="tm-clear-link">{% translate "Clear filters" %}</a>
                   {% endif %}
                 </div>
               {% endif %}

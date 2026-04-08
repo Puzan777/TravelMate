@@ -71,6 +71,7 @@
     border-radius: 12px;
     padding: 14px;
     box-shadow: var(--shadow-soft);
+    color: var(--text-main);
   }
   .sidebar-section {
     margin-bottom: 16px;
@@ -83,7 +84,7 @@
     font-size: 0.76rem;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: #708099;
+    color: #5b6f8c;
     font-weight: 700;
   }
   .sidebar-links {
@@ -102,14 +103,22 @@
     padding: 9px 10px;
     border-radius: 8px;
     text-decoration: none;
-    color: #172336;
+    color: #14253d;
     border: 1px solid transparent;
     font-size: 0.9rem;
+    line-height: 1.35;
+    white-space: normal;
+    word-break: break-word;
   }
   .sidebar-links a:hover {
     background: var(--brand-soft);
     border-color: #c3d8ec;
     color: #0c4d86;
+  }
+  .sidebar-links a:visited,
+  .sidebar-links a:active,
+  .sidebar-links a:focus-visible {
+    color: #14253d;
   }
 
   .dashboard-main {

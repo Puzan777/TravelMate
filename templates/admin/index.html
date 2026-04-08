@@ -4,228 +4,275 @@
 {% block extrastyle %}
 {{ block.super }}
 <style>
-  :root {
-    --bg-page: #f0f4f8;
-    --bg-card: #ffffff;
-    --text-main: #1a2332;
-    --text-muted: #5e6e82;
-    --line: #dce4ee;
-    --line-soft: #e8eff7;
-    --brand: #0d7377;
-    --brand-2: #11998e;
-    --brand-soft: #e0f5f5;
-    --accent: #e8871e;
-    --good: #0f8b4c;
-    --warn: #c27803;
-    --bad: #c0392b;
-    --radius-lg: 16px;
-    --radius-md: 12px;
-    --shadow-soft: 0 12px 28px rgba(26, 35, 50, 0.08);
+  #header {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    right: 0;
   }
 
-  #content-main {
-    background: var(--bg-page);
-    border: 1px solid var(--line-soft);
-    border-radius: var(--radius-lg);
-    padding: 20px;
+  #container {
+    padding-top: 86px;
   }
 
-  .dash-shell {
+  #nav-sidebar {
+    position: fixed !important;
+    top: 106px !important;
+    bottom: 24px !important;
+    z-index: 220 !important;
+  }
+
+  .main > #nav-sidebar + .content,
+  .main.shifted > #nav-sidebar + .content {
+    width: calc(100% - 332px) !important;
+    max-width: calc(100% - 332px) !important;
+    margin-left: 308px !important;
+  }
+
+  .dash-stage {
     display: grid;
-    grid-template-columns: 300px 1fr;
+    gap: 20px;
+  }
+
+  .dash-hero {
+    position: relative;
+    overflow: hidden;
+    padding: 28px;
+    border: 1px solid rgba(255, 250, 242, 0.18);
+    border-radius: 28px;
+    background:
+      radial-gradient(circle at 82% 18%, rgba(255, 255, 255, 0.22), transparent 18%),
+      linear-gradient(135deg, #0c394d 0%, #145c75 52%, #1b7f9c 100%);
+    color: #fff9f0;
+    box-shadow: 0 24px 48px rgba(14, 65, 86, 0.2);
+  }
+
+  .dash-hero::after {
+    content: "";
+    position: absolute;
+    inset: auto -70px -110px auto;
+    width: 240px;
+    height: 240px;
+    border-radius: 50%;
+    background: rgba(255, 249, 240, 0.1);
+  }
+
+  .dash-hero-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 18px;
+    flex-wrap: wrap;
+  }
+
+  .dash-hero-shell {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: 1fr;
     gap: 18px;
     align-items: start;
   }
 
-  .dash-hero {
-    grid-column: 1 / -1;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 16px;
-    background: linear-gradient(135deg, #063b3e 0%, #0d7377 55%, #11998e 100%);
-    color: #fff;
-    border-radius: var(--radius-lg);
-    padding: 20px;
-    box-shadow: var(--shadow-soft);
+  .dash-hero-main {
+    display: grid;
+    gap: 18px;
+  }
+
+  .dash-eyebrow {
+    margin: 0 0 8px;
+    color: rgba(255, 249, 240, 0.72);
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
   }
 
   .dash-hero h1 {
     margin: 0;
-    color: #fff;
-    font-size: 1.4rem;
-    font-weight: 750;
+    color: #fff9f0 !important;
+    font-size: 2.35rem !important;
   }
 
   .dash-hero p {
-    margin: 6px 0 0;
-    color: rgba(255, 255, 255, 0.9);
-    font-size: 0.92rem;
+    max-width: 720px;
+    margin: 10px 0 0;
+    color: rgba(255, 249, 240, 0.84);
+    font-size: 0.98rem;
+    line-height: 1.65;
   }
 
-  .hero-badge {
-    border: 1px solid rgba(255, 255, 255, 0.38);
-    background: rgba(255, 255, 255, 0.14);
+  .dash-hero-copy {
+    max-width: 720px;
+  }
+
+  .dash-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 42px;
+    padding: 0 16px;
+    border: 1px solid rgba(255, 249, 240, 0.2);
     border-radius: 999px;
-    padding: 6px 12px;
+    background: rgba(255, 249, 240, 0.1);
+    color: #fff9f0;
     font-size: 0.82rem;
-    white-space: nowrap;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    backdrop-filter: blur(8px);
   }
 
-  .dash-side,
-  .dash-main-card {
-    background: var(--bg-card);
-    border: 1px solid var(--line);
-    border-radius: var(--radius-md);
-    box-shadow: var(--shadow-soft);
+  .dash-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 4px;
   }
 
-  .dash-side {
-    padding: 14px;
+  .dash-action-panel {
+    padding: 4px 0 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    backdrop-filter: none;
   }
 
-  .side-block+.side-block {
-    margin-top: 14px;
-    padding-top: 14px;
-    border-top: 1px solid var(--line-soft);
-  }
-
-  .side-heading {
-    margin: 0 0 8px;
-    color: #6c7b90;
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    font-weight: 700;
-  }
-
-  .side-links {
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-
-  .side-links li+li {
-    margin-top: 6px;
-  }
-
-  .side-links a {
-    display: block;
-    text-decoration: none;
-    color: #1b2a40;
-    border: 1px solid transparent;
-    border-radius: 8px;
-    padding: 8px 10px;
-    font-size: 0.9rem;
-  }
-
-  .side-links a:hover {
-    background: var(--brand-soft);
-    border-color: #b0ddd0;
-    color: var(--brand);
-  }
-
-  .dash-main {
-    min-width: 0;
-  }
-
-  .kpi-grid {
+  .dash-hero-stats {
+    position: relative;
+    z-index: 1;
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    grid-template-columns: repeat(4, minmax(180px, 1fr));
     gap: 12px;
-    margin-bottom: 16px;
+    margin-top: 22px;
+    align-items: stretch;
   }
 
-  .kpi-card {
-    background: var(--bg-card);
-    border: 1px solid var(--line);
-    border-radius: 12px;
-    padding: 14px;
-    box-shadow: var(--shadow-soft);
-    transition: transform 0.18s ease, box-shadow 0.18s ease;
+  .dash-hero-stat {
+    padding: 14px 16px;
+    border: 1px solid rgba(255, 249, 240, 0.14);
+    border-top: 3px solid rgba(255, 249, 240, 0.26);
+    border-radius: 18px;
+    background: rgba(255, 249, 240, 0.08);
+    backdrop-filter: blur(10px);
+    min-width: 0;
+    min-height: 148px;
+    display: flex;
+    flex-direction: column;
   }
 
-  .kpi-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 16px 28px rgba(15, 23, 42, 0.11);
+  .dash-hero-stat.is-revenue {
+    border-top-color: #f0c27b;
   }
 
-  .kpi-label {
+  .dash-hero-stat.is-vendors {
+    border-top-color: #88d3ea;
+  }
+
+  .dash-hero-stat.is-users {
+    border-top-color: #fff1c7;
+  }
+
+  .dash-hero-stat.is-pending {
+    border-top-color: #f2a65a;
+  }
+
+  .dash-hero-stat-label {
     margin: 0;
-    color: #6d7b90;
-    font-size: 0.75rem;
+    color: #ffffff;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
-    letter-spacing: 0.06em;
-    font-weight: 700;
   }
 
-  .kpi-value {
-    margin: 6px 0 0;
-    font-size: 1.85rem;
-    font-weight: 760;
-    color: var(--text-main);
-    line-height: 1.1;
+  .dash-hero-stat-value {
+    margin: 8px 0 0;
+    color: #fffdf8;
+    font-size: 1.7rem;
+    font-weight: 800;
+    line-height: 1.05;
   }
 
-  .kpi-link {
-    display: inline-block;
-    margin-top: 9px;
-    color: var(--brand);
-    text-decoration: none;
-    font-weight: 600;
-    font-size: 0.85rem;
+  .dash-hero-stat-note {
+    margin: 8px 0 0;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.8rem;
+    line-height: 1.5;
   }
 
-  .main-grid {
-    display: grid;
-    grid-template-columns: 1.3fr 1fr;
-    gap: 14px;
-    margin-bottom: 16px;
-  }
-
-  .dash-main-card {
-    padding: 14px;
-  }
-
-  .card-title {
-    margin: 0 0 10px;
-    font-size: 1rem;
-    color: var(--text-main);
-  }
-
-  .actions-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-    gap: 9px;
-  }
-
-  .action-link {
+  .dash-hero-stat-link {
     display: block;
     text-decoration: none;
-    border: 1px solid #c5ddd8;
-    border-radius: 8px;
-    padding: 10px;
-    color: #1a2332;
-    font-weight: 600;
-    font-size: 0.89rem;
-    background: #f5fafa;
-    transition: all 0.2s ease;
+    transition: transform 180ms ease, border-color 180ms ease, background 180ms ease;
   }
 
-  .action-link:hover {
-    border-color: #89c4b8;
-    background: var(--brand-soft);
-    color: var(--brand);
+  .dash-hero-stat-link:hover {
+    transform: translateY(-2px);
+    background: rgba(255, 249, 240, 0.12);
+    border-color: rgba(255, 249, 240, 0.24);
+  }
+
+  .dash-hero-stat-link:hover .dash-hero-stat-value,
+  .dash-hero-stat-link:hover .dash-hero-stat-label,
+  .dash-hero-stat-link:hover .dash-hero-stat-note {
+    color: #ffffff;
+  }
+
+  .dash-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 46px;
+    padding: 0 18px;
+    border: 1px solid rgba(255, 249, 240, 0.18);
+    border-radius: 999px;
+    background: rgba(255, 249, 240, 0.12);
+    color: #ffffff !important;
+    font-size: 0.86rem;
+    font-weight: 800;
+    text-decoration: none;
+    transition: transform 180ms ease, background 180ms ease, border-color 180ms ease;
+    flex: 0 0 auto;
+    min-width: 184px;
+    box-shadow: 0 10px 22px rgba(10, 37, 49, 0.18);
+  }
+
+  .dash-link:hover {
     transform: translateY(-1px);
+    background: rgba(255, 249, 240, 0.2);
+    border-color: rgba(255, 249, 240, 0.3);
+    color: #ffffff !important;
   }
 
-  .trend-wrap {
+  .dash-link.is-accent {
+    border-color: rgba(212, 140, 86, 0.22);
+    background: linear-gradient(135deg, #d48c56 0%, #b96f38 100%);
+    color: #ffffff !important;
+  }
+
+  .dash-split {
     display: grid;
-    grid-template-columns: repeat(6, minmax(52px, 1fr));
-    gap: 8px;
-    align-items: end;
-    min-height: 180px;
-    margin-top: 8px;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.95fr);
+    gap: 18px;
+  }
+
+  .dash-panel {
+    padding: 20px;
+    border: 1px solid rgba(22, 48, 64, 0.1);
+    border-radius: 24px;
+    background: rgba(255, 252, 246, 0.94);
+    box-shadow: 0 16px 36px rgba(14, 65, 86, 0.08);
+  }
+
+  .dash-panel h2 {
+    margin: 0 0 8px;
+    color: #163040;
+    font-size: 1.08rem;
+  }
+
+  .dash-panel-copy {
+    margin: 0 0 16px;
+    color: #5f7481;
+    font-size: 0.9rem;
   }
 
   .trend-toolbar {
@@ -234,514 +281,522 @@
     align-items: center;
     gap: 10px;
     flex-wrap: wrap;
-    margin-bottom: 8px;
+    margin-bottom: 12px;
   }
 
   .trend-switch {
     display: inline-flex;
-    gap: 6px;
+    gap: 8px;
     flex-wrap: wrap;
   }
 
   .trend-switch-btn {
-    border: 1px solid #c5ddd8;
-    background: #f5fafa;
-    color: #1a2332;
+    min-height: 40px;
+    padding: 0 14px;
+    border: 1px solid rgba(22, 48, 64, 0.1);
     border-radius: 999px;
-    padding: 5px 10px;
-    font-size: 0.8rem;
-    font-weight: 700;
+    background: rgba(29, 120, 149, 0.08);
+    color: #163040;
+    font-weight: 800;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 180ms ease;
   }
 
   .trend-switch-btn.is-active {
-    background: var(--brand);
-    border-color: var(--brand);
-    color: #fff;
-    box-shadow: 0 2px 8px rgba(13, 115, 119, 0.2);
+    background: linear-gradient(135deg, #0e4156 0%, #1d7895 100%);
+    border-color: transparent;
+    color: #fff9f0;
+    box-shadow: 0 14px 28px rgba(21, 92, 117, 0.18);
+  }
+
+  .trend-wrap {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(54px, 1fr));
+    gap: 10px;
+    align-items: end;
+    min-height: 196px;
   }
 
   .trend-col {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
   }
 
   .trend-bar {
     width: 100%;
-    max-width: 56px;
-    border-radius: 10px 10px 4px 4px;
-    background: linear-gradient(180deg, #11998e, #0d7377);
-    min-height: 6px;
+    max-width: 58px;
+    min-height: 8px;
+    border-radius: 16px 16px 6px 6px;
+    background: linear-gradient(180deg, #58a6c0 0%, #1d7895 100%);
     box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.28);
-    transition: height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: height 220ms ease;
   }
 
   .trend-total {
-    font-size: 0.78rem;
-    color: #4b5b71;
-    font-weight: 700;
+    color: #284857;
+    font-size: 0.82rem;
+    font-weight: 800;
   }
 
   .trend-label {
+    color: #617682;
     font-size: 0.74rem;
-    color: #65758a;
+    line-height: 1.3;
     text-align: center;
-    line-height: 1.2;
+  }
+
+  .snapshot-list {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .snapshot-item {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 16px;
+    border: 1px solid rgba(22, 48, 64, 0.08);
+    border-radius: 18px;
+    background: linear-gradient(180deg, #fffdf9 0%, #f7efe2 100%);
+    min-height: 128px;
+  }
+
+  .snapshot-label {
+    color: #5f7481;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    line-height: 1.4;
+  }
+
+  .snapshot-value {
+    margin-top: 8px;
+    color: #163040;
+    font-size: 1.3rem;
+    font-weight: 800;
+    line-height: 1;
   }
 
   .table-wrap {
     overflow-x: auto;
-    border: 1px solid var(--line-soft);
-    border-radius: 10px;
+    border: 1px solid rgba(22, 48, 64, 0.08);
+    border-radius: 20px;
+    background: #fffdf9;
   }
 
-  .simple-table {
+  .dash-table {
     width: 100%;
+    min-width: 620px;
     border-collapse: collapse;
-    min-width: 640px;
-    background: #fff;
   }
 
-  .simple-table th,
-  .simple-table td {
-    padding: 8px 10px;
-    border-bottom: 1px solid var(--line-soft);
+  .dash-table th,
+  .dash-table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid rgba(22, 48, 64, 0.08);
     text-align: left;
-    font-size: 0.89rem;
+    vertical-align: middle;
   }
 
-  .simple-table th {
-    color: var(--text-muted);
-    font-size: 0.8rem;
+  .dash-table th {
+    color: #617682;
+    font-size: 0.76rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
-    letter-spacing: 0.03em;
-    background: #f8fafc;
-    font-weight: 700;
+    background: rgba(29, 120, 149, 0.05);
   }
 
-  .simple-table tbody tr:hover {
-    background: #f8fbff;
+  .dash-table tbody tr:hover {
+    background: rgba(220, 236, 243, 0.22);
   }
 
   .pill {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 28px;
+    padding: 0 10px;
     border-radius: 999px;
     font-size: 0.74rem;
-    padding: 3px 8px;
-    font-weight: 700;
+    font-weight: 800;
   }
 
   .pill-good {
-    background: #e9f8ef;
-    color: var(--good);
-    border: 1px solid #b9e6cc;
+    background: rgba(47, 127, 100, 0.12);
+    color: #2f7f64;
   }
 
   .pill-warn {
-    background: #fff4e8;
-    color: var(--warn);
-    border: 1px solid #ffd9b0;
+    background: rgba(184, 132, 60, 0.14);
+    color: #9a6e30;
   }
 
   .pill-bad {
-    background: #fdecec;
-    color: var(--bad);
-    border: 1px solid #f7c7c7;
-  }
-
-  .muted {
-    color: var(--text-muted);
-    margin: 0;
+    background: rgba(166, 84, 80, 0.12);
+    color: #8f4542;
   }
 
   .section-actions {
-    margin-top: 10px;
     display: flex;
-    gap: 8px;
+    gap: 10px;
     flex-wrap: wrap;
+    margin-top: 16px;
   }
 
   .section-actions a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    padding: 0 14px;
+    border: 1px solid rgba(22, 48, 64, 0.1);
+    border-radius: 999px;
+    background: rgba(29, 120, 149, 0.08);
+    color: #163040;
+    font-size: 0.84rem;
+    font-weight: 800;
     text-decoration: none;
-    color: var(--brand);
-    border: 1px solid #b0ddd0;
-    background: var(--brand-soft);
-    border-radius: 8px;
-    padding: 5px 9px;
-    font-weight: 700;
-    font-size: 0.82rem;
-    transition: all 0.2s ease;
   }
+
   .section-actions a:hover {
-    background: #c5ece5;
-    color: #095456;
+    background: rgba(29, 120, 149, 0.14);
+    color: #163040;
   }
 
   @media (max-width: 1180px) {
-    .dash-shell {
-      grid-template-columns: 1fr;
-    }
-
-    .main-grid {
+    .dash-split {
       grid-template-columns: 1fr;
     }
   }
 
-  @media (max-width: 680px) {
-    #content-main {
-      padding: 12px;
+  @media (max-width: 720px) {
+    #container {
+      padding-top: 76px;
     }
 
     .dash-hero {
-      flex-direction: column;
-      align-items: flex-start;
+      padding: 22px 18px;
+    }
+
+    .dash-hero h1 {
+      font-size: 1.9rem !important;
+    }
+
+    .dash-hero-stats {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .trend-wrap {
       grid-template-columns: repeat(3, minmax(56px, 1fr));
     }
+
+    .snapshot-list {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 560px) {
+    .dash-hero-stats {
+      grid-template-columns: 1fr;
+    }
   }
 </style>
 {% endblock %}
 
+{% block content_title %}{% endblock %}
+
 {% block content %}
-<div id="content-main">
-  {% dashboard_hot_sale_breakdown as hot_sale_breakdown %}
-  {% dashboard_top_products 10 as top_products %}
-  {% dashboard_product_trends 6 as product_trends %}
-  {% dashboard_recent_users 8 as recent_users %}
-  {% dashboard_recent_bookings 10 as recent_bookings %}
-  {% dashboard_recent_vendor_applications 8 as vendor_applications %}
+{% dashboard_hot_sale_breakdown as hot_sale_breakdown %}
+{% dashboard_top_products 10 as top_products %}
+{% dashboard_product_trends 6 as product_trends %}
+{% dashboard_recent_users 8 as recent_users %}
+{% dashboard_recent_bookings 10 as recent_bookings %}
+{% dashboard_recent_vendor_applications 8 as vendor_applications %}
+{% dashboard_total_revenue as total_revenue %}
+{% dashboard_approved_vendor_count as total_vendors %}
 
-  <div class="dash-shell">
-    <section class="dash-hero">
-      <div>
-        <h1>TravelMate Control Center</h1>
-        <p>Unified command view for catalog, vendors, and booking operations.</p>
-      </div>
-      <div class="hero-badge">Admin Operations</div>
-    </section>
-
-    <aside class="dash-side">
-      <div class="side-block">
-        <h3 class="side-heading">Catalog</h3>
-        <ul class="side-links">
-          <li><a href="{% url 'admin:app_activitycategory_changelist' %}">Activity Categories</a></li>
-          <li><a href="{% url 'admin:app_activity_changelist' %}">Activities</a></li>
-          <li><a href="{% url 'admin:app_destination_changelist' %}">Destinations</a></li>
-          <li><a href="{% url 'admin:app_package_changelist' %}">Packages</a></li>
-          <li><a href="{% url 'admin:app_hotsale_changelist' %}">Hot Sales</a></li>
-        </ul>
-      </div>
-
-      <div class="side-block">
-        <h3 class="side-heading">Approvals</h3>
-        <ul class="side-links">
-          <li><a href="{% url 'admin:pending_approvals' %}">Pending Approvals</a></li>
-          <li><a href="{% url 'admin:live_products' %}">Live Products</a></li>
-        </ul>
-      </div>
-
-      <div class="side-block">
-        <h3 class="side-heading">Commerce</h3>
-        <ul class="side-links">
-          <li><a href="{% url 'admin:app_booking_changelist' %}">Bookings</a></li>
-        </ul>
-      </div>
-
-      <div class="side-block">
-        <h3 class="side-heading">Users</h3>
-        <ul class="side-links">
-          <li><a href="{% url 'admin:app_customuser_changelist' %}">Users</a></li>
-          <li><a href="{% url 'admin:vendor_vendorprofile_changelist' %}">Vendors</a></li>
-          <li><a href="{% url 'admin:vendor_vendorprofile_changelist' %}?verification_status__exact=PENDING">Pending
-              Vendor Verification</a></li>
-        </ul>
-      </div>
-    </aside>
-
-    <main class="dash-main">
-      <div class="kpi-grid">
-        <article class="kpi-card">
-          <p class="kpi-label">Total Bookings</p>
-          <p class="kpi-value">{% dashboard_booking_count %}</p>
-          <a class="kpi-link" href="{% url 'admin:app_booking_changelist' %}">Open bookings</a>
-        </article>
-
-        <article class="kpi-card">
-          <p class="kpi-label">Pending Vendors</p>
-          <p class="kpi-value">{% dashboard_pending_vendor_count %}</p>
-          <a class="kpi-link"
-            href="{% url 'admin:vendor_vendorprofile_changelist' %}?verification_status__exact=PENDING">Review queue</a>
-        </article>
-
-        <article class="kpi-card">
-          <p class="kpi-label">Pending Products</p>
-          <p class="kpi-value">{% dashboard_pending_product_count %}</p>
-          <a class="kpi-link" href="{% url 'admin:pending_approvals' %}">Review list</a>
-        </article>
-
-        <article class="kpi-card">
-          <p class="kpi-label">Approved Vendors</p>
-          <p class="kpi-value">{% dashboard_approved_vendor_count %}</p>
-          <a class="kpi-link" href="{% url 'admin:vendor_vendorprofile_changelist' %}">Vendor records</a>
-        </article>
-
-        <article class="kpi-card">
-          <p class="kpi-label">Live Products</p>
-          <p class="kpi-value">{% dashboard_live_product_count %}</p>
-          <a class="kpi-link" href="{% url 'admin:live_products' %}">View live</a>
-        </article>
-
-        <article class="kpi-card">
-          <p class="kpi-label">Active Packages</p>
-          <p class="kpi-value">{% dashboard_active_package_count %}</p>
-          <a class="kpi-link" href="{% url 'admin:app_package_changelist' %}?is_active__exact=1">Inspect active</a>
-        </article>
-
-        <article class="kpi-card">
-          <p class="kpi-label">Total Activities</p>
-          <p class="kpi-value">{% dashboard_activity_count %}</p>
-          <a class="kpi-link" href="{% url 'admin:app_activity_changelist' %}">Open activities</a>
-        </article>
-
-        <article class="kpi-card">
-          <p class="kpi-label">Active Activities</p>
-          <p class="kpi-value">{% dashboard_active_activity_count %}</p>
-          <a class="kpi-link" href="{% url 'admin:app_activity_changelist' %}?is_active__exact=1">Inspect active</a>
-        </article>
-
-        <article class="kpi-card">
-          <p class="kpi-label">Hot Sales</p>
-          <p class="kpi-value">{{ hot_sale_breakdown.total }}</p>
-          <a class="kpi-link" href="{% url 'admin:app_hotsale_changelist' %}">Manage offers</a>
-        </article>
-
-        <article class="kpi-card">
-          <p class="kpi-label">Destinations</p>
-          <p class="kpi-value">{% dashboard_destination_count %}</p>
-          <a class="kpi-link" href="{% url 'admin:app_destination_changelist' %}">View destinations</a>
-        </article>
-
-        <article class="kpi-card">
-          <p class="kpi-label">Registered Users</p>
-          <p class="kpi-value">{% dashboard_user_count %}</p>
-          <a class="kpi-link" href="{% url 'admin:app_customuser_changelist' %}">User management</a>
-        </article>
-      </div>
-
-      <div class="main-grid">
-        <section class="dash-main-card">
-          <h2 class="card-title">Product Trends (Last 6 Months)</h2>
-          <div class="trend-toolbar">
-            <p id="trend-summary" class="muted" style="margin: 0;">
-              Package bookings (last 6 months): {{ product_trends.total_package_bookings }}
-            </p>
-            <div class="trend-switch" role="group" aria-label="Product trend mode">
-              <button type="button" class="trend-switch-btn is-active" data-trend-mode="package"
-                aria-pressed="true">Packages</button>
-              <button type="button" class="trend-switch-btn" data-trend-mode="activity"
-                aria-pressed="false">Activities</button>
-            </div>
+<div class="dash-stage">
+  <section class="dash-hero">
+    <div class="dash-hero-shell">
+      <div class="dash-hero-main">
+        <div class="dash-hero-head">
+          <div class="dash-hero-copy">
+            <p class="dash-eyebrow">TravelMate Admin</p>
+            <h1>Admin Dashboard</h1>
           </div>
-          {% if product_trends.points %}
-          <div id="product-trends-card" class="trend-wrap">
-            {% for point in product_trends.points %}
-            <div class="trend-col" data-package-bookings="{{ point.package_bookings }}"
-              data-activity-bookings="{{ point.activity_bookings }}">
-              <div class="trend-total">{{ point.package_bookings }}</div>
-              <div class="trend-bar" style="height:6px;"></div>
-              <div class="trend-label">{{ point.label }}</div>
-            </div>
+          <div class="dash-badge">Admin Overview</div>
+        </div>
+        <div class="dash-hero-stats">
+          <article class="dash-hero-stat is-revenue">
+            <p class="dash-hero-stat-label">Total Revenue</p>
+            <p class="dash-hero-stat-value">Rs {{ total_revenue|floatformat:0 }}</p>
+            <p class="dash-hero-stat-note">Based on visible booking totals.</p>
+          </article>
+          <a class="dash-hero-stat dash-hero-stat-link is-vendors" href="{% url 'admin:vendor_vendorprofile_changelist' %}?verification_status__exact=APPROVED">
+            <p class="dash-hero-stat-label">Approved Vendors</p>
+            <p class="dash-hero-stat-value">{{ total_vendors }}</p>
+            <p class="dash-hero-stat-note">Vendor profiles approved for platform use.</p>
+          </a>
+          <a class="dash-hero-stat dash-hero-stat-link is-users" href="{% url 'admin:app_customuser_changelist' %}?role__exact=CUSTOMER">
+            <p class="dash-hero-stat-label">Customers</p>
+            <p class="dash-hero-stat-value">{% dashboard_customer_count %}</p>
+            <p class="dash-hero-stat-note">Customer accounts only, excluding admins and vendors.</p>
+          </a>
+          <a class="dash-hero-stat dash-hero-stat-link is-pending" href="{% url 'admin:vendor_vendorprofile_changelist' %}?verification_status__exact=PENDING">
+            <p class="dash-hero-stat-label">Pending Vendors</p>
+            <p class="dash-hero-stat-value">{% dashboard_pending_vendor_count %}</p>
+            <p class="dash-hero-stat-note">Vendor applications waiting for review.</p>
+          </a>
+        </div>
+      </div>
+      <aside class="dash-action-panel">
+        <div class="dash-actions">
+          <a class="dash-link is-accent" href="{% url 'admin:pending_approvals' %}">Approve Pending Products</a>
+          <a class="dash-link" href="{% url 'admin:live_products' %}">Inspect Live Products</a>
+          <a class="dash-link" href="{% url 'admin:app_booking_changelist' %}">Bookings</a>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="dash-split">
+    <div class="dash-panel">
+      <h2>Product Trends</h2>
+      <div class="trend-toolbar">
+        <p id="trend-summary" class="dash-panel-copy" style="margin: 0;">Package bookings (last 6 months): {{ product_trends.total_package_bookings }}</p>
+        <div class="trend-switch" role="group" aria-label="Product trend mode">
+          <button type="button" class="trend-switch-btn is-active" data-trend-mode="package" aria-pressed="true">Packages</button>
+          <button type="button" class="trend-switch-btn" data-trend-mode="activity" aria-pressed="false">Activities</button>
+        </div>
+      </div>
+      {% if product_trends.points %}
+      <div id="product-trends-card" class="trend-wrap">
+        {% for point in product_trends.points %}
+        <div class="trend-col" data-package-bookings="{{ point.package_bookings }}" data-activity-bookings="{{ point.activity_bookings }}">
+          <div class="trend-total">{{ point.package_bookings }}</div>
+          <div class="trend-bar" style="height: 8px;"></div>
+          <div class="trend-label">{{ point.label }}</div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="dash-panel-copy">No product trend data is available yet.</p>
+      {% endif %}
+    </div>
+
+    <div class="dash-panel">
+      <h2>Platform Snapshot</h2>
+      <div class="snapshot-list">
+        <div class="snapshot-item">
+          <div>
+            <div class="snapshot-label">Total Packages</div>
+            <div class="snapshot-value">{% dashboard_package_count %}</div>
+          </div>
+          <span class="pill pill-good">Catalog</span>
+        </div>
+        <div class="snapshot-item">
+          <div>
+            <div class="snapshot-label">Total Destinations</div>
+            <div class="snapshot-value">{% dashboard_destination_count %}</div>
+          </div>
+          <span class="pill pill-good">Catalog</span>
+        </div>
+        <div class="snapshot-item">
+          <div>
+            <div class="snapshot-label">Total Bookings</div>
+            <div class="snapshot-value">{% dashboard_booking_count %}</div>
+          </div>
+          <span class="pill pill-warn">Activity</span>
+        </div>
+        <div class="snapshot-item">
+          <div>
+            <div class="snapshot-label">Total Hot Sales</div>
+            <div class="snapshot-value">{% dashboard_hot_sale_count %}</div>
+          </div>
+          <span class="pill pill-warn">Promotion</span>
+        </div>
+        <div class="snapshot-item">
+          <div>
+            <div class="snapshot-label">Added Favorites</div>
+            <div class="snapshot-value">{% dashboard_favorite_count %}</div>
+          </div>
+          <span class="pill pill-good">Engagement</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="dash-panel">
+    <h2>Top Products by Booking Volume</h2>
+    {% if top_products %}
+    <div class="table-wrap">
+      <table class="dash-table">
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Type</th>
+            <th>Vendor</th>
+            <th>Bookings</th>
+            <th>Rating</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for product in top_products %}
+          <tr>
+            <td>{{ product.product_name }}</td>
+            <td>{{ product.product_type }}</td>
+            <td>{{ product.vendor_name }}</td>
+            <td>{{ product.bookings }}</td>
+            <td>{{ product.rating_display }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="dash-panel-copy">No product data found.</p>
+    {% endif %}
+  </section>
+
+  <section class="dash-split">
+    <div class="dash-panel">
+      <h2>Recent Bookings</h2>
+      {% if recent_bookings %}
+      <div class="table-wrap">
+        <table class="dash-table">
+          <thead>
+            <tr>
+              <th>Package</th>
+              <th>Traveler</th>
+              <th>Travel Date</th>
+              <th>People</th>
+              <th>Booked On</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for booking in recent_bookings %}
+            <tr>
+              <td>{{ booking.package.title }}</td>
+              <td>{{ booking.full_name }}</td>
+              <td>{{ booking.travel_date|date:"M d, Y" }}</td>
+              <td>{{ booking.number_of_people }}</td>
+              <td>{{ booking.created_at|date:"M d, Y" }}</td>
+            </tr>
             {% endfor %}
-          </div>
-          {% else %}
-          <p class="muted">No product trend data available yet.</p>
-          {% endif %}
-        </section>
-
-        <section class="dash-main-card">
-          <h2 class="card-title">Quick Actions</h2>
-          <div class="actions-grid">
-            <a class="action-link" href="{% url 'admin:app_activitycategory_changelist' %}">Manage Activity Categories</a>
-            <a class="action-link" href="{% url 'admin:app_activity_changelist' %}">Manage Activities</a>
-            <a class="action-link"
-              href="{% url 'admin:vendor_vendorprofile_changelist' %}?verification_status__exact=PENDING">Review Vendor
-              Queue</a>
-            <a class="action-link" href="{% url 'admin:app_customuser_add' %}">Create User</a>
-            <a class="action-link" href="{% url 'admin:app_booking_changelist' %}">Manage Bookings</a>
-            <a class="action-link" href="{% url 'admin:app_package_changelist' %}">Manage Packages</a>
-            <a class="action-link" href="{% url 'admin:app_hotsale_changelist' %}">Manage Hot Sales</a>
-          </div>
-        </section>
+          </tbody>
+        </table>
       </div>
-
-      <section class="dash-main-card" style="margin-bottom: 14px;">
-        <h2 class="card-title">Top Products by Booking Volume</h2>
-        {% if top_products %}
-        <div class="table-wrap">
-          <table class="simple-table">
-            <thead>
-              <tr>
-                <th>Product Name</th>
-                <th>Type</th>
-                <th>Vendor</th>
-                <th>Bookings</th>
-                <th>Rating</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for product in top_products %}
-              <tr>
-                <td>{{ product.product_name }}</td>
-                <td>{{ product.product_type }}</td>
-                <td>{{ product.vendor_name }}</td>
-                <td>{{ product.bookings }}</td>
-                <td>{{ product.rating_display }}</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-        {% else %}
-        <p class="muted">No product data found.</p>
-        {% endif %}
-      </section>
-
-      <section class="dash-main-card" style="margin-bottom: 14px;">
-        <h2 class="card-title">Recent Bookings</h2>
-        {% if recent_bookings %}
-        <div class="table-wrap">
-          <table class="simple-table">
-            <thead>
-              <tr>
-                <th>Package</th>
-                <th>Traveler</th>
-                <th>Travel Date</th>
-                <th>People</th>
-                <th>Booked On</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for booking in recent_bookings %}
-              <tr>
-                <td>{{ booking.package.title }}</td>
-                <td>{{ booking.full_name }}</td>
-                <td>{{ booking.travel_date|date:"M d, Y" }}</td>
-                <td>{{ booking.number_of_people }}</td>
-                <td>{{ booking.created_at|date:"M d, Y" }}</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-        {% else %}
-        <p class="muted">No bookings available.</p>
-        {% endif %}
-        <div class="section-actions">
-          <a href="{% url 'admin:app_booking_changelist' %}">Open Bookings</a>
-        </div>
-      </section>
-
-      <div class="main-grid" style="margin-bottom: 0;">
-        <section class="dash-main-card">
-          <h2 class="card-title">Recent Vendor Applications</h2>
-          {% if vendor_applications %}
-          <div class="table-wrap">
-            <table class="simple-table" style="min-width: 560px;">
-              <thead>
-                <tr>
-                  <th>Company</th>
-                  <th>Owner</th>
-                  <th>Status</th>
-                  <th>Submitted</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for vendor in vendor_applications %}
-                <tr>
-                  <td>{{ vendor.company_name }}</td>
-                  <td>{{ vendor.owner_full_name|default:"-" }}</td>
-                  <td>
-                    {% if vendor.verification_status == 'APPROVED' %}
-                    <span class="pill pill-good">Approved</span>
-                    {% elif vendor.verification_status == 'REJECTED' %}
-                    <span class="pill pill-bad">Rejected</span>
-                    {% else %}
-                    <span class="pill pill-warn">Pending</span>
-                    {% endif %}
-                  </td>
-                  <td>{% if vendor.submitted_at %}{{ vendor.submitted_at|date:"M d, Y" }}{% else %}-{% endif %}</td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-          {% else %}
-          <p class="muted">No vendor applications found.</p>
-          {% endif %}
-          <div class="section-actions">
-            <a href="{% url 'admin:vendor_vendorprofile_changelist' %}">Open Vendor Profiles</a>
-          </div>
-        </section>
-
-        <section class="dash-main-card">
-          <h2 class="card-title">Recent Users</h2>
-          {% if recent_users %}
-          <div class="table-wrap">
-            <table class="simple-table" style="min-width: 520px;">
-              <thead>
-                <tr>
-                  <th>Username</th>
-                  <th>Email</th>
-                  <th>Role</th>
-                  <th>Joined</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for user in recent_users %}
-                <tr>
-                  <td>{{ user.username }}</td>
-                  <td>{{ user.email|default:"-" }}</td>
-                  <td>{{ user.role|default:"-" }}</td>
-                  <td>{{ user.date_joined|date:"M d, Y" }}</td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-          {% else %}
-          <p class="muted">No users found.</p>
-          {% endif %}
-          <div class="section-actions">
-            <a href="{% url 'admin:app_customuser_changelist' %}">Open Users</a>
-            <a href="{% url 'admin:app_customuser_add' %}">Add User</a>
-          </div>
-        </section>
+      {% else %}
+      <p class="dash-panel-copy">No bookings are available yet.</p>
+      {% endif %}
+      <div class="section-actions">
+        <a href="{% url 'admin:app_booking_changelist' %}">Open bookings</a>
       </div>
-    </main>
-  </div>
+    </div>
+
+  </section>
+
+  <section class="dash-split">
+    <div class="dash-panel">
+      <h2>Recent Vendor Applications</h2>
+      {% if vendor_applications %}
+      <div class="table-wrap">
+        <table class="dash-table" style="min-width: 560px;">
+          <thead>
+            <tr>
+              <th>Company</th>
+              <th>Owner</th>
+              <th>Status</th>
+              <th>Submitted</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for vendor in vendor_applications %}
+            <tr>
+              <td>{{ vendor.company_name }}</td>
+              <td>{{ vendor.owner_full_name|default:"-" }}</td>
+              <td>
+                {% if vendor.verification_status == "APPROVED" %}
+                <span class="pill pill-good">Approved</span>
+                {% elif vendor.verification_status == "REJECTED" %}
+                <span class="pill pill-bad">Rejected</span>
+                {% else %}
+                <span class="pill pill-warn">Pending</span>
+                {% endif %}
+              </td>
+              <td>{% if vendor.submitted_at %}{{ vendor.submitted_at|date:"M d, Y" }}{% else %}-{% endif %}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <p class="dash-panel-copy">No vendor applications found.</p>
+      {% endif %}
+      <div class="section-actions">
+        <a href="{% url 'admin:vendor_vendorprofile_changelist' %}">Open vendor profiles</a>
+      </div>
+    </div>
+
+    <div class="dash-panel">
+      <h2>Recent Users</h2>
+      {% if recent_users %}
+      <div class="table-wrap">
+        <table class="dash-table" style="min-width: 520px;">
+          <thead>
+            <tr>
+              <th>Username</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Joined</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for user in recent_users %}
+            <tr>
+              <td>{{ user.username }}</td>
+              <td>{{ user.email|default:"-" }}</td>
+              <td>{{ user.role|default:"-" }}</td>
+              <td>{{ user.date_joined|date:"M d, Y" }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <p class="dash-panel-copy">No users found.</p>
+      {% endif %}
+      <div class="section-actions">
+        <a href="{% url 'admin:app_customuser_changelist' %}?role__exact=CUSTOMER">Open customers</a>
+        <a href="{% url 'admin:app_customuser_add' %}">Add user</a>
+      </div>
+    </div>
+  </section>
 </div>
 
 <script>
-  document.addEventListener('DOMContentLoaded', function () {
-    const trendWrap = document.getElementById('product-trends-card');
+  document.addEventListener("DOMContentLoaded", function () {
+    const trendWrap = document.getElementById("product-trends-card");
     if (!trendWrap) {
       return;
     }
 
-    const summary = document.getElementById('trend-summary');
-    const buttons = Array.from(document.querySelectorAll('.trend-switch-btn'));
-    const columns = Array.from(trendWrap.querySelectorAll('.trend-col'));
+    const summary = document.getElementById("trend-summary");
+    const buttons = Array.from(document.querySelectorAll(".trend-switch-btn"));
+    const columns = Array.from(trendWrap.querySelectorAll(".trend-col"));
 
     function readValue(column, mode) {
-      if (mode === 'activity') {
-        return parseInt(column.dataset.activityBookings || '0', 10);
+      if (mode === "activity") {
+        return parseInt(column.dataset.activityBookings || "0", 10);
       }
-      return parseInt(column.dataset.packageBookings || '0', 10);
+      return parseInt(column.dataset.packageBookings || "0", 10);
     }
 
     function seriesTotals() {
@@ -749,11 +804,11 @@
       let activities = 0;
 
       columns.forEach(function (column) {
-        packages += readValue(column, 'package');
-        activities += readValue(column, 'activity');
+        packages += readValue(column, "package");
+        activities += readValue(column, "activity");
       });
 
-      return { packages, activities };
+      return { packages: packages, activities: activities };
     }
 
     function updateTrend(mode) {
@@ -762,49 +817,44 @@
         maxValue = Math.max(maxValue, readValue(column, mode));
       });
 
-      columns.forEach(function (column, index) {
+      columns.forEach(function (column) {
         const value = readValue(column, mode);
-        const totalEl = column.querySelector('.trend-total');
-        const barEl = column.querySelector('.trend-bar');
-        const labelEl = column.querySelector('.trend-label');
+        const totalEl = column.querySelector(".trend-total");
+        const barEl = column.querySelector(".trend-bar");
 
         totalEl.textContent = String(value);
         if (maxValue === 0) {
-          barEl.style.height = '6px';
+          barEl.style.height = "8px";
         } else {
-          barEl.style.height = String(Math.max(6, Math.round((value / maxValue) * 72))) + 'px';
-        }
-
-        if (columns.length > 10 && index % 5 !== 0 && index !== columns.length - 1) {
-          labelEl.style.opacity = '0';
-        } else {
-          labelEl.style.opacity = '1';
+          barEl.style.height = String(Math.max(8, Math.round((value / maxValue) * 92))) + "px";
         }
       });
 
       buttons.forEach(function (button) {
         const active = button.dataset.trendMode === mode;
-        button.classList.toggle('is-active', active);
-        button.setAttribute('aria-pressed', active ? 'true' : 'false');
+        button.classList.toggle("is-active", active);
+        button.setAttribute("aria-pressed", active ? "true" : "false");
       });
 
       const totals = seriesTotals();
-      if (summary) {
-        if (mode === 'package') {
-          summary.textContent = 'Package bookings (last 6 months): ' + totals.packages;
-        } else if (mode === 'activity') {
-          summary.textContent = 'Activity bookings (last 6 months): ' + totals.activities;
-        }
+      if (!summary) {
+        return;
+      }
+
+      if (mode === "package") {
+        summary.textContent = "Package bookings (last 6 months): " + totals.packages;
+      } else {
+        summary.textContent = "Activity bookings (last 6 months): " + totals.activities;
       }
     }
 
     buttons.forEach(function (button) {
-      button.addEventListener('click', function () {
-        updateTrend(button.dataset.trendMode || 'package');
+      button.addEventListener("click", function () {
+        updateTrend(button.dataset.trendMode || "package");
       });
     });
 
-    updateTrend('package');
+    updateTrend("package");
   });
 </script>
 {% endblock %}

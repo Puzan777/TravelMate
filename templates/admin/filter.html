@@ -1,13 +1,11 @@
 {% load i18n %}
-<div class="form-group custom-filter-group" style="display: flex; flex-direction: column; gap: 6px; min-width: 160px; flex: 1; max-width: 250px;">
-    <label style="font-size: 0.8rem; font-weight: 700; color: var(--tm-text-muted); text-transform: uppercase; white-space: nowrap; overflow: visible; display: block; line-height: 1.2; flex-shrink: 0;">
-        {{ title }}
-    </label>
-    <select class="admin-filter-select" onchange="window.location.href=this.value" style="padding: 0 12px; height: 40px; border-radius: 8px; border: 1px solid var(--tm-line); font-size: 0.9rem; background: #fff; width: 100%; white-space: nowrap; text-overflow: ellipsis; outline: none; cursor: pointer;">
-        {% for choice in choices %}
-            <option value="{{ choice.query_string|iriencode }}" {% if choice.selected %}selected{% endif %}>
-                {{ choice.display|truncatechars:40 }}
-            </option>
-        {% endfor %}
+<div class="tm-filter-group">
+    <label class="tm-filter-label">{{ title }}</label>
+    <select class="tm-filter-select" onchange="window.location.href=this.value">
+      {% for choice in choices %}
+        <option value="{{ choice.query_string|iriencode }}" {% if choice.selected %}selected{% endif %}>
+          {{ choice.display|truncatechars:40 }}
+        </option>
+      {% endfor %}
     </select>
 </div>
