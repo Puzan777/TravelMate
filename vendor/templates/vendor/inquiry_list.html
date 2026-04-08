@@ -2,6 +2,16 @@
 
 {% block title %}Vendor Inquiries{% endblock %}
 
+{% block extrastyle %}
+<style>
+  .filters-toolbar {
+    padding: 14px;
+    border-bottom: 1px solid #e9eef5;
+    background: #f8fbff;
+  }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container py-5">
   <div class="d-flex justify-content-between align-items-center mb-4">
@@ -13,6 +23,37 @@
   </div>
 
   <div class="card shadow-sm border-0">
+    <div class="filters-toolbar">
+      <form method="get" class="row g-2 align-items-end">
+        <div class="col-lg-5">
+          <label for="inquiry-search" class="form-label mb-1 small text-muted">Search</label>
+          <input id="inquiry-search" type="text" name="q" value="{{ search_query }}" class="form-control" placeholder="Package, customer, email, message...">
+        </div>
+        <div class="col-lg-3 col-md-4">
+          <label for="inquiry-package" class="form-label mb-1 small text-muted">Package</label>
+          <select id="inquiry-package" name="package" class="form-select">
+            <option value="all">All packages</option>
+            {% for package in package_options %}
+            <option value="{{ package.id }}"{% if selected_package == package.id|stringformat:'s' %} selected{% endif %}>{{ package.title }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-lg-2 col-md-4">
+          <label for="inquiry-reply" class="form-label mb-1 small text-muted">Reply Status</label>
+          <select id="inquiry-reply" name="reply" class="form-select">
+            <option value="all"{% if selected_reply == 'all' %} selected{% endif %}>All</option>
+            <option value="pending"{% if selected_reply == 'pending' %} selected{% endif %}>Pending</option>
+            <option value="replied"{% if selected_reply == 'replied' %} selected{% endif %}>Replied</option>
+          </select>
+        </div>
+        <div class="col-lg-2 col-md-4 d-grid gap-2">
+          <button type="submit" class="btn btn-primary">Apply</button>
+          <a href="?{{ export_query_string }}" class="btn btn-success">Export CSV</a>
+          <a href="{% url 'vendor:inquiry_list' %}" class="btn btn-outline-secondary">Clear</a>
+        </div>
+      </form>
+    </div>
+
     <div class="card-body p-0">
       {% if inquiries %}
       <div class="table-responsive">
@@ -52,7 +93,13 @@
         </table>
       </div>
       {% else %}
-      <div class="p-4 text-center text-muted">No inquiries yet for your packages.</div>
+      <div class="p-4 text-center text-muted">
+        {% if has_filters_applied %}
+        No inquiries match your current filters.
+        {% else %}
+        No inquiries yet for your packages.
+        {% endif %}
+      </div>
       {% endif %}
     </div>
   </div>

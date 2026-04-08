@@ -1,10 +1,15 @@
+import csv
+from datetime import date
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Q
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
-from app.models import Activity, ActivityImage, ApprovalStatus, Booking, HotSale, Inquiry, Package, PackageImage
+from app.models import Activity, ActivityCategory, ActivityImage, ApprovalStatus, Booking, HotSale, Inquiry, Package, PackageImage
 from .forms import (
 	PackageItineraryFormSet,
 	VendorActivityForm,
@@ -142,13 +147,64 @@ def package_list(request):
 	if vendor_profile is None:
 		return redirect('home')
 
-	packages = Package.objects.filter(vendor=vendor_profile).select_related('destination').order_by('-created_at')
+	search_query = request.GET.get('q', '').strip()
+	selected_status = request.GET.get('status', 'all').upper()
+	selected_active = request.GET.get('active', 'all').lower()
+	selected_category = request.GET.get('category', 'all').upper()
+
+	valid_statuses = {choice[0] for choice in ApprovalStatus.choices}
+	valid_categories = {choice[0] for choice in Package.Category.choices}
+
+	packages = Package.objects.filter(vendor=vendor_profile).select_related('destination')
+
+	if search_query:
+		packages = packages.filter(
+			Q(title__icontains=search_query)
+			| Q(description__icontains=search_query)
+			| Q(destination__name__icontains=search_query)
+			| Q(region__icontains=search_query)
+			| Q(city__icontains=search_query)
+		)
+
+	if selected_status in valid_statuses:
+		packages = packages.filter(approval_status=selected_status)
+	else:
+		selected_status = 'all'
+
+	if selected_active == 'active':
+		packages = packages.filter(is_active=True)
+	elif selected_active == 'inactive':
+		packages = packages.filter(is_active=False)
+	else:
+		selected_active = 'all'
+
+	if selected_category in valid_categories:
+		packages = packages.filter(category=selected_category)
+	else:
+		selected_category = 'all'
+
+	packages = packages.order_by('-created_at')
+	has_filters_applied = any(
+		[
+			bool(search_query),
+			selected_status != 'all',
+			selected_active != 'all',
+			selected_category != 'all',
+		]
+	)
 	return render(
 		request,
 		'vendor/package_list.html',
 		{
 			'packages': packages,
 			'vendor_profile': vendor_profile,
+			'search_query': search_query,
+			'selected_status': selected_status,
+			'selected_active': selected_active,
+			'selected_category': selected_category,
+			'package_status_options': ApprovalStatus.choices,
+			'package_category_options': Package.Category.choices,
+			'has_filters_applied': has_filters_applied,
 		},
 	)
 
@@ -159,13 +215,74 @@ def activity_list(request):
 	if vendor_profile is None:
 		return redirect('home')
 
-	activities = Activity.objects.filter(vendor=vendor_profile).select_related('category').order_by('name')
+	search_query = request.GET.get('q', '').strip()
+	selected_status = request.GET.get('status', 'all').upper()
+	selected_active = request.GET.get('active', 'all').lower()
+	selected_difficulty = request.GET.get('difficulty', 'all').lower()
+	selected_category = request.GET.get('category', 'all')
+
+	valid_statuses = {choice[0] for choice in ApprovalStatus.choices}
+	valid_difficulty_levels = {choice[0] for choice in Activity.DifficultyLevel.choices}
+
+	activities = Activity.objects.filter(vendor=vendor_profile).select_related('category')
+
+	if search_query:
+		activities = activities.filter(
+			Q(name__icontains=search_query)
+			| Q(description__icontains=search_query)
+			| Q(category__name__icontains=search_query)
+			| Q(equipment_provided__icontains=search_query)
+			| Q(safety_notes__icontains=search_query)
+		)
+
+	if selected_status in valid_statuses:
+		activities = activities.filter(approval_status=selected_status)
+	else:
+		selected_status = 'all'
+
+	if selected_active == 'active':
+		activities = activities.filter(is_active=True)
+	elif selected_active == 'inactive':
+		activities = activities.filter(is_active=False)
+	else:
+		selected_active = 'all'
+
+	if selected_difficulty in valid_difficulty_levels:
+		activities = activities.filter(difficulty_level=selected_difficulty)
+	else:
+		selected_difficulty = 'all'
+
+	activity_category_options = ActivityCategory.objects.filter(activities__vendor=vendor_profile).distinct().order_by('name')
+	if selected_category.isdigit():
+		activities = activities.filter(category_id=int(selected_category))
+	else:
+		selected_category = 'all'
+
+	activities = activities.order_by('name')
+	has_filters_applied = any(
+		[
+			bool(search_query),
+			selected_status != 'all',
+			selected_active != 'all',
+			selected_difficulty != 'all',
+			selected_category != 'all',
+		]
+	)
 	return render(
 		request,
 		'vendor/activity_list.html',
 		{
 			'activities': activities,
 			'vendor_profile': vendor_profile,
+			'search_query': search_query,
+			'selected_status': selected_status,
+			'selected_active': selected_active,
+			'selected_difficulty': selected_difficulty,
+			'selected_category': selected_category,
+			'activity_status_options': ApprovalStatus.choices,
+			'activity_difficulty_options': Activity.DifficultyLevel.choices,
+			'activity_category_options': activity_category_options,
+			'has_filters_applied': has_filters_applied,
 		},
 	)
 
@@ -465,15 +582,51 @@ def hot_sale_list(request):
 	if vendor_profile is None:
 		return redirect('home')
 
+	search_query = request.GET.get('q', '').strip()
+	selected_type = request.GET.get('type', 'all').lower()
+	selected_status = request.GET.get('status', 'all').lower()
+
 	hot_sales = HotSale.objects.filter(
 		Q(package__vendor=vendor_profile) | Q(activity__vendor=vendor_profile)
-	).select_related('package', 'activity').prefetch_related('activity__images').order_by('-created_at')
+	).select_related('package', 'activity').prefetch_related('activity__images')
+
+	if search_query:
+		hot_sales = hot_sales.filter(
+			Q(package__title__icontains=search_query)
+			| Q(activity__name__icontains=search_query)
+			| Q(note__icontains=search_query)
+		)
+
+	if selected_type == 'package':
+		hot_sales = hot_sales.filter(package__isnull=False)
+	elif selected_type == 'activity':
+		hot_sales = hot_sales.filter(activity__isnull=False)
+	else:
+		selected_type = 'all'
+
+	if selected_status == 'active':
+		hot_sales = hot_sales.filter(is_active=True)
+	elif selected_status == 'inactive':
+		hot_sales = hot_sales.filter(is_active=False)
+	else:
+		selected_status = 'all'
+
+	hot_sales = hot_sales.order_by('-created_at')
+	has_filters_applied = any([
+		bool(search_query),
+		selected_type != 'all',
+		selected_status != 'all',
+	])
 	return render(
 		request,
 		'vendor/hot_sale_list.html',
 		{
 			'hot_sales': hot_sales,
 			'vendor_profile': vendor_profile,
+			'search_query': search_query,
+			'selected_type': selected_type,
+			'selected_status': selected_status,
+			'has_filters_applied': has_filters_applied,
 		},
 	)
 
@@ -542,13 +695,87 @@ def inquiry_list(request):
 	if vendor_profile is None:
 		return redirect('home')
 
-	inquiries = Inquiry.objects.filter(package__vendor=vendor_profile).select_related('package', 'user').order_by('-created_at')
+	search_query = request.GET.get('q', '').strip()
+	selected_reply = request.GET.get('reply', 'all').lower()
+	selected_package = request.GET.get('package', 'all')
+
+	package_options = Package.objects.filter(vendor=vendor_profile).order_by('title')
+
+	inquiries = Inquiry.objects.filter(package__vendor=vendor_profile).select_related('package', 'user')
+
+	if search_query:
+		inquiries = inquiries.filter(
+			Q(package__title__icontains=search_query)
+			| Q(full_name__icontains=search_query)
+			| Q(email__icontains=search_query)
+			| Q(phone__icontains=search_query)
+			| Q(message__icontains=search_query)
+			| Q(admin_reply__icontains=search_query)
+		)
+
+	if selected_reply == 'replied':
+		inquiries = inquiries.exclude(admin_reply='')
+	elif selected_reply == 'pending':
+		inquiries = inquiries.filter(admin_reply='')
+	else:
+		selected_reply = 'all'
+
+	if selected_package.isdigit():
+		inquiries = inquiries.filter(package_id=int(selected_package))
+	else:
+		selected_package = 'all'
+
+	inquiries = inquiries.order_by('-created_at')
+
+	if request.GET.get('export', '').lower() == 'csv':
+		response = HttpResponse(content_type='text/csv')
+		response['Content-Disposition'] = 'attachment; filename="vendor_inquiries.csv"'
+		writer = csv.writer(response)
+		writer.writerow([
+			'ID',
+			'Package',
+			'Customer',
+			'Email',
+			'Phone',
+			'Message',
+			'Reply Status',
+			'Created At',
+		])
+		for inquiry in inquiries:
+			writer.writerow([
+				inquiry.id,
+				inquiry.package.title,
+				inquiry.full_name,
+				inquiry.email,
+				inquiry.phone,
+				inquiry.message,
+				'Replied' if inquiry.admin_reply else 'Pending',
+				inquiry.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+			])
+		return response
+
+	has_filters_applied = any([
+		bool(search_query),
+		selected_reply != 'all',
+		selected_package != 'all',
+	])
+
+	export_query = request.GET.copy()
+	export_query.pop('export', None)
+	export_query['export'] = 'csv'
+
 	return render(
 		request,
 		'vendor/inquiry_list.html',
 		{
 			'inquiries': inquiries,
 			'vendor_profile': vendor_profile,
+			'package_options': package_options,
+			'search_query': search_query,
+			'selected_reply': selected_reply,
+			'selected_package': selected_package,
+			'has_filters_applied': has_filters_applied,
+			'export_query_string': export_query.urlencode(),
 		},
 	)
 
@@ -559,18 +786,159 @@ def booking_list(request):
 	if vendor_profile is None:
 		return redirect('home')
 
+	search_query = request.GET.get('q', '').strip()
+	travel_from_input = request.GET.get('travel_from', '').strip()
+	travel_to_input = request.GET.get('travel_to', '').strip()
+	selected_payment_status = request.GET.get('payment_status', 'all').upper()
+	selected_payment_method = request.GET.get('payment_method', 'all').upper()
+	selected_sort = request.GET.get('sort', 'booked_desc')
+
+	travel_from = None
+	travel_to = None
+	if travel_from_input:
+		try:
+			travel_from = date.fromisoformat(travel_from_input)
+		except ValueError:
+			travel_from_input = ''
+	if travel_to_input:
+		try:
+			travel_to = date.fromisoformat(travel_to_input)
+		except ValueError:
+			travel_to_input = ''
+
+	if travel_from and travel_to and travel_from > travel_to:
+		travel_from, travel_to = travel_to, travel_from
+		travel_from_input = travel_from.isoformat()
+		travel_to_input = travel_to.isoformat()
+
+	valid_payment_statuses = {choice[0] for choice in Booking.PaymentStatus.choices}
+	valid_payment_methods = {choice[0] for choice in Booking.PaymentMethod.choices}
+
 	bookings = (
 		Booking.objects.visible_in_listings()
 		.filter(package__vendor=vendor_profile)
-		.select_related('package', 'user')
-		.order_by('-created_at')
+		.select_related('package', 'package__destination', 'user')
+	)
+
+	if search_query:
+		bookings = bookings.filter(
+			Q(package__title__icontains=search_query)
+			| Q(full_name__icontains=search_query)
+			| Q(email__icontains=search_query)
+			| Q(phone__icontains=search_query)
+			| Q(transaction_reference__icontains=search_query)
+			| Q(pickup_location__icontains=search_query)
+			| Q(nationality__icontains=search_query)
+		)
+
+	if selected_payment_status in valid_payment_statuses:
+		bookings = bookings.filter(payment_status=selected_payment_status)
+	else:
+		selected_payment_status = 'all'
+
+	if selected_payment_method in valid_payment_methods:
+		bookings = bookings.filter(payment_method=selected_payment_method)
+	else:
+		selected_payment_method = 'all'
+
+	if travel_from:
+		bookings = bookings.filter(travel_date__gte=travel_from)
+	if travel_to:
+		bookings = bookings.filter(travel_date__lte=travel_to)
+
+	sort_options = [
+		('booked_desc', 'Booked: Newest first'),
+		('booked_asc', 'Booked: Oldest first'),
+		('travel_asc', 'Travel date: Earliest first'),
+		('travel_desc', 'Travel date: Latest first'),
+		('amount_desc', 'Amount: High to low'),
+		('amount_asc', 'Amount: Low to high'),
+	]
+	sort_ordering = {
+		'booked_desc': ('-created_at', '-id'),
+		'booked_asc': ('created_at', 'id'),
+		'travel_asc': ('travel_date', '-created_at'),
+		'travel_desc': ('-travel_date', '-created_at'),
+		'amount_desc': ('-total_amount', '-created_at'),
+		'amount_asc': ('total_amount', '-created_at'),
+	}
+	if selected_sort not in sort_ordering:
+		selected_sort = 'booked_desc'
+
+	bookings = bookings.order_by(*sort_ordering[selected_sort])
+
+	if request.GET.get('export', '').lower() == 'csv':
+		response = HttpResponse(content_type='text/csv')
+		response['Content-Disposition'] = 'attachment; filename="vendor_bookings.csv"'
+		writer = csv.writer(response)
+		writer.writerow([
+			'ID',
+			'Package',
+			'Traveler',
+			'Email',
+			'Phone',
+			'Travel Date',
+			'People',
+			'Payment Status',
+			'Payment Method',
+			'Total Amount',
+			'Booked On',
+		])
+		for booking in bookings:
+			writer.writerow([
+				booking.id,
+				booking.package.title,
+				booking.full_name,
+				booking.email,
+				booking.phone,
+				booking.travel_date.isoformat() if booking.travel_date else '',
+				booking.number_of_people,
+				booking.get_payment_status_display(),
+				booking.get_payment_method_display(),
+				booking.total_amount,
+				booking.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+			])
+		return response
+
+	paginator = Paginator(bookings, 12)
+	page_obj = paginator.get_page(request.GET.get('page'))
+	bookings = page_obj.object_list
+
+	base_query = request.GET.copy()
+	base_query.pop('page', None)
+	base_query.pop('export', None)
+	pagination_query_string = base_query.urlencode()
+
+	export_query = base_query.copy()
+	export_query['export'] = 'csv'
+	has_filters_applied = any(
+		[
+			bool(search_query),
+			selected_payment_status != 'all',
+			selected_payment_method != 'all',
+			bool(travel_from_input),
+			bool(travel_to_input),
+		]
 	)
 	return render(
 		request,
 		'vendor/booking_list.html',
 		{
 			'bookings': bookings,
+			'page_obj': page_obj,
 			'vendor_profile': vendor_profile,
+			'search_query': search_query,
+			'selected_travel_from': travel_from_input,
+			'selected_travel_to': travel_to_input,
+			'selected_payment_status': selected_payment_status,
+			'selected_payment_method': selected_payment_method,
+			'selected_sort': selected_sort,
+			'payment_status_options': Booking.PaymentStatus.choices,
+			'payment_method_options': Booking.PaymentMethod.choices,
+			'sort_options': sort_options,
+			'pagination_query_string': pagination_query_string,
+			'export_query_string': export_query.urlencode(),
+			'has_filters_applied': has_filters_applied,
 		},
 	)
 

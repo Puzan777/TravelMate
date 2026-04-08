@@ -58,6 +58,11 @@
     border-radius: 12px;
     box-shadow: var(--vd-shadow-soft);
   }
+  .filters-toolbar {
+    padding: 14px;
+    border-bottom: 1px solid var(--vd-line-soft);
+    background: #f8fbff;
+  }
   .table-wrap {
     overflow-x: auto;
   }
@@ -93,6 +98,54 @@
     </section>
 
     <div class="list-card">
+      <div class="filters-toolbar">
+      <form method="get" class="row g-2 align-items-end">
+        <div class="col-lg-4">
+        <label for="booking-search" class="form-label mb-1 small text-muted">Search</label>
+        <input id="booking-search" type="text" name="q" value="{{ search_query }}" class="form-control" placeholder="Package, traveler, email, phone...">
+        </div>
+        <div class="col-lg-2 col-md-3">
+        <label for="booking-travel-from" class="form-label mb-1 small text-muted">Travel From</label>
+        <input id="booking-travel-from" type="date" name="travel_from" value="{{ selected_travel_from }}" class="form-control">
+        </div>
+        <div class="col-lg-2 col-md-3">
+        <label for="booking-travel-to" class="form-label mb-1 small text-muted">Travel To</label>
+        <input id="booking-travel-to" type="date" name="travel_to" value="{{ selected_travel_to }}" class="form-control">
+        </div>
+        <div class="col-lg-2 col-md-3">
+        <label for="booking-payment-status" class="form-label mb-1 small text-muted">Payment Status</label>
+        <select id="booking-payment-status" name="payment_status" class="form-select">
+          <option value="all">All statuses</option>
+          {% for value, label in payment_status_options %}
+          <option value="{{ value }}"{% if selected_payment_status == value %} selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+        </div>
+        <div class="col-lg-2 col-md-3">
+        <label for="booking-payment-method" class="form-label mb-1 small text-muted">Payment Method</label>
+        <select id="booking-payment-method" name="payment_method" class="form-select">
+          <option value="all">All methods</option>
+          {% for value, label in payment_method_options %}
+          <option value="{{ value }}"{% if selected_payment_method == value %} selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+        </div>
+        <div class="col-lg-3 col-md-4">
+        <label for="booking-sort" class="form-label mb-1 small text-muted">Sort By</label>
+        <select id="booking-sort" name="sort" class="form-select">
+          {% for value, label in sort_options %}
+          <option value="{{ value }}"{% if selected_sort == value %} selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+        </div>
+        <div class="col-lg-9 d-flex gap-2 justify-content-end flex-wrap">
+        <button type="submit" class="btn btn-primary">Apply</button>
+        <a href="?{{ export_query_string }}" class="btn btn-success">Export CSV</a>
+        <a href="{% url 'vendor:booking_list' %}" class="btn btn-outline-secondary">Clear</a>
+        </div>
+      </form>
+      </div>
+
       {% if bookings %}
       <div class="table-wrap">
         <table class="table align-middle">
@@ -136,8 +189,44 @@
           </tbody>
         </table>
       </div>
+
+      {% if page_obj.paginator.num_pages > 1 %}
+      <div class="px-3 py-3 border-top">
+        <nav aria-label="Bookings pagination">
+          <ul class="pagination pagination-sm mb-0 justify-content-end flex-wrap">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+              <a class="page-link" href="?{% if pagination_query_string %}{{ pagination_query_string }}&{% endif %}page={{ page_obj.previous_page_number }}">Previous</a>
+            </li>
+            {% else %}
+            <li class="page-item disabled"><span class="page-link">Previous</span></li>
+            {% endif %}
+
+            {% for number in page_obj.paginator.page_range %}
+            <li class="page-item{% if page_obj.number == number %} active{% endif %}">
+              <a class="page-link" href="?{% if pagination_query_string %}{{ pagination_query_string }}&{% endif %}page={{ number }}">{{ number }}</a>
+            </li>
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+            <li class="page-item">
+              <a class="page-link" href="?{% if pagination_query_string %}{{ pagination_query_string }}&{% endif %}page={{ page_obj.next_page_number }}">Next</a>
+            </li>
+            {% else %}
+            <li class="page-item disabled"><span class="page-link">Next</span></li>
+            {% endif %}
+          </ul>
+        </nav>
+      </div>
+      {% endif %}
       {% else %}
-      <div class="p-4 text-center text-muted">No bookings yet for your packages.</div>
+      <div class="p-4 text-center text-muted">
+      {% if has_filters_applied %}
+      No bookings match your current filters.
+      {% else %}
+      No bookings yet for your packages.
+      {% endif %}
+      </div>
       {% endif %}
     </div>
   </div>
