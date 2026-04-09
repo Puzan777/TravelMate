@@ -12,6 +12,7 @@
 
   <style>
     .sale-card {
+      position: relative;
       border: 1px solid rgba(15, 23, 42, 0.08);
       border-radius: 24px;
       overflow: hidden;
@@ -92,12 +93,76 @@
       background: #0b3d69;
       color: #fff;
     }
+    .fav-corner {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      z-index: 3;
+      margin: 0;
+    }
+    .fav-icon-btn {
+      width: 36px;
+      min-width: 36px;
+      height: 36px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.55);
+      background: rgba(255, 255, 255, 0.28);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      color: #1f3b56;
+      font-size: 1.1rem;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      text-decoration: none;
+      box-shadow: 0 6px 14px rgba(15, 23, 42, 0.22);
+      transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .fav-icon-btn:hover,
+    .fav-icon-btn:focus-visible {
+      background: rgba(255, 255, 255, 0.5);
+      transform: translateY(-1px);
+      box-shadow: 0 8px 16px rgba(15, 23, 42, 0.24);
+    }
+    .fav-icon-btn.is-fav {
+      border-color: rgba(255, 255, 255, 0.72);
+      background: rgba(255, 255, 255, 0.42);
+      color: #e11d48;
+    }
+    .fav-icon-btn:disabled {
+      opacity: 0.72;
+    }
   </style>
 
   <div class="row g-4">
     {% for sale in hot_sales %}
       <div class="col-md-6 col-xl-4">
         <article class="sale-card h-100">
+          {% if can_toggle_favorites %}
+            {% if sale.package %}
+              <form method="post" action="{% url 'toggle_favorite_package' sale.package.slug %}" class="fav-corner">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                <button type="submit" class="fav-icon-btn{% if sale.package.id in favorite_package_ids %} is-fav{% endif %}" aria-label="Toggle favorite" title="Add to favorites">
+                  {% if sale.package.id in favorite_package_ids %}&#10084;{% else %}&#9825;{% endif %}
+                </button>
+              </form>
+            {% elif sale.activity %}
+              <form method="post" action="{% url 'toggle_favorite_activity' sale.activity.pk %}" class="fav-corner">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                <button type="submit" class="fav-icon-btn{% if sale.activity.id in favorite_activity_ids %} is-fav{% endif %}" aria-label="Toggle favorite" title="Add to favorites">
+                  {% if sale.activity.id in favorite_activity_ids %}&#10084;{% else %}&#9825;{% endif %}
+                </button>
+              </form>
+            {% endif %}
+          {% elif user.is_authenticated %}
+            <button type="button" class="fav-icon-btn fav-corner" disabled aria-disabled="true" title="Only customers can add favorites">&#9825;</button>
+          {% else %}
+            <a href="{% url 'login' %}" class="fav-icon-btn fav-corner" aria-label="Login to add favorite" title="Login to add favorites">&#9825;</a>
+          {% endif %}
           {% if sale.package and sale.package.image %}
             <img src="{{ sale.package.image.url }}" class="sale-image" alt="{{ sale.package.title }}">
           {% elif sale.activity_primary_image %}

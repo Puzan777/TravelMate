@@ -268,7 +268,7 @@
         </div>
         <div class="metric">
           <p class="metric-label">Favorites</p>
-          <p class="metric-value">{{ favorite_packages|length }}</p>
+          <p class="metric-value">{{ total_favorite_count }}</p>
         </div>
       </div>
     </div>
@@ -436,9 +436,9 @@
       <div class="tab-pane fade" id="favorites-pane" role="tabpanel" aria-labelledby="favorites-tab" tabindex="0">
         <div class="card profile-tab-card">
           <div class="card-body">
-            <h2 class="section-title">Favorite Packages</h2>
+            <h2 class="section-title">Favorite Packages & Activities</h2>
 
-            {% if favorite_packages %}
+            {% if favorite_packages or favorite_activities %}
               <div class="d-grid gap-2">
                 {% for package in favorite_packages %}
                   <div class="fav-item">
@@ -457,9 +457,26 @@
                     </form>
                   </div>
                 {% endfor %}
+
+                {% for activity in favorite_activities %}
+                  <div class="fav-item">
+                    <a href="{% url 'activity_detail' activity.pk %}" class="text-decoration-none fw-semibold d-block mb-1">
+                      {{ activity.name }}
+                    </a>
+                    <div class="small text-muted mb-2">
+                      {{ activity.category.name }} | ${{ activity.price }}
+                    </div>
+
+                    <form method="post" action="{% url 'toggle_favorite_activity' activity.pk %}">
+                      {% csrf_token %}
+                      <input type="hidden" name="next" value="profile">
+                      <button type="submit" class="btn btn-sm btn-outline-danger w-100">Remove</button>
+                    </form>
+                  </div>
+                {% endfor %}
               </div>
             {% else %}
-              <p class="empty-state">No favorite packages yet.</p>
+              <p class="empty-state">No favorite items yet.</p>
             {% endif %}
           </div>
         </div>

@@ -23,6 +23,11 @@ class CustomUser(AbstractUser):
         blank=True,
         related_name='favorited_by'
     )
+    favorite_activities = models.ManyToManyField(
+        'Activity',
+        blank=True,
+        related_name='favorited_by_users'
+    )
 
     @property
     def is_vendor(self):
@@ -812,3 +817,19 @@ def _enforce_customer_favorite_access(sender, instance, action, reverse, pk_set,
 
     if not _is_customer_account(instance):
         raise ValidationError('Only customers can add packages to favorites.')
+
+
+@receiver(m2m_changed, sender=CustomUser.favorite_activities.through)
+def _enforce_customer_activity_favorite_access(sender, instance, action, reverse, pk_set, **kwargs):
+    if action != 'pre_add':
+        return
+
+    if reverse:
+        users = CustomUser.objects.filter(pk__in=pk_set)
+        has_disallowed_user = any(not _is_customer_account(user) for user in users)
+        if has_disallowed_user:
+            raise ValidationError('Only customers can add activities to favorites.')
+        return
+
+    if not _is_customer_account(instance):
+        raise ValidationError('Only customers can add activities to favorites.')

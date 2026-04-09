@@ -19,6 +19,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout
 from django.contrib import messages
 from django.utils import timezone
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
@@ -63,6 +64,33 @@ def _is_customer_user(user):
         and not user.is_staff
         and not user.is_superuser
     )
+
+
+def _favorite_card_context(request):
+    can_toggle_favorites = _is_customer_user(request.user) if request.user.is_authenticated else False
+    favorite_package_ids = set()
+    favorite_activity_ids = set()
+
+    if can_toggle_favorites:
+        favorite_package_ids = set(request.user.favorite_packages.values_list('id', flat=True))
+        favorite_activity_ids = set(request.user.favorite_activities.values_list('id', flat=True))
+
+    return {
+        'can_toggle_favorites': can_toggle_favorites,
+        'favorite_package_ids': favorite_package_ids,
+        'favorite_activity_ids': favorite_activity_ids,
+    }
+
+
+def _safe_next_redirect(request, fallback_response):
+    next_url = (request.POST.get('next') or '').strip()
+    if next_url and url_has_allowed_host_and_scheme(
+        url=next_url,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        return redirect(next_url)
+    return fallback_response
 
 
 def customer_only(view_func=None, *, error_message='Only customers can book packages.'):
@@ -521,10 +549,12 @@ def home(request):
     # Show active packages (best packages)
     packages = Package.objects.filter(is_active=True, approval_status=ApprovalStatus.APPROVED)[:6]  # limit to 6
 
-    return render(request, "home.html", {
+    context = {
         "featured_destinations": destinations,
-        "featured_packages": packages
-    })
+        "featured_packages": packages,
+    }
+    context.update(_favorite_card_context(request))
+    return render(request, "home.html", context)
 
 
 def destination_list(request):
@@ -545,10 +575,12 @@ def destination_detail(request, pk):
         approval_status=ApprovalStatus.APPROVED,
     ).order_by('-created_at')
     
-    return render(request, 'destination_detail.html', {
+    context = {
         'destination': destination,
-        'packages': packages
-    })
+        'packages': packages,
+    }
+    context.update(_favorite_card_context(request))
+    return render(request, 'destination_detail.html', context)
 
 
 # ----------------- Package views -----------------
@@ -563,12 +595,14 @@ def package_list(request, category=None, hot_sales=False):
         qs = qs.filter(category=category)
         title = dict(Package.Category.choices).get(category, category.title())
 
-    return render(request, 'packages_list.html', {
+    context = {
         'packages': qs,
         'category': category,
         'hot_sales': hot_sales,
         'title': title,
-    })
+    }
+    context.update(_favorite_card_context(request))
+    return render(request, 'packages_list.html', context)
 
 
 def hot_sale_list(request):
@@ -579,10 +613,12 @@ def hot_sale_list(request):
         | Q(activity__is_active=True, activity__approval_status=ApprovalStatus.APPROVED),
     ).select_related('package', 'package__destination', 'activity', 'activity__category').prefetch_related('activity__images')
 
-    return render(request, 'hot_sales.html', {
+    context = {
         'hot_sales': hot_sales,
         'title': 'Hot Sales',
-    })
+    }
+    context.update(_favorite_card_context(request))
+    return render(request, 'hot_sales.html', context)
 
 
 def activity_detail(request, pk):
@@ -880,6 +916,8 @@ def profile_view(request):
     )
     inquiries = Inquiry.objects.filter(user=request.user).select_related('package').order_by('-created_at')
     favorite_packages = request.user.favorite_packages.filter(is_active=True).select_related('destination').order_by('-updated_at')
+    favorite_activities = request.user.favorite_activities.filter(is_active=True).select_related('category').order_by('-created_at')
+    total_favorite_count = favorite_packages.count() + favorite_activities.count()
 
     return render(request, 'profile.html', {
         'bookings': bookings,
@@ -887,6 +925,8 @@ def profile_view(request):
         'total_booking_count': bookings.count() + activity_bookings.count(),
         'inquiries': inquiries,
         'favorite_packages': favorite_packages,
+        'favorite_activities': favorite_activities,
+        'total_favorite_count': total_favorite_count,
     })
 
 
@@ -904,10 +944,28 @@ def toggle_favorite_package(request, slug):
         request.user.favorite_packages.add(package)
         messages.success(request, 'Added to favorites.')
 
-    next_url = request.POST.get('next')
-    if next_url == 'profile':
+    if request.POST.get('next') == 'profile':
         return redirect('profile')
-    return redirect('package_detail', slug=slug)
+    return _safe_next_redirect(request, redirect('package_detail', slug=slug))
+
+
+@customer_only(error_message='Only customers can add activities to favorites.')
+@login_required
+def toggle_favorite_activity(request, pk):
+    if request.method != 'POST':
+        return redirect('activity_detail', pk=pk)
+
+    activity = get_object_or_404(Activity, pk=pk, is_active=True, approval_status=ApprovalStatus.APPROVED)
+    if request.user.favorite_activities.filter(pk=activity.pk).exists():
+        request.user.favorite_activities.remove(activity)
+        messages.info(request, 'Removed from favorites.')
+    else:
+        request.user.favorite_activities.add(activity)
+        messages.success(request, 'Added to favorites.')
+
+    if request.POST.get('next') == 'profile':
+        return redirect('profile')
+    return _safe_next_redirect(request, redirect('activity_detail', pk=activity.pk))
 
 
 @csrf_exempt

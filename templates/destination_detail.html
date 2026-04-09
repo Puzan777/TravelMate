@@ -61,13 +61,70 @@
       color: #f59e0b;
       white-space: nowrap;
     }
+    .tm-card-with-fav {
+      position: relative;
+      overflow: hidden;
+    }
+    .fav-corner {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      z-index: 3;
+      margin: 0;
+    }
+    .fav-icon-btn {
+      width: 36px;
+      min-width: 36px;
+      height: 36px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.55);
+      background: rgba(255, 255, 255, 0.28);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      color: #1f3b56;
+      font-size: 1.1rem;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      box-shadow: 0 6px 14px rgba(15, 23, 42, 0.22);
+      transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .fav-icon-btn:hover,
+    .fav-icon-btn:focus-visible {
+      background: rgba(255, 255, 255, 0.5);
+      transform: translateY(-1px);
+      box-shadow: 0 8px 16px rgba(15, 23, 42, 0.24);
+    }
+    .fav-icon-btn.is-fav {
+      border-color: rgba(255, 255, 255, 0.72);
+      background: rgba(255, 255, 255, 0.42);
+      color: #e11d48;
+    }
+    .fav-icon-btn:disabled {
+      opacity: 0.72;
+    }
   </style>
 
   {% if packages %}
     <div class="row g-4">
       {% for package in packages %}
         <div class="col-sm-6 col-md-4 col-lg-3">
-          <div class="card h-100 shadow-sm">
+          <div class="card h-100 shadow-sm tm-card-with-fav">
+            {% if can_toggle_favorites %}
+              <form method="post" action="{% url 'toggle_favorite_package' package.slug %}" class="fav-corner">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                <button type="submit" class="fav-icon-btn{% if package.id in favorite_package_ids %} is-fav{% endif %}" aria-label="Toggle favorite" title="Add to favorites">
+                  {% if package.id in favorite_package_ids %}&#10084;{% else %}&#9825;{% endif %}
+                </button>
+              </form>
+            {% elif user.is_authenticated %}
+              <button type="button" class="fav-icon-btn fav-corner" disabled aria-disabled="true" title="Only customers can add favorites">&#9825;</button>
+            {% else %}
+              <a href="{% url 'login' %}" class="fav-icon-btn fav-corner text-decoration-none" aria-label="Login to add favorite" title="Login to add favorites">&#9825;</a>
+            {% endif %}
             {% if package.image %}
               <img src="{{ package.image.url }}" class="card-img-top package-img" alt="{{ package.title }}">
             {% else %}

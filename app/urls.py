@@ -20,6 +20,7 @@ urlpatterns = [
     path('packages/trekking/', views.package_list, {'category': 'TREKKING'}, name='packages_trekking'),
     path('packages/heli/', views.package_list, {'category': 'HELI'}, name='packages_heli'),
     path('packages/hot-sales/', views.hot_sale_list, name='packages_hot_sales'),
+    path('activities/<int:pk>/favorite/', views.toggle_favorite_activity, name='toggle_favorite_activity'),
     path('activities/<int:pk>/', views.activity_detail, name='activity_detail'),
     path('payments/esewa/callback/', views.esewa_callback, name='esewa_callback'),
     path('payments/esewa/failure/', views.esewa_failure, name='esewa_failure'),
