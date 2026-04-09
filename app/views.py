@@ -12,6 +12,7 @@ from urllib.request import Request, urlopen
 
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
+from django.core.mail import send_mail
 from django.db.models import Q
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout
@@ -116,6 +117,70 @@ def _read_esewa_callback_payload(request):
             or ''
         ),
     }
+
+
+def _send_new_booking_emails(booking):
+    from_email = (
+        getattr(settings, 'DEFAULT_FROM_EMAIL', None)
+        or getattr(settings, 'EMAIL_HOST_USER', None)
+        or 'no-reply@travelmate.local'
+    )
+
+    package_title = booking.package.title
+    travel_date = booking.travel_date.strftime('%Y-%m-%d')
+    amount = booking.total_amount
+    payment_method = booking.get_payment_method_display()
+    customer_name = booking.full_name
+
+    customer_email = (booking.email or '').strip()
+    vendor_email = ''
+    vendor_profile = getattr(booking.package, 'vendor', None)
+    if vendor_profile and vendor_profile.user:
+        vendor_email = (vendor_profile.user.email or '').strip()
+
+    if customer_email:
+        customer_subject = f'Booking Confirmation - {package_title}'
+        customer_message = (
+            f'Hello {customer_name},\n\n'
+            f'Your booking request has been received for {package_title}.\n\n'
+            f'Travel date: {travel_date}\n'
+            f'Number of people: {booking.number_of_people}\n'
+            f'Payment method: {payment_method}\n'
+            f'Total amount: {amount}\n\n'
+            'We will contact you if any additional details are needed.\n\n'
+            'Thank you,\n'
+            'TravelMate Team'
+        )
+        send_mail(
+            customer_subject,
+            customer_message,
+            from_email,
+            [customer_email],
+            fail_silently=True,
+        )
+
+    if vendor_email:
+        vendor_subject = f'New Booking Alert - {package_title}'
+        vendor_message = (
+            'Hello,\n\n'
+            f'You have received a new booking for {package_title}.\n\n'
+            f'Traveler: {customer_name}\n'
+            f'Email: {booking.email}\n'
+            f'Phone: {booking.phone}\n'
+            f'Travel date: {travel_date}\n'
+            f'People: {booking.number_of_people}\n'
+            f'Payment method: {payment_method}\n'
+            f'Total amount: {amount}\n\n'
+            'Please check your vendor dashboard for full details.\n\n'
+            'TravelMate System'
+        )
+        send_mail(
+            vendor_subject,
+            vendor_message,
+            from_email,
+            [vendor_email],
+            fail_silently=True,
+        )
 
 
 def _verify_esewa_transaction(reference, payment_token, amount, product_code=''):
@@ -409,6 +474,7 @@ def package_detail(request, slug):
                 booking.package = package
                 booking.user = request.user
                 booking.save()
+                _send_new_booking_emails(booking)
                 if booking.payment_method == Booking.PaymentMethod.ESEWA:
                     payment_request, payment_error = _build_esewa_payment_request(request, booking)
                     if payment_error:
