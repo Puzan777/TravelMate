@@ -122,6 +122,18 @@
     .content-body p:last-child {
       margin-bottom: 0;
     }
+    .review-item {
+      border: 1px solid #e3edf7;
+      border-radius: 10px;
+      padding: 10px;
+      background: #f9fcff;
+    }
+    .review-stars-inline {
+      color: #b05f00;
+      letter-spacing: 0.05em;
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
     .book-card {
       border: 1px solid #dce7f2;
       border-radius: 14px;
@@ -409,6 +421,69 @@
           <div class="content-body">{{ package.itinerary|linebreaks }}</div>
         </div>
       {% endif %}
+
+      <div class="mb-4 content-card">
+        <h5 class="content-title">Traveler Reviews</h5>
+        <p class="small text-muted mb-3">Average rating: <strong>{{ package.rating|floatformat:1 }}/5</strong> from {{ package_reviews|length }} review{{ package_reviews|length|pluralize }}.</p>
+
+        {% if can_review_package %}
+          <form method="post" class="d-grid gap-2 mb-3">
+            {% csrf_token %}
+            <input type="hidden" name="form_type" value="review">
+
+            <label for="id_rating" class="form-label mb-1">Your rating</label>
+            {{ review_form.rating }}
+            {% if review_form.rating.errors %}
+              <div class="text-danger small">{{ review_form.rating.errors|striptags }}</div>
+            {% endif %}
+
+            <label for="id_comment" class="form-label mb-1">Your comment <span class="text-muted">(optional)</span></label>
+            {{ review_form.comment }}
+            {% if review_form.comment.errors %}
+              <div class="text-danger small">{{ review_form.comment.errors|striptags }}</div>
+            {% endif %}
+
+            <button type="submit" class="btn btn-outline-success">
+              {% if user_package_review %}Update Review{% else %}Submit Review{% endif %}
+            </button>
+          </form>
+        {% elif user.is_authenticated %}
+          <div class="alert alert-info py-2">You can review this package after you complete a booking.</div>
+        {% else %}
+          <a href="{% url 'login' %}" class="btn btn-outline-primary mb-3">Login to Write a Review</a>
+        {% endif %}
+
+        {% if package_reviews %}
+          <div class="d-grid gap-2">
+            {% for review in package_reviews|slice:":8" %}
+              <article class="review-item">
+                <div class="d-flex justify-content-between align-items-start gap-2">
+                  <div>
+                    <div class="fw-semibold">
+                      {% if review.user %}
+                        {{ review.user.get_full_name|default:review.user.username }}
+                      {% else %}
+                        Traveler
+                      {% endif %}
+                    </div>
+                    <div class="review-stars-inline" aria-label="{{ review.rating }} out of 5">
+                      {% for star in "12345"|make_list %}
+                        {% if forloop.counter <= review.rating %}★{% else %}☆{% endif %}
+                      {% endfor %}
+                    </div>
+                  </div>
+                  <small class="text-muted">{{ review.created_at|date:"M d, Y" }}</small>
+                </div>
+                {% if review.comment %}
+                  <p class="small text-muted mb-0 mt-2">{{ review.comment|linebreaksbr }}</p>
+                {% endif %}
+              </article>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="small text-muted mb-0">No reviews yet. Be the first traveler to review this package.</p>
+        {% endif %}
+      </div>
 
     </div>
 

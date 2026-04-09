@@ -13,7 +13,7 @@ from django.utils.html import format_html
 
 from .models import (
     Activity, ActivityBooking, ActivityCategory, ActivityImage, ApprovalStatus, Booking, CustomUser, Destination,
-    HotSale, Package, PackageImage, PackageItinerary,
+    HotSale, Package, PackageImage, PackageItinerary, ActivityReview, PackageReview,
 )
 
 # Keep Django's nav sidebar enabled so navigation persists on changelists,
@@ -462,6 +462,22 @@ class ActivityBookingAdmin(admin.ModelAdmin):
         if len(name) <= 20:
             return name
         return f"{name[:20]}..."
+
+
+@admin.register(PackageReview)
+class PackageReviewAdmin(admin.ModelAdmin):
+    list_display = ('package', 'user', 'rating', 'created_at', 'updated_at')
+    list_filter = ('rating', 'created_at', 'updated_at')
+    search_fields = ('package__title', 'user__username', 'user__email', 'comment')
+    readonly_fields = ('created_at', 'updated_at')
+
+
+@admin.register(ActivityReview)
+class ActivityReviewAdmin(admin.ModelAdmin):
+    list_display = ('activity', 'user', 'rating', 'created_at', 'updated_at')
+    list_filter = ('rating', 'created_at', 'updated_at')
+    search_fields = ('activity__name', 'user__username', 'user__email', 'comment')
+    readonly_fields = ('created_at', 'updated_at')
 
 
 # ────────────────────────────────────────────────────────────────────

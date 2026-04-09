@@ -1,7 +1,15 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.utils import timezone
-from .models import ActivityBooking, ActivityCategory, Booking, CustomUser, Inquiry
+from .models import (
+    ActivityBooking,
+    ActivityCategory,
+    ActivityReview,
+    Booking,
+    CustomUser,
+    Inquiry,
+    PackageReview,
+)
 
 class SignUpForm(UserCreationForm):
     email = forms.EmailField(required=True)
@@ -188,6 +196,54 @@ class ActivityBookingForm(forms.ModelForm):
 
         cleaned_data['transaction_reference'] = transaction_reference
         return cleaned_data
+
+
+class PackageReviewForm(forms.ModelForm):
+    class Meta:
+        model = PackageReview
+        fields = ('rating', 'comment')
+        widgets = {
+            'rating': forms.Select(
+                choices=[
+                    (5, '5 - Excellent'),
+                    (4, '4 - Very good'),
+                    (3, '3 - Good'),
+                    (2, '2 - Fair'),
+                    (1, '1 - Poor'),
+                ],
+                attrs={'class': 'form-control'},
+            ),
+            'comment': forms.Textarea(
+                attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Share your experience (optional).'}
+            ),
+        }
+
+    def clean_comment(self):
+        return (self.cleaned_data.get('comment') or '').strip()
+
+
+class ActivityReviewForm(forms.ModelForm):
+    class Meta:
+        model = ActivityReview
+        fields = ('rating', 'comment')
+        widgets = {
+            'rating': forms.Select(
+                choices=[
+                    (5, '5 - Excellent'),
+                    (4, '4 - Very good'),
+                    (3, '3 - Good'),
+                    (2, '2 - Fair'),
+                    (1, '1 - Poor'),
+                ],
+                attrs={'class': 'form-control'},
+            ),
+            'comment': forms.Textarea(
+                attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Share your experience (optional).'}
+            ),
+        }
+
+    def clean_comment(self):
+        return (self.cleaned_data.get('comment') or '').strip()
 
 
 class ActivityCategoryForm(forms.ModelForm):

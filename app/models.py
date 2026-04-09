@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.core.files.storage import default_storage
 from django.db import models
+from django.db.models import Avg
 from django.db.models.signals import post_delete, post_save, pre_save
 from django.dispatch import receiver
 from django.urls import reverse
@@ -218,6 +219,13 @@ class Activity(models.Model):
     name = models.CharField(max_length=150)
     description = models.TextField()
     price = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)])
+    rating = models.DecimalField(
+        max_digits=2,
+        decimal_places=1,
+        default=0.0,
+        validators=[MinValueValidator(0.0), MaxValueValidator(5.0)],
+        help_text='Activity rating from 0.0 to 5.0'
+    )
     max_group_size = models.PositiveIntegerField(blank=True, null=True)
     equipment_provided = models.TextField(blank=True)
     safety_notes = models.TextField(blank=True)
@@ -519,6 +527,113 @@ class ActivityBooking(models.Model):
             self.paid_at = None
 
         super().save(*args, **kwargs)
+
+
+class PackageReview(models.Model):
+    package = models.ForeignKey(Package, on_delete=models.CASCADE, related_name='reviews')
+    user = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='package_reviews')
+    rating = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+    comment = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['package', 'user'],
+                name='unique_package_review_per_user',
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.package.title} review by {self.user or 'Anonymous'}"
+
+    def clean(self):
+        if not self.user_id:
+            raise ValidationError({'user': 'A logged-in user is required to submit a review.'})
+
+        has_booking = Booking.objects.filter(
+            user_id=self.user_id,
+            package_id=self.package_id,
+        ).visible_in_listings().exists()
+        if not has_booking:
+            raise ValidationError({'user': 'Only users who booked this package can submit a review.'})
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+        _sync_package_average_rating(self.package_id)
+
+    def delete(self, *args, **kwargs):
+        package_id = self.package_id
+        super().delete(*args, **kwargs)
+        _sync_package_average_rating(package_id)
+
+
+class ActivityReview(models.Model):
+    activity = models.ForeignKey(Activity, on_delete=models.CASCADE, related_name='reviews')
+    user = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='activity_reviews')
+    rating = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+    comment = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['activity', 'user'],
+                name='unique_activity_review_per_user',
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.activity.name} review by {self.user or 'Anonymous'}"
+
+    def clean(self):
+        if not self.user_id:
+            raise ValidationError({'user': 'A logged-in user is required to submit a review.'})
+
+        has_booking = ActivityBooking.objects.filter(
+            user_id=self.user_id,
+            activity_id=self.activity_id,
+        ).visible_in_listings().exists()
+        if not has_booking:
+            raise ValidationError({'user': 'Only users who booked this activity can submit a review.'})
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+        _sync_activity_average_rating(self.activity_id)
+
+    def delete(self, *args, **kwargs):
+        activity_id = self.activity_id
+        super().delete(*args, **kwargs)
+        _sync_activity_average_rating(activity_id)
+
+
+def _rounded_average_rating(queryset):
+    avg_rating = queryset.aggregate(avg_rating=Avg('rating')).get('avg_rating')
+    if avg_rating is None:
+        return 0
+    return round(float(avg_rating), 1)
+
+
+def _sync_package_average_rating(package_id):
+    if not package_id:
+        return
+    Package.objects.filter(pk=package_id).update(
+        rating=_rounded_average_rating(PackageReview.objects.filter(package_id=package_id))
+    )
+
+
+def _sync_activity_average_rating(activity_id):
+    if not activity_id:
+        return
+    Activity.objects.filter(pk=activity_id).update(
+        rating=_rounded_average_rating(ActivityReview.objects.filter(activity_id=activity_id))
+    )
 
 
 class Inquiry(models.Model):

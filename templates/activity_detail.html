@@ -46,6 +46,25 @@
       padding: 14px;
       margin-top: 16px;
     }
+    .review-card {
+      border: 1px solid #dce7f2;
+      border-radius: 12px;
+      background: #ffffff;
+      padding: 14px;
+      margin-top: 16px;
+    }
+    .review-item {
+      border: 1px solid #e3edf7;
+      border-radius: 10px;
+      padding: 10px;
+      background: #f9fcff;
+    }
+    .review-stars {
+      color: #b05f00;
+      letter-spacing: 0.05em;
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
     .book-card .form-label {
       font-size: 0.8rem;
       font-weight: 700;
@@ -106,6 +125,7 @@
             {% else %}
               <span class="meta-pill">${{ activity.price }}</span>
             {% endif %}
+            <div class="small text-muted mt-2">Rating: <strong>{{ activity.rating|floatformat:1 }}/5</strong> ({{ activity_reviews|length }} review{{ activity_reviews|length|pluralize }})</div>
           </div>
         </div>
 
@@ -155,6 +175,7 @@
 
           <form method="post" class="d-grid gap-2">
             {% csrf_token %}
+            <input type="hidden" name="form_type" value="booking">
 
             <label for="id_full_name" class="form-label">Full name</label>
             {{ booking_form.full_name }}
@@ -218,6 +239,65 @@
               <a href="{% url 'login' %}" class="btn btn-outline-primary w-100 mt-2">Login to Book</a>
             {% endif %}
           </form>
+        </div>
+
+        <div class="review-card">
+          <h3 class="h5 mb-2">Traveler Reviews</h3>
+          <p class="small text-muted mb-3">Share your experience after booking this activity.</p>
+
+          {% if can_review_activity %}
+            <form method="post" class="d-grid gap-2 mb-3">
+              {% csrf_token %}
+              <input type="hidden" name="form_type" value="review">
+
+              <label for="id_rating" class="form-label">Your rating</label>
+              {{ review_form.rating }}
+              {% if review_form.rating.errors %}<div class="text-danger small">{{ review_form.rating.errors|striptags }}</div>{% endif %}
+
+              <label for="id_comment" class="form-label">Your comment <span class="text-muted">(optional)</span></label>
+              {{ review_form.comment }}
+              {% if review_form.comment.errors %}<div class="text-danger small">{{ review_form.comment.errors|striptags }}</div>{% endif %}
+
+              <button type="submit" class="btn btn-outline-success w-100">
+                {% if user_activity_review %}Update Review{% else %}Submit Review{% endif %}
+              </button>
+            </form>
+          {% elif user.is_authenticated %}
+            <div class="alert alert-info py-2">You can review this activity after you complete a booking.</div>
+          {% else %}
+            <a href="{% url 'login' %}" class="btn btn-outline-primary w-100 mb-3">Login to Write a Review</a>
+          {% endif %}
+
+          {% if activity_reviews %}
+            <div class="d-grid gap-2">
+              {% for review in activity_reviews|slice:":8" %}
+                <article class="review-item">
+                  <div class="d-flex justify-content-between align-items-start gap-2">
+                    <div>
+                      <div class="fw-semibold">
+                        {% if review.user %}
+                          {{ review.user.get_full_name|default:review.user.username }}
+                        {% else %}
+                          Traveler
+                        {% endif %}
+                      </div>
+                      <div class="review-stars" aria-label="{{ review.rating }} out of 5">
+                        {% for star in "12345"|make_list %}
+                          {% if forloop.counter <= review.rating %}★{% else %}☆{% endif %}
+                        {% endfor %}
+                      </div>
+                    </div>
+                    <small class="text-muted">{{ review.created_at|date:"M d, Y" }}</small>
+                  </div>
+                  {% if review.comment %}
+                    <p class="small text-muted mb-0 mt-2">{{ review.comment|linebreaksbr }}</p>
+                  {% endif %}
+                </article>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p class="small text-muted mb-0">No reviews yet. Be the first traveler to review this activity.</p>
+          {% endif %}
         </div>
 
         <div class="d-flex flex-wrap gap-2 mt-3">

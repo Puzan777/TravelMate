@@ -21,12 +21,46 @@ from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
-from .forms import ActivityBookingForm, ActivityCategoryForm, SignUpForm, LoginForm, BookingForm, InquiryForm
-from .models import Activity, ActivityBooking, ActivityCategory, ApprovalStatus, Booking, CustomUser, Destination, HotSale, Inquiry, Package
+from .forms import (
+    ActivityBookingForm,
+    ActivityCategoryForm,
+    ActivityReviewForm,
+    BookingForm,
+    InquiryForm,
+    LoginForm,
+    PackageReviewForm,
+    SignUpForm,
+)
+from .models import (
+    Activity,
+    ActivityBooking,
+    ActivityCategory,
+    ActivityReview,
+    ApprovalStatus,
+    Booking,
+    CustomUser,
+    Destination,
+    HotSale,
+    Inquiry,
+    Package,
+    PackageReview,
+)
 
 
 def _request_param(request, name):
     return request.POST.get(name) or request.GET.get(name)
+
+
+def _can_user_review_package(user, package):
+    if not user.is_authenticated:
+        return False
+    return Booking.objects.filter(user=user, package=package).visible_in_listings().exists()
+
+
+def _can_user_review_activity(user, activity):
+    if not user.is_authenticated:
+        return False
+    return ActivityBooking.objects.filter(user=user, activity=activity).visible_in_listings().exists()
 
 
 def _extract_booking_target_from_token(token):
@@ -523,6 +557,8 @@ def activity_detail(request, pk):
     booking_unit_price = active_hot_sale.sale_price if active_hot_sale else activity.price
     blocked_dates = list(activity.unavailable_dates.filter(date__gte=timezone.localdate()).order_by('date'))
     blocked_dates_iso = [entry.date.isoformat() for entry in blocked_dates]
+    activity_reviews = activity.reviews.select_related('user').all()
+    can_review_activity = _can_user_review_activity(request.user, activity)
 
     booking_initial = {'travel_date': timezone.localdate(), 'number_of_people': 1}
     if request.user.is_authenticated:
@@ -531,38 +567,74 @@ def activity_detail(request, pk):
             'email': request.user.email,
         })
 
+    user_activity_review = None
+    if request.user.is_authenticated:
+        user_activity_review = activity_reviews.filter(user=request.user).first()
+
+    review_initial = {}
+    if user_activity_review:
+        review_initial = {
+            'rating': user_activity_review.rating,
+            'comment': user_activity_review.comment,
+        }
+
     if request.method == 'POST':
-        if not request.user.is_authenticated:
-            return redirect('login')
+        form_type = request.POST.get('form_type', 'booking')
 
-        booking_form = ActivityBookingForm(request.POST, activity=activity)
-        if booking_form.is_valid():
-            activity_booking = booking_form.save(commit=False)
-            activity_booking.activity = activity
-            activity_booking.user = request.user
-            activity_booking.save()
-            _send_new_activity_booking_emails(activity_booking)
-            if activity_booking.payment_method == ActivityBooking.PaymentMethod.ESEWA:
-                payment_request, payment_error = _build_activity_esewa_payment_request(request, activity_booking)
-                if payment_error:
-                    activity_booking.payment_status = ActivityBooking.PaymentStatus.FAILED
-                    activity_booking.save()
-                    messages.error(request, f'Could not start eSewa payment: {payment_error}')
-                    return redirect('activity_detail', pk=activity.pk)
+        if form_type == 'review':
+            if not request.user.is_authenticated:
+                return redirect('login')
 
-                return render(request, 'esewa_redirect.html', {
-                    'booking': activity_booking,
-                    'item_name': activity.name,
-                    'item_type': 'activity',
-                    'cancel_url': reverse('activity_detail', kwargs={'pk': activity.pk}),
-                    'esewa_payment_url': payment_request['payment_url'],
-                    'esewa_payload': payment_request['payment_payload'],
-                })
+            if not can_review_activity:
+                messages.error(request, 'You can review this activity only after making a booking.')
+                return redirect('activity_detail', pk=activity.pk)
 
-            messages.success(request, 'Your activity booking request has been submitted successfully.')
-            return redirect('activity_detail', pk=activity.pk)
+            review_form = ActivityReviewForm(request.POST, instance=user_activity_review)
+            booking_form = ActivityBookingForm(initial=booking_initial, activity=activity)
+            if review_form.is_valid():
+                activity_review = review_form.save(commit=False)
+                activity_review.activity = activity
+                activity_review.user = request.user
+                activity_review.save()
+                success_message = 'Your activity review was submitted successfully.'
+                if user_activity_review:
+                    success_message = 'Your activity review was updated successfully.'
+                messages.success(request, success_message)
+                return redirect('activity_detail', pk=activity.pk)
+        else:
+            if not request.user.is_authenticated:
+                return redirect('login')
+
+            booking_form = ActivityBookingForm(request.POST, activity=activity)
+            review_form = ActivityReviewForm(initial=review_initial, instance=user_activity_review)
+            if booking_form.is_valid():
+                activity_booking = booking_form.save(commit=False)
+                activity_booking.activity = activity
+                activity_booking.user = request.user
+                activity_booking.save()
+                _send_new_activity_booking_emails(activity_booking)
+                if activity_booking.payment_method == ActivityBooking.PaymentMethod.ESEWA:
+                    payment_request, payment_error = _build_activity_esewa_payment_request(request, activity_booking)
+                    if payment_error:
+                        activity_booking.payment_status = ActivityBooking.PaymentStatus.FAILED
+                        activity_booking.save()
+                        messages.error(request, f'Could not start eSewa payment: {payment_error}')
+                        return redirect('activity_detail', pk=activity.pk)
+
+                    return render(request, 'esewa_redirect.html', {
+                        'booking': activity_booking,
+                        'item_name': activity.name,
+                        'item_type': 'activity',
+                        'cancel_url': reverse('activity_detail', kwargs={'pk': activity.pk}),
+                        'esewa_payment_url': payment_request['payment_url'],
+                        'esewa_payload': payment_request['payment_payload'],
+                    })
+
+                messages.success(request, 'Your activity booking request has been submitted successfully.')
+                return redirect('activity_detail', pk=activity.pk)
     else:
         booking_form = ActivityBookingForm(initial=booking_initial, activity=activity)
+        review_form = ActivityReviewForm(initial=review_initial, instance=user_activity_review)
 
     return render(request, 'activity_detail.html', {
         'activity': activity,
@@ -572,6 +644,10 @@ def activity_detail(request, pk):
         'booking_unit_price': booking_unit_price,
         'blocked_dates': blocked_dates,
         'blocked_dates_iso': blocked_dates_iso,
+        'review_form': review_form,
+        'activity_reviews': activity_reviews,
+        'can_review_activity': can_review_activity,
+        'user_activity_review': user_activity_review,
     })
 
 
@@ -589,9 +665,22 @@ def package_detail(request, slug):
     active_hot_sale = package.hot_sale_entries.filter(is_active=True).order_by('-updated_at', '-created_at').first()
     booking_unit_price = active_hot_sale.sale_price if active_hot_sale else package.price
     open_booking_box = request.method == 'GET' and request.GET.get('open_booking') in {'1', 'true', 'yes'}
+    package_reviews = package.reviews.select_related('user').all()
+    can_review_package = _can_user_review_package(request.user, package)
 
     if request.user.is_authenticated:
         is_favorite = request.user.favorite_packages.filter(pk=package.pk).exists()
+
+    user_package_review = None
+    if request.user.is_authenticated:
+        user_package_review = package_reviews.filter(user=request.user).first()
+
+    review_initial = {}
+    if user_package_review:
+        review_initial = {
+            'rating': user_package_review.rating,
+            'comment': user_package_review.comment,
+        }
 
     booking_initial = {'travel_date': timezone.localdate(), 'number_of_people': 1}
     inquiry_initial = {}
@@ -614,6 +703,7 @@ def package_detail(request, slug):
 
             booking_form = BookingForm(request.POST, package=package)
             inquiry_form = InquiryForm(initial=inquiry_initial)
+            review_form = PackageReviewForm(initial=review_initial, instance=user_package_review)
             if booking_form.is_valid():
                 booking = booking_form.save(commit=False)
                 booking.package = package
@@ -642,6 +732,7 @@ def package_detail(request, slug):
         elif form_type == 'inquiry':
             booking_form = BookingForm(initial=booking_initial, package=package)
             inquiry_form = InquiryForm(request.POST)
+            review_form = PackageReviewForm(initial=review_initial, instance=user_package_review)
             if inquiry_form.is_valid():
                 inquiry = inquiry_form.save(commit=False)
                 inquiry.package = package
@@ -650,17 +741,41 @@ def package_detail(request, slug):
                 inquiry.save()
                 messages.success(request, 'Your inquiry has been sent. Our team will contact you soon.')
                 return redirect('package_detail', slug=slug)
+        elif form_type == 'review':
+            if not request.user.is_authenticated:
+                return redirect('login')
+
+            if not can_review_package:
+                messages.error(request, 'You can review this package only after making a booking.')
+                return redirect('package_detail', slug=slug)
+
+            booking_form = BookingForm(initial=booking_initial, package=package)
+            inquiry_form = InquiryForm(initial=inquiry_initial)
+            review_form = PackageReviewForm(request.POST, instance=user_package_review)
+            if review_form.is_valid():
+                package_review = review_form.save(commit=False)
+                package_review.package = package
+                package_review.user = request.user
+                package_review.save()
+                success_message = 'Your package review was submitted successfully.'
+                if user_package_review:
+                    success_message = 'Your package review was updated successfully.'
+                messages.success(request, success_message)
+                return redirect('package_detail', slug=slug)
         else:
             booking_form = BookingForm(initial=booking_initial, package=package)
             inquiry_form = InquiryForm(initial=inquiry_initial)
+            review_form = PackageReviewForm(initial=review_initial, instance=user_package_review)
     else:
         booking_form = BookingForm(initial=booking_initial, package=package)
         inquiry_form = InquiryForm(initial=inquiry_initial)
+        review_form = PackageReviewForm(initial=review_initial, instance=user_package_review)
 
     return render(request, 'package_detail.html', {
         'package': package,
         'booking_form': booking_form,
         'inquiry_form': inquiry_form,
+        'review_form': review_form,
         'is_favorite': is_favorite,
         'itinerary_days': itinerary_days,
         'blocked_dates': blocked_dates,
@@ -668,6 +783,9 @@ def package_detail(request, slug):
         'active_hot_sale': active_hot_sale,
         'booking_unit_price': booking_unit_price,
         'open_booking_box': open_booking_box,
+        'package_reviews': package_reviews,
+        'can_review_package': can_review_package,
+        'user_package_review': user_package_review,
     })
 
 
