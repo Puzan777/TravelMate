@@ -58,6 +58,40 @@
       -webkit-box-orient: vertical;
       overflow: hidden;
     }
+    .sale-inline-link {
+      display: inline-block;
+      margin-top: 6px;
+      font-size: 0.84rem;
+      font-weight: 700;
+      color: #0a4f8a;
+      text-decoration: none;
+    }
+    .sale-inline-link:hover {
+      color: #0b3d69;
+      text-decoration: underline;
+    }
+    .sale-actions {
+      margin-top: auto;
+      padding-top: 12px;
+      border-top: 1px solid rgba(15, 23, 42, 0.08);
+    }
+    .sale-action-btn {
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      border: none;
+      border-radius: 12px;
+      background: #0a4f8a;
+      color: #fff;
+      font-weight: 700;
+      padding: 10px 12px;
+      text-decoration: none;
+    }
+    .sale-action-btn:hover {
+      background: #0b3d69;
+      color: #fff;
+    }
   </style>
 
   <div class="row g-4">
@@ -81,6 +115,11 @@
                   <div class="small text-muted">{{ sale.package.destination.name }}</div>
                 {% elif sale.activity and sale.activity.category %}
                   <div class="small text-muted">{{ sale.activity.category.name }}</div>
+                {% endif %}
+                {% if sale.package %}
+                  <a href="{{ sale.package.get_absolute_url }}" class="sale-inline-link" style="display:inline-block !important; background:#0a4f8a !important; color:#ffffff !important; padding:6px 10px !important; border-radius:8px !important; text-decoration:none !important; margin-top:8px !important;">View Details</a>
+                {% elif sale.activity %}
+                  <a href="{% url 'activity_detail' sale.activity.pk %}" class="sale-inline-link" style="display:inline-block !important; background:#0a4f8a !important; color:#ffffff !important; padding:6px 10px !important; border-radius:8px !important; text-decoration:none !important; margin-top:8px !important;">View Details</a>
                 {% endif %}
               </div>
               <span class="badge rounded-pill text-bg-warning text-dark px-3 py-2">Hot Sale</span>
@@ -116,11 +155,11 @@
               <div class="sale-note small mb-4">{{ sale.note }}</div>
             {% endif %}
 
-            <div class="mt-auto d-flex gap-2">
+            <div class="sale-actions">
               {% if sale.package %}
-                <a href="{{ sale.package.get_absolute_url }}" class="btn btn-primary flex-grow-1">View Package</a>
+                <a href="{{ sale.package.get_absolute_url }}" class="sale-action-btn">View Details</a>
               {% else %}
-                <span class="btn btn-outline-secondary flex-grow-1 disabled">Activity Offer</span>
+                <a href="{% url 'activity_detail' sale.activity.pk %}" class="sale-action-btn">View Details</a>
               {% endif %}
             </div>
           </div>

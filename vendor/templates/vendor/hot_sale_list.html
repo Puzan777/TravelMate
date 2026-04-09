@@ -78,6 +78,11 @@
             {% endif %}
           </td>
           <td class="text-end">
+            {% if hot_sale.package %}
+            <a href="{{ hot_sale.package.get_absolute_url }}" class="vd-btn-outline" style="padding: 4px 10px; font-size: 0.76rem;">View Details</a>
+            {% elif hot_sale.activity %}
+            <a href="{% url 'activity_detail' hot_sale.activity.pk %}" class="vd-btn-outline" style="padding: 4px 10px; font-size: 0.76rem;">View Details</a>
+            {% endif %}
             <a href="{% url 'vendor:hot_sale_edit' hot_sale.pk %}" class="vd-btn-primary" style="padding: 4px 10px; font-size: 0.76rem;">Edit</a>
           </td>
         </tr>

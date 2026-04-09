@@ -240,6 +240,7 @@
           <th>Original</th>
           <th>Sale Price</th>
           <th>Status</th>
+          <th class="text-end">Action</th>
         </tr>
       </thead>
       <tbody>
@@ -254,6 +255,13 @@
               <span class="vd-badge vd-badge-success">Active</span>
             {% else %}
               <span class="vd-badge vd-badge-muted">Inactive</span>
+            {% endif %}
+          </td>
+          <td class="text-end">
+            {% if sale.package %}
+              <a href="{{ sale.package.get_absolute_url }}" class="vd-btn-outline" style="padding: 3px 10px; font-size: 0.76rem;">View Details</a>
+            {% elif sale.activity %}
+              <a href="{% url 'activity_detail' sale.activity.pk %}" class="vd-btn-outline" style="padding: 3px 10px; font-size: 0.76rem;">View Details</a>
             {% endif %}
           </td>
         </tr>
