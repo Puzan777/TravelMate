@@ -117,9 +117,9 @@
                   <div class="small text-muted">{{ sale.activity.category.name }}</div>
                 {% endif %}
                 {% if sale.package %}
-                  <a href="{{ sale.package.get_absolute_url }}" class="sale-inline-link" style="display:inline-block !important; background:#0a4f8a !important; color:#ffffff !important; padding:6px 10px !important; border-radius:8px !important; text-decoration:none !important; margin-top:8px !important;">View Details</a>
+                  <a href="{{ sale.package.get_absolute_url }}?hot_sale=1" class="sale-inline-link" style="display:inline-block !important; background:#0a4f8a !important; color:#ffffff !important; padding:6px 10px !important; border-radius:8px !important; text-decoration:none !important; margin-top:8px !important;">View Details</a>
                 {% elif sale.activity %}
-                  <a href="{% url 'activity_detail' sale.activity.pk %}" class="sale-inline-link" style="display:inline-block !important; background:#0a4f8a !important; color:#ffffff !important; padding:6px 10px !important; border-radius:8px !important; text-decoration:none !important; margin-top:8px !important;">View Details</a>
+                  <a href="{% url 'activity_detail' sale.activity.pk %}?hot_sale=1" class="sale-inline-link" style="display:inline-block !important; background:#0a4f8a !important; color:#ffffff !important; padding:6px 10px !important; border-radius:8px !important; text-decoration:none !important; margin-top:8px !important;">View Details</a>
                 {% endif %}
               </div>
               <span class="badge rounded-pill text-bg-warning text-dark px-3 py-2">Hot Sale</span>
@@ -157,9 +157,9 @@
 
             <div class="sale-actions">
               {% if sale.package %}
-                <a href="{{ sale.package.get_absolute_url }}" class="sale-action-btn">View Details</a>
+                <a href="{{ sale.package.get_absolute_url }}?hot_sale=1" class="sale-action-btn">View Details</a>
               {% else %}
-                <a href="{% url 'activity_detail' sale.activity.pk %}" class="sale-action-btn">View Details</a>
+                <a href="{% url 'activity_detail' sale.activity.pk %}?hot_sale=1" class="sale-action-btn">View Details</a>
               {% endif %}
             </div>
           </div>

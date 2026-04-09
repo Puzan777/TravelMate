@@ -514,7 +514,7 @@
             <p><strong>Duration:</strong> {{ package.duration }}</p>
           </div>
 
-          {% if user.is_authenticated %}
+          {% if user.is_authenticated and is_customer_user %}
             <form method="post" action="{% url 'toggle_favorite_package' package.slug %}" class="mb-3">
               {% csrf_token %}
               {% if is_favorite %}
@@ -523,6 +523,9 @@
                 <button type="submit" class="btn btn-outline-primary w-100 favorite-btn">Add to Favorites</button>
               {% endif %}
             </form>
+          {% elif user.is_authenticated %}
+            <button type="button" class="btn btn-secondary w-100 favorite-btn mb-3" disabled aria-disabled="true">Add to Favorites</button>
+            <div class="alert alert-info py-2 mb-3">Only customers can add packages to favorites.</div>
           {% endif %}
 
           {% if messages %}
@@ -531,17 +534,21 @@
             {% endfor %}
           {% endif %}
 
-          <button class="btn btn-success w-100 booking-toggle-btn" type="button" data-bs-toggle="collapse" data-bs-target="#bookingBox" aria-expanded="{% if booking_form.errors or open_booking_box %}true{% else %}false{% endif %}" aria-controls="bookingBox">
-            Book This Trip
-          </button>
+          {% if can_book_package %}
+            <button class="btn btn-success w-100 booking-toggle-btn" type="button" data-bs-toggle="collapse" data-bs-target="#bookingBox" aria-expanded="{% if booking_form.errors or open_booking_box %}true{% else %}false{% endif %}" aria-controls="bookingBox">
+              Book This Trip
+            </button>
 
-          <div id="bookingBox" class="collapse{% if booking_form.errors or open_booking_box %} show{% endif %}">
-            <h6 class="sub-form-title">Booking Request</h6>
-            <div class="booking-panel">
-              <p class="booking-tip">Open the form only when needed, then submit your travel details for review.</p>
-              <form method="post" class="d-grid gap-2">
-                {% csrf_token %}
-                <input type="hidden" name="form_type" value="booking">
+            <div id="bookingBox" class="collapse{% if booking_form.errors or open_booking_box %} show{% endif %}">
+              <h6 class="sub-form-title">Booking Request</h6>
+              <div class="booking-panel">
+                <p class="booking-tip">Open the form only when needed, then submit your travel details for review.</p>
+                <form method="post" class="d-grid gap-2">
+                  {% csrf_token %}
+                  <input type="hidden" name="form_type" value="booking">
+                  {% if hot_sale_context %}
+                    <input type="hidden" name="hot_sale" value="1">
+                  {% endif %}
 
                 <label for="id_full_name" class="form-label mb-1">Full name</label>
                 {{ booking_form.full_name }}
@@ -619,26 +626,33 @@
                   <div class="text-danger small">{{ booking_form.emergency_contact.errors|striptags }}</div>
                 {% endif %}
 
-                {% if user.is_authenticated %}
-                  <button type="submit" class="btn btn-success w-100">Submit Booking</button>
-                {% else %}
-                  <a href="{% url 'login' %}" class="btn btn-outline-primary w-100">Login to Book</a>
-                {% endif %}
-              </form>
+                  {% if user.is_authenticated %}
+                    <button type="submit" class="btn btn-success w-100">Submit Booking</button>
+                  {% else %}
+                    <a href="{% url 'login' %}" class="btn btn-outline-primary w-100">Login to Book</a>
+                  {% endif %}
+                </form>
+              </div>
             </div>
-          </div>
+          {% elif user.is_authenticated %}
+            <button class="btn btn-secondary w-100 booking-toggle-btn" type="button" disabled aria-disabled="true">
+              Book This Trip
+            </button>
+            <div class="alert alert-info py-2 mt-2 mb-0">Only customers can book packages.</div>
+          {% endif %}
 
-          <button class="btn btn-outline-dark w-100 inquiry-toggle-btn" type="button" data-bs-toggle="collapse" data-bs-target="#inquiryBox" aria-expanded="{% if inquiry_form.errors %}true{% else %}false{% endif %}" aria-controls="inquiryBox">
-            Make an Inquiry
-          </button>
+          {% if can_submit_inquiry %}
+            <button class="btn btn-outline-dark w-100 inquiry-toggle-btn" type="button" data-bs-toggle="collapse" data-bs-target="#inquiryBox" aria-expanded="{% if inquiry_form.errors %}true{% else %}false{% endif %}" aria-controls="inquiryBox">
+              Make an Inquiry
+            </button>
 
-          <div id="inquiryBox" class="collapse{% if inquiry_form.errors %} show{% endif %}">
-            <h6 class="sub-form-title">Quick Inquiry</h6>
-            <div class="inquiry-panel">
-              <p class="inquiry-tip">Share your requirements and our team will get back to you quickly.</p>
-              <form method="post" class="d-grid gap-2">
-                {% csrf_token %}
-                <input type="hidden" name="form_type" value="inquiry">
+            <div id="inquiryBox" class="collapse{% if inquiry_form.errors %} show{% endif %}">
+              <h6 class="sub-form-title">Quick Inquiry</h6>
+              <div class="inquiry-panel">
+                <p class="inquiry-tip">Share your requirements and our team will get back to you quickly.</p>
+                <form method="post" class="d-grid gap-2">
+                  {% csrf_token %}
+                  <input type="hidden" name="form_type" value="inquiry">
 
                 <label for="id_full_name" class="form-label mb-1">Full name</label>
                 {{ inquiry_form.full_name }}
@@ -664,10 +678,16 @@
                   <div class="text-danger small">{{ inquiry_form.message.errors|striptags }}</div>
                 {% endif %}
 
-                <button type="submit" class="btn btn-dark w-100">Send Inquiry</button>
-              </form>
+                  <button type="submit" class="btn btn-dark w-100">Send Inquiry</button>
+                </form>
+              </div>
             </div>
-          </div>
+          {% elif user.is_authenticated %}
+            <button class="btn btn-secondary w-100 inquiry-toggle-btn" type="button" disabled aria-disabled="true">
+              Make an Inquiry
+            </button>
+            <div class="alert alert-info py-2 mt-2 mb-0">Only customers can send inquiries.</div>
+          {% endif %}
         </div>
       </div>
     </div>

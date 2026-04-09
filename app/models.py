@@ -3,6 +3,7 @@ from django.core.files.storage import default_storage
 from django.db import models
 from django.db.models import Avg
 from django.db.models.signals import post_delete, post_save, pre_save
+from django.db.models.signals import m2m_changed
 from django.dispatch import receiver
 from django.urls import reverse
 from django.core.exceptions import ValidationError
@@ -397,6 +398,10 @@ class HotSale(models.Model):
                 'sale_price': 'Hot sale price must be lower than the original price.'
             })
 
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
     @property
     def savings_amount(self):
         original_price = self.original_price
@@ -408,6 +413,15 @@ class HotSale(models.Model):
 class BookingQuerySet(models.QuerySet):
     def visible_in_listings(self):
         return self.filter(Booking.visible_in_listings_q())
+
+
+def _is_customer_account(user):
+    return (
+        user is not None
+        and user.role == CustomUser.Role.CUSTOMER
+        and not user.is_staff
+        and not user.is_superuser
+    )
 
 
 class Booking(models.Model):
@@ -450,20 +464,28 @@ class Booking(models.Model):
     def __str__(self):
         return f"{self.package.title} - {self.full_name} - {self.travel_date}"
 
+    def clean(self):
+        if self.user_id:
+            is_customer = (
+                self.user.role == CustomUser.Role.CUSTOMER
+                and not self.user.is_staff
+                and not self.user.is_superuser
+            )
+            if not is_customer:
+                raise ValidationError({'user': 'Only customers can book packages.'})
+
     def save(self, *args, **kwargs):
         if self.package_id and self.number_of_people:
-            package_price = self.package.price
-            active_hot_sale = self.package.hot_sale_entries.filter(is_active=True).order_by('-updated_at', '-created_at').first()
-            if active_hot_sale and active_hot_sale.sale_price is not None:
-                package_price = active_hot_sale.sale_price
-            if package_price is not None:
-                self.total_amount = package_price * self.number_of_people
+            should_compute_total = self.total_amount is None or self.total_amount <= 0
+            if should_compute_total and self.package.price is not None:
+                self.total_amount = self.package.price * self.number_of_people
 
         if self.payment_status == self.PaymentStatus.PAID and self.paid_at is None:
             self.paid_at = timezone.now()
         elif self.payment_status in (self.PaymentStatus.PENDING, self.PaymentStatus.FAILED):
             self.paid_at = None
 
+        self.full_clean()
         super().save(*args, **kwargs)
 
 
@@ -514,12 +536,9 @@ class ActivityBooking(models.Model):
 
     def save(self, *args, **kwargs):
         if self.activity_id and self.number_of_people:
-            activity_price = self.activity.price
-            active_hot_sale = self.activity.hot_sale_entries.filter(is_active=True).order_by('-updated_at', '-created_at').first()
-            if active_hot_sale and active_hot_sale.sale_price is not None:
-                activity_price = active_hot_sale.sale_price
-            if activity_price is not None:
-                self.total_amount = activity_price * self.number_of_people
+            should_compute_total = self.total_amount is None or self.total_amount <= 0
+            if should_compute_total and self.activity.price is not None:
+                self.total_amount = self.activity.price * self.number_of_people
 
         if self.payment_status == self.PaymentStatus.PAID and self.paid_at is None:
             self.paid_at = timezone.now()
@@ -650,8 +669,15 @@ class Inquiry(models.Model):
     class Meta:
         ordering = ['-created_at']
 
+    def clean(self):
+        if self.user_id and not _is_customer_account(self.user):
+            raise ValidationError({'user': 'Only customers can send inquiries.'})
+
     def save(self, *args, **kwargs):
         from django.utils import timezone
+
+        if self._state.adding and self.user_id and not _is_customer_account(self.user):
+            raise ValidationError({'user': 'Only customers can send inquiries.'})
 
         if self.admin_reply and self.replied_at is None:
             self.replied_at = timezone.now()
@@ -770,3 +796,19 @@ def _package_post_delete(sender, instance, **kwargs):
             lambda: PackageImage.objects.filter(image=file_name),
         ],
     )
+
+
+@receiver(m2m_changed, sender=CustomUser.favorite_packages.through)
+def _enforce_customer_favorite_access(sender, instance, action, reverse, pk_set, **kwargs):
+    if action != 'pre_add':
+        return
+
+    if reverse:
+        users = CustomUser.objects.filter(pk__in=pk_set)
+        has_disallowed_user = any(not _is_customer_account(user) for user in users)
+        if has_disallowed_user:
+            raise ValidationError('Only customers can add packages to favorites.')
+        return
+
+    if not _is_customer_account(instance):
+        raise ValidationError('Only customers can add packages to favorites.')

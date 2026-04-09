@@ -47,6 +47,9 @@
           <label class="vd-form-label">Sale Price</label>
           {{ form.sale_price }}
           <div class="text-danger small">{{ form.sale_price.errors }}</div>
+          {% if form.sale_price.help_text %}
+          <p class="small mb-0 mt-1" style="color: var(--vd-text-muted);">{{ form.sale_price.help_text }}</p>
+          {% endif %}
         </div>
         <div class="col-12">
           <label class="vd-form-label">Note</label>

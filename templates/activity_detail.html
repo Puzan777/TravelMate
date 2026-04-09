@@ -176,6 +176,9 @@
           <form method="post" class="d-grid gap-2">
             {% csrf_token %}
             <input type="hidden" name="form_type" value="booking">
+            {% if hot_sale_context %}
+              <input type="hidden" name="hot_sale" value="1">
+            {% endif %}
 
             <label for="id_full_name" class="form-label">Full name</label>
             {{ booking_form.full_name }}

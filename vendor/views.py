@@ -71,6 +71,34 @@ def _sync_package_cover_image(package):
 		package.save(update_fields=['image'])
 
 
+def _save_hot_sale_without_touching_base_price(form):
+	"""Persist hot sale while preserving the selected package/activity base price."""
+	hot_sale = form.save(commit=False)
+	target_model = None
+	target_id = None
+	original_price = None
+
+	if hot_sale.package_id:
+		target_model = Package
+		target_id = hot_sale.package_id
+	elif hot_sale.activity_id:
+		target_model = Activity
+		target_id = hot_sale.activity_id
+
+	if target_model and target_id:
+		locked_target = target_model.objects.select_for_update().only('price').get(pk=target_id)
+		original_price = locked_target.price
+
+	hot_sale.save()
+
+	if target_model and target_id and original_price is not None:
+		current_price = target_model.objects.filter(pk=target_id).values_list('price', flat=True).first()
+		if current_price != original_price:
+			target_model.objects.filter(pk=target_id).update(price=original_price)
+
+	return hot_sale
+
+
 def register(request):
 	if request.user.is_authenticated:
 		messages.info(request, 'You are already logged in. Please use another account for vendor registration.')
@@ -805,7 +833,7 @@ def hot_sale_create(request):
 		form = VendorHotSaleForm(request.POST, vendor_profile=vendor_profile)
 		if form.is_valid():
 			with transaction.atomic():
-				form.save()
+				_save_hot_sale_without_touching_base_price(form)
 			messages.success(request, 'Hot sale created successfully.')
 			return redirect('vendor:hot_sale_list')
 	else:
@@ -836,7 +864,7 @@ def hot_sale_edit(request, pk):
 		form = VendorHotSaleForm(request.POST, instance=hot_sale, vendor_profile=vendor_profile)
 		if form.is_valid():
 			with transaction.atomic():
-				form.save()
+				_save_hot_sale_without_touching_base_price(form)
 			messages.success(request, 'Hot sale updated successfully.')
 			return redirect('vendor:hot_sale_list')
 	else:

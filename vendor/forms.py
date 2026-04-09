@@ -188,6 +188,8 @@ class VendorHotSaleForm(forms.ModelForm):
         for field in self.fields.values():
             field.widget.attrs['class'] = 'form-control'
 
+        self.fields['sale_price'].help_text = 'Applies only to the hot sale. Original package/activity price remains unchanged.'
+
         self.fields['is_active'].widget.attrs.pop('class', None)
 
         package_qs = Package.objects.filter(is_active=True)

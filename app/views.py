@@ -5,6 +5,7 @@ import hashlib
 import hmac
 import json
 import re
+from functools import wraps
 from decimal import Decimal, InvalidOperation
 from urllib.error import URLError
 from urllib.parse import urlencode, urlparse
@@ -49,6 +50,45 @@ from .models import (
 
 def _request_param(request, name):
     return request.POST.get(name) or request.GET.get(name)
+
+
+def _is_hot_sale_context(request):
+    return str(_request_param(request, 'hot_sale') or '').strip().lower() in {'1', 'true', 'yes'}
+
+
+def _is_customer_user(user):
+    return (
+        user.is_authenticated
+        and user.role == CustomUser.Role.CUSTOMER
+        and not user.is_staff
+        and not user.is_superuser
+    )
+
+
+def customer_only(view_func=None, *, error_message='Only customers can book packages.'):
+    def decorator(func):
+        @wraps(func)
+        def _wrapped_view(request, *args, **kwargs):
+            if request.user.is_authenticated and not _is_customer_user(request.user):
+                messages.error(request, error_message)
+                return redirect(request.META.get('HTTP_REFERER') or reverse('home'))
+            return func(request, *args, **kwargs)
+
+        return _wrapped_view
+
+    if view_func is None:
+        return decorator
+    return decorator(view_func)
+
+
+@customer_only
+def _ensure_customer_booking_access(request):
+    return None
+
+
+@customer_only(error_message='Only customers can send inquiries.')
+def _ensure_customer_inquiry_access(request):
+    return None
 
 
 def _can_user_review_package(user, package):
@@ -552,7 +592,10 @@ def activity_detail(request, pk):
         is_active=True,
         approval_status=ApprovalStatus.APPROVED,
     )
-    active_hot_sale = activity.hot_sale_entries.filter(is_active=True).order_by('-updated_at', '-created_at').first()
+    hot_sale_context = _is_hot_sale_context(request)
+    active_hot_sale = None
+    if hot_sale_context:
+        active_hot_sale = activity.hot_sale_entries.filter(is_active=True).order_by('-updated_at', '-created_at').first()
     activity_primary_image = activity.images.first()
     booking_unit_price = active_hot_sale.sale_price if active_hot_sale else activity.price
     blocked_dates = list(activity.unavailable_dates.filter(date__gte=timezone.localdate()).order_by('date'))
@@ -605,12 +648,18 @@ def activity_detail(request, pk):
             if not request.user.is_authenticated:
                 return redirect('login')
 
+            blocked_response = _ensure_customer_booking_access(request)
+            if blocked_response:
+                return blocked_response
+
             booking_form = ActivityBookingForm(request.POST, activity=activity)
             review_form = ActivityReviewForm(initial=review_initial, instance=user_activity_review)
             if booking_form.is_valid():
                 activity_booking = booking_form.save(commit=False)
                 activity_booking.activity = activity
                 activity_booking.user = request.user
+                if booking_unit_price is not None and activity_booking.number_of_people:
+                    activity_booking.total_amount = booking_unit_price * activity_booking.number_of_people
                 activity_booking.save()
                 _send_new_activity_booking_emails(activity_booking)
                 if activity_booking.payment_method == ActivityBooking.PaymentMethod.ESEWA:
@@ -639,6 +688,7 @@ def activity_detail(request, pk):
     return render(request, 'activity_detail.html', {
         'activity': activity,
         'active_hot_sale': active_hot_sale,
+        'hot_sale_context': hot_sale_context,
         'activity_primary_image': activity_primary_image,
         'booking_form': booking_form,
         'booking_unit_price': booking_unit_price,
@@ -662,11 +712,17 @@ def package_detail(request, slug):
     itinerary_days = list(package.itinerary_entries.all())
     blocked_dates = list(package.unavailable_dates.filter(date__gte=timezone.localdate()).order_by('date'))
     blocked_dates_iso = [entry.date.isoformat() for entry in blocked_dates]
-    active_hot_sale = package.hot_sale_entries.filter(is_active=True).order_by('-updated_at', '-created_at').first()
+    hot_sale_context = _is_hot_sale_context(request)
+    active_hot_sale = None
+    if hot_sale_context:
+        active_hot_sale = package.hot_sale_entries.filter(is_active=True).order_by('-updated_at', '-created_at').first()
     booking_unit_price = active_hot_sale.sale_price if active_hot_sale else package.price
     open_booking_box = request.method == 'GET' and request.GET.get('open_booking') in {'1', 'true', 'yes'}
     package_reviews = package.reviews.select_related('user').all()
     can_review_package = _can_user_review_package(request.user, package)
+    is_customer_user = _is_customer_user(request.user) if request.user.is_authenticated else False
+    can_book_package = (not request.user.is_authenticated) or _is_customer_user(request.user)
+    can_submit_inquiry = (not request.user.is_authenticated) or is_customer_user
 
     if request.user.is_authenticated:
         is_favorite = request.user.favorite_packages.filter(pk=package.pk).exists()
@@ -701,6 +757,10 @@ def package_detail(request, slug):
             if not request.user.is_authenticated:
                 return redirect('login')
 
+            blocked_response = _ensure_customer_booking_access(request)
+            if blocked_response:
+                return blocked_response
+
             booking_form = BookingForm(request.POST, package=package)
             inquiry_form = InquiryForm(initial=inquiry_initial)
             review_form = PackageReviewForm(initial=review_initial, instance=user_package_review)
@@ -708,6 +768,8 @@ def package_detail(request, slug):
                 booking = booking_form.save(commit=False)
                 booking.package = package
                 booking.user = request.user
+                if booking_unit_price is not None and booking.number_of_people:
+                    booking.total_amount = booking_unit_price * booking.number_of_people
                 booking.save()
                 _send_new_booking_emails(booking)
                 if booking.payment_method == Booking.PaymentMethod.ESEWA:
@@ -730,6 +792,10 @@ def package_detail(request, slug):
                     messages.success(request, 'Your booking request has been submitted successfully.')
                 return redirect('package_detail', slug=slug)
         elif form_type == 'inquiry':
+            blocked_response = _ensure_customer_inquiry_access(request)
+            if blocked_response:
+                return blocked_response
+
             booking_form = BookingForm(initial=booking_initial, package=package)
             inquiry_form = InquiryForm(request.POST)
             review_form = PackageReviewForm(initial=review_initial, instance=user_package_review)
@@ -773,6 +839,7 @@ def package_detail(request, slug):
 
     return render(request, 'package_detail.html', {
         'package': package,
+        'hot_sale_context': hot_sale_context,
         'booking_form': booking_form,
         'inquiry_form': inquiry_form,
         'review_form': review_form,
@@ -785,6 +852,9 @@ def package_detail(request, slug):
         'open_booking_box': open_booking_box,
         'package_reviews': package_reviews,
         'can_review_package': can_review_package,
+        'can_book_package': can_book_package,
+        'can_submit_inquiry': can_submit_inquiry,
+        'is_customer_user': is_customer_user,
         'user_package_review': user_package_review,
     })
 
@@ -820,6 +890,7 @@ def profile_view(request):
     })
 
 
+@customer_only(error_message='Only customers can add packages to favorites.')
 @login_required
 def toggle_favorite_package(request, slug):
     if request.method != 'POST':
