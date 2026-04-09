@@ -1,109 +1,96 @@
-{% extends 'base.html' %}
+{% extends 'vendor/vendor_base.html' %}
 
-{% block title %}Vendor Inquiries{% endblock %}
+{% block page_title %}Inquiries{% endblock %}
+{% block nav_inquiries %}active{% endblock %}
 
-{% block extrastyle %}
-<style>
-  .filters-toolbar {
-    padding: 14px;
-    border-bottom: 1px solid #e9eef5;
-    background: #f8fbff;
-  }
-</style>
+{% block breadcrumb %}
+  <a href="{% url 'vendor:dashboard' %}">Dashboard</a>
+  <i class="bi bi-chevron-right"></i>
+  <span>Inquiries</span>
 {% endblock %}
 
-{% block content %}
-<div class="container py-5">
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-      <h1 class="h3 mb-1">Package Inquiries</h1>
-      <p class="text-muted mb-0">These inquiries are automatically routed to you from your package detail pages.</p>
-    </div>
-    <a href="{% url 'vendor:dashboard' %}" class="btn btn-outline-primary">Back to Dashboard</a>
+{% block vendor_content %}
+<div class="vd-page-header vd-fade-in">
+  <div>
+    <h1 class="vd-page-title">Package Inquiries</h1>
+    <p class="vd-page-subtitle">These inquiries are automatically routed to you from your package detail pages.</p>
+  </div>
+  <a href="?{{ export_query_string }}" class="vd-btn-primary"><i class="bi bi-download"></i> Export CSV</a>
+</div>
+
+<div class="vd-card vd-fade-in vd-fade-in-1">
+  <div class="vd-filters">
+    <form method="get" class="row g-2 align-items-end">
+      <div class="col-lg-5">
+        <label for="inquiry-search" class="vd-form-label">Search</label>
+        <input id="inquiry-search" type="text" name="q" value="{{ search_query }}" class="form-control" placeholder="Package, customer, email, message...">
+      </div>
+      <div class="col-lg-3 col-md-4">
+        <label for="inquiry-package" class="vd-form-label">Package</label>
+        <select id="inquiry-package" name="package" class="form-select">
+          <option value="all">All packages</option>
+          {% for package in package_options %}
+          <option value="{{ package.id }}"{% if selected_package == package.id|stringformat:'s' %} selected{% endif %}>{{ package.title }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-lg-2 col-md-4">
+        <label for="inquiry-reply" class="vd-form-label">Reply Status</label>
+        <select id="inquiry-reply" name="reply" class="form-select">
+          <option value="all"{% if selected_reply == 'all' %} selected{% endif %}>All</option>
+          <option value="pending"{% if selected_reply == 'pending' %} selected{% endif %}>Pending</option>
+          <option value="replied"{% if selected_reply == 'replied' %} selected{% endif %}>Replied</option>
+        </select>
+      </div>
+      <div class="col-lg-2 col-md-4 d-grid gap-2">
+        <button type="submit" class="vd-btn-primary" style="justify-content: center;">Apply</button>
+        <a href="{% url 'vendor:inquiry_list' %}" class="vd-btn-outline" style="justify-content: center;">Clear</a>
+      </div>
+    </form>
   </div>
 
-  <div class="card shadow-sm border-0">
-    <div class="filters-toolbar">
-      <form method="get" class="row g-2 align-items-end">
-        <div class="col-lg-5">
-          <label for="inquiry-search" class="form-label mb-1 small text-muted">Search</label>
-          <input id="inquiry-search" type="text" name="q" value="{{ search_query }}" class="form-control" placeholder="Package, customer, email, message...">
-        </div>
-        <div class="col-lg-3 col-md-4">
-          <label for="inquiry-package" class="form-label mb-1 small text-muted">Package</label>
-          <select id="inquiry-package" name="package" class="form-select">
-            <option value="all">All packages</option>
-            {% for package in package_options %}
-            <option value="{{ package.id }}"{% if selected_package == package.id|stringformat:'s' %} selected{% endif %}>{{ package.title }}</option>
-            {% endfor %}
-          </select>
-        </div>
-        <div class="col-lg-2 col-md-4">
-          <label for="inquiry-reply" class="form-label mb-1 small text-muted">Reply Status</label>
-          <select id="inquiry-reply" name="reply" class="form-select">
-            <option value="all"{% if selected_reply == 'all' %} selected{% endif %}>All</option>
-            <option value="pending"{% if selected_reply == 'pending' %} selected{% endif %}>Pending</option>
-            <option value="replied"{% if selected_reply == 'replied' %} selected{% endif %}>Replied</option>
-          </select>
-        </div>
-        <div class="col-lg-2 col-md-4 d-grid gap-2">
-          <button type="submit" class="btn btn-primary">Apply</button>
-          <a href="?{{ export_query_string }}" class="btn btn-success">Export CSV</a>
-          <a href="{% url 'vendor:inquiry_list' %}" class="btn btn-outline-secondary">Clear</a>
-        </div>
-      </form>
-    </div>
-
-    <div class="card-body p-0">
-      {% if inquiries %}
-      <div class="table-responsive">
-        <table class="table mb-0 align-middle">
-          <thead class="table-light">
-            <tr>
-              <th>Package</th>
-              <th>Customer</th>
-              <th>Email</th>
-              <th>Message</th>
-              <th>Status</th>
-              <th class="text-end">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for inquiry in inquiries %}
-            <tr>
-              <td>{{ inquiry.package.title }}</td>
-              <td>{{ inquiry.full_name }}</td>
-              <td>{{ inquiry.email }}</td>
-              <td>{{ inquiry.message|truncatechars:90 }}</td>
-              <td>
-                {% if inquiry.admin_reply %}
-                  <span class="badge text-bg-success">Replied</span>
-                {% else %}
-                  <span class="badge text-bg-warning">Pending</span>
-                {% endif %}
-              </td>
-              <td class="text-end">
-                <a href="{% url 'vendor:inquiry_reply' inquiry.pk %}" class="btn btn-sm btn-outline-secondary">
-                  {% if inquiry.admin_reply %}Edit Reply{% else %}Reply{% endif %}
-                </a>
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-      {% else %}
-      <div class="p-4 text-center text-muted">
-        {% if has_filters_applied %}
-        No inquiries match your current filters.
-        {% else %}
-        No inquiries yet for your packages.
-        {% endif %}
-      </div>
-      {% endif %}
-    </div>
+  {% if inquiries %}
+  <div class="vd-table-wrap">
+    <table class="table mb-0">
+      <thead>
+        <tr>
+          <th>Package</th>
+          <th>Customer</th>
+          <th>Email</th>
+          <th>Message</th>
+          <th>Status</th>
+          <th class="text-end">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for inquiry in inquiries %}
+        <tr>
+          <td class="fw-semibold" style="font-size: 0.85rem;">{{ inquiry.package.title }}</td>
+          <td style="font-size: 0.85rem;">{{ inquiry.full_name }}</td>
+          <td style="font-size: 0.85rem;">{{ inquiry.email }}</td>
+          <td style="font-size: 0.85rem; max-width: 220px;">{{ inquiry.message|truncatechars:70 }}</td>
+          <td>
+            {% if inquiry.admin_reply %}
+              <span class="vd-badge vd-badge-success"><i class="bi bi-check-circle-fill"></i> Replied</span>
+            {% else %}
+              <span class="vd-badge vd-badge-warning"><i class="bi bi-clock"></i> Pending</span>
+            {% endif %}
+          </td>
+          <td class="text-end">
+            <a href="{% url 'vendor:inquiry_reply' inquiry.pk %}" class="vd-btn-primary" style="padding: 4px 12px; font-size: 0.76rem;">
+              {% if inquiry.admin_reply %}Edit Reply{% else %}Reply{% endif %}
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
+  {% else %}
+  <div class="vd-empty">
+    <div><i class="bi bi-chat-square-text"></i></div>
+    <p>{% if has_filters_applied %}No inquiries match your current filters.{% else %}No inquiries yet for your packages.{% endif %}</p>
+  </div>
+  {% endif %}
 </div>
 {% endblock %}
-
-{% block footer %}{% endblock %}

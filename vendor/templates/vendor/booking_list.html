@@ -1,236 +1,162 @@
-{% extends 'base.html' %}
+{% extends 'vendor/vendor_base.html' %}
 
-{% block title %}Vendor Bookings{% endblock %}
+{% block page_title %}Bookings{% endblock %}
+{% block nav_bookings %}active{% endblock %}
 
-{% block extrastyle %}
-<style>
-  :root {
-    --vd-bg-page: #f3f6fb;
-    --vd-bg-surface: #ffffff;
-    --vd-text-muted: #5b6475;
-    --vd-line: #dbe2ec;
-    --vd-line-soft: #e9eef5;
-    --vd-shadow-soft: 0 10px 24px rgba(17, 24, 39, 0.06);
-  }
-  .vendor-wrap {
-    max-width: 1240px;
-  }
-  .vendor-shell {
-    background: var(--vd-bg-page);
-    border: 1px solid var(--vd-line-soft);
-    border-radius: 14px;
-    padding: 18px;
-  }
-  .page-hero {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 14px;
-    background: linear-gradient(120deg, #0b3d69, #0a4f8a 45%, #0e6bb7);
-    color: #fff;
-    border-radius: 14px;
-    padding: 18px 20px;
-    margin-bottom: 16px;
-    box-shadow: var(--vd-shadow-soft);
-  }
-  .page-hero h1 {
-    margin: 0;
-    font-size: 1.3rem;
-    color: #fff;
-  }
-  .page-hero p {
-    margin: 5px 0 0;
-    color: rgba(255, 255, 255, 0.9);
-    font-size: 0.9rem;
-  }
-  .hero-actions {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-  }
-  .hero-actions .btn {
-    border-radius: 999px;
-    font-weight: 600;
-  }
-  .list-card {
-    background: var(--vd-bg-surface);
-    border: 1px solid var(--vd-line);
-    border-radius: 12px;
-    box-shadow: var(--vd-shadow-soft);
-  }
-  .filters-toolbar {
-    padding: 14px;
-    border-bottom: 1px solid var(--vd-line-soft);
-    background: #f8fbff;
-  }
-  .table-wrap {
-    overflow-x: auto;
-  }
-  .table-wrap table {
-    margin-bottom: 0;
-  }
-  .table-wrap thead th {
-    color: var(--vd-text-muted);
-    font-weight: 700;
-    font-size: 0.82rem;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-    background: #f8fafc;
-    border-bottom: 1px solid var(--vd-line-soft);
-  }
-  .table-wrap tbody tr:hover {
-    background: #f8fbff;
-  }
-</style>
+{% block breadcrumb %}
+  <a href="{% url 'vendor:dashboard' %}">Dashboard</a>
+  <i class="bi bi-chevron-right"></i>
+  <span>Bookings</span>
 {% endblock %}
 
-{% block content %}
-<div class="container vendor-wrap py-4 py-md-5">
-  <div class="vendor-shell">
-    <section class="page-hero">
-      <div>
-        <h1>Package Bookings</h1>
-        <p>All bookings made for your packages.</p>
-      </div>
-      <div class="hero-actions">
-        <a href="{% url 'vendor:dashboard' %}" class="btn btn-outline-light">Dashboard</a>
-      </div>
-    </section>
+{% block vendor_content %}
+<div class="vd-page-header vd-fade-in">
+  <div>
+    <h1 class="vd-page-title">Package Bookings</h1>
+    <p class="vd-page-subtitle">All bookings made for your packages.</p>
+  </div>
+  <a href="?{{ export_query_string }}" class="vd-btn-primary"><i class="bi bi-download"></i> Export CSV</a>
+</div>
 
-    <div class="list-card">
-      <div class="filters-toolbar">
-      <form method="get" class="row g-2 align-items-end">
-        <div class="col-lg-4">
-        <label for="booking-search" class="form-label mb-1 small text-muted">Search</label>
+<div class="vd-card vd-fade-in vd-fade-in-1">
+  <!-- Filters -->
+  <div class="vd-filters">
+    <form method="get" class="row g-2 align-items-end">
+      <div class="col-lg-3">
+        <label for="booking-search" class="vd-form-label">Search</label>
         <input id="booking-search" type="text" name="q" value="{{ search_query }}" class="form-control" placeholder="Package, traveler, email, phone...">
-        </div>
-        <div class="col-lg-2 col-md-3">
-        <label for="booking-travel-from" class="form-label mb-1 small text-muted">Travel From</label>
+      </div>
+      <div class="col-lg-2 col-md-3">
+        <label for="booking-travel-from" class="vd-form-label">Travel From</label>
         <input id="booking-travel-from" type="date" name="travel_from" value="{{ selected_travel_from }}" class="form-control">
-        </div>
-        <div class="col-lg-2 col-md-3">
-        <label for="booking-travel-to" class="form-label mb-1 small text-muted">Travel To</label>
+      </div>
+      <div class="col-lg-2 col-md-3">
+        <label for="booking-travel-to" class="vd-form-label">Travel To</label>
         <input id="booking-travel-to" type="date" name="travel_to" value="{{ selected_travel_to }}" class="form-control">
-        </div>
-        <div class="col-lg-2 col-md-3">
-        <label for="booking-payment-status" class="form-label mb-1 small text-muted">Payment Status</label>
+      </div>
+      <div class="col-lg-2 col-md-3">
+        <label for="booking-payment-status" class="vd-form-label">Payment Status</label>
         <select id="booking-payment-status" name="payment_status" class="form-select">
           <option value="all">All statuses</option>
           {% for value, label in payment_status_options %}
           <option value="{{ value }}"{% if selected_payment_status == value %} selected{% endif %}>{{ label }}</option>
           {% endfor %}
         </select>
-        </div>
-        <div class="col-lg-2 col-md-3">
-        <label for="booking-payment-method" class="form-label mb-1 small text-muted">Payment Method</label>
+      </div>
+      <div class="col-lg-2 col-md-3">
+        <label for="booking-payment-method" class="vd-form-label">Payment Method</label>
         <select id="booking-payment-method" name="payment_method" class="form-select">
           <option value="all">All methods</option>
           {% for value, label in payment_method_options %}
           <option value="{{ value }}"{% if selected_payment_method == value %} selected{% endif %}>{{ label }}</option>
           {% endfor %}
         </select>
-        </div>
-        <div class="col-lg-3 col-md-4">
-        <label for="booking-sort" class="form-label mb-1 small text-muted">Sort By</label>
+      </div>
+      <div class="col-lg-3 col-md-4">
+        <label for="booking-sort" class="vd-form-label">Sort By</label>
         <select id="booking-sort" name="sort" class="form-select">
           {% for value, label in sort_options %}
           <option value="{{ value }}"{% if selected_sort == value %} selected{% endif %}>{{ label }}</option>
           {% endfor %}
         </select>
-        </div>
-        <div class="col-lg-9 d-flex gap-2 justify-content-end flex-wrap">
-        <button type="submit" class="btn btn-primary">Apply</button>
-        <a href="?{{ export_query_string }}" class="btn btn-success">Export CSV</a>
-        <a href="{% url 'vendor:booking_list' %}" class="btn btn-outline-secondary">Clear</a>
-        </div>
-      </form>
       </div>
-
-      {% if bookings %}
-      <div class="table-wrap">
-        <table class="table align-middle">
-          <thead>
-            <tr>
-              <th>Package</th>
-              <th>Traveler</th>
-              <th>Contact</th>
-              <th>Travel Date</th>
-              <th>People</th>
-              <th>Payment</th>
-              <th>Booked On</th>
-              <th class="text-end">Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for booking in bookings %}
-            <tr>
-              <td>
-                <div class="fw-semibold">{{ booking.package.title }}</div>
-                <div class="small text-muted">{{ booking.package.destination.name|default:'No destination' }}</div>
-              </td>
-              <td>
-                <div class="fw-semibold">{{ booking.full_name }}</div>
-                <div class="small text-muted">{% if booking.user %}Account: {{ booking.user.username }}{% else %}Guest booking{% endif %}</div>
-              </td>
-              <td>
-                <div>{{ booking.email }}</div>
-                <div class="small text-muted">{{ booking.phone }}</div>
-              </td>
-              <td>{{ booking.travel_date|date:"M d, Y" }}</td>
-              <td>{{ booking.number_of_people }}</td>
-              <td>
-                <div>{{ booking.get_payment_method_display }}</div>
-                <div class="small text-muted">{{ booking.get_payment_status_display }}</div>
-              </td>
-              <td>{{ booking.created_at|date:"M d, Y" }}</td>
-              <td class="text-end">Rs. {{ booking.total_amount }}</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+      <div class="col-lg-9 d-flex gap-2 justify-content-end flex-wrap">
+        <button type="submit" class="vd-btn-primary">Apply</button>
+        <a href="{% url 'vendor:booking_list' %}" class="vd-btn-outline">Clear</a>
       </div>
-
-      {% if page_obj.paginator.num_pages > 1 %}
-      <div class="px-3 py-3 border-top">
-        <nav aria-label="Bookings pagination">
-          <ul class="pagination pagination-sm mb-0 justify-content-end flex-wrap">
-            {% if page_obj.has_previous %}
-            <li class="page-item">
-              <a class="page-link" href="?{% if pagination_query_string %}{{ pagination_query_string }}&{% endif %}page={{ page_obj.previous_page_number }}">Previous</a>
-            </li>
-            {% else %}
-            <li class="page-item disabled"><span class="page-link">Previous</span></li>
-            {% endif %}
-
-            {% for number in page_obj.paginator.page_range %}
-            <li class="page-item{% if page_obj.number == number %} active{% endif %}">
-              <a class="page-link" href="?{% if pagination_query_string %}{{ pagination_query_string }}&{% endif %}page={{ number }}">{{ number }}</a>
-            </li>
-            {% endfor %}
-
-            {% if page_obj.has_next %}
-            <li class="page-item">
-              <a class="page-link" href="?{% if pagination_query_string %}{{ pagination_query_string }}&{% endif %}page={{ page_obj.next_page_number }}">Next</a>
-            </li>
-            {% else %}
-            <li class="page-item disabled"><span class="page-link">Next</span></li>
-            {% endif %}
-          </ul>
-        </nav>
-      </div>
-      {% endif %}
-      {% else %}
-      <div class="p-4 text-center text-muted">
-      {% if has_filters_applied %}
-      No bookings match your current filters.
-      {% else %}
-      No bookings yet for your packages.
-      {% endif %}
-      </div>
-      {% endif %}
-    </div>
+    </form>
   </div>
+
+  <!-- Table -->
+  {% if bookings %}
+  <div class="vd-table-wrap">
+    <table class="table mb-0">
+      <thead>
+        <tr>
+          <th>Package</th>
+          <th>Traveler</th>
+          <th>Contact</th>
+          <th>Travel Date</th>
+          <th class="text-center">People</th>
+          <th>Payment</th>
+          <th>Booked On</th>
+          <th class="text-end">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for booking in bookings %}
+        <tr>
+          <td>
+            <div class="fw-semibold" style="font-size: 0.85rem;">{{ booking.package.title }}</div>
+            <div class="small" style="color: var(--vd-text-muted);">{{ booking.package.destination.name|default:'—' }}</div>
+          </td>
+          <td>
+            <div class="fw-semibold" style="font-size: 0.85rem;">{{ booking.full_name }}</div>
+            <div class="small" style="color: var(--vd-text-muted);">{% if booking.user %}{{ booking.user.username }}{% else %}Guest{% endif %}</div>
+          </td>
+          <td>
+            <div style="font-size: 0.85rem;">{{ booking.email }}</div>
+            <div class="small" style="color: var(--vd-text-muted);">{{ booking.phone }}</div>
+          </td>
+          <td style="font-size: 0.85rem;">{{ booking.travel_date|date:"M d, Y" }}</td>
+          <td class="text-center" style="font-size: 0.85rem;">{{ booking.number_of_people }}</td>
+          <td>
+            <div style="font-size: 0.85rem;">{{ booking.get_payment_method_display }}</div>
+            <div>
+              {% if booking.payment_status == 'PAID' %}
+                <span class="vd-badge vd-badge-success">Paid</span>
+              {% elif booking.payment_status == 'PENDING' %}
+                <span class="vd-badge vd-badge-warning">Pending</span>
+              {% elif booking.payment_status == 'FAILED' %}
+                <span class="vd-badge vd-badge-danger">Failed</span>
+              {% elif booking.payment_status == 'REFUNDED' %}
+                <span class="vd-badge vd-badge-info">Refunded</span>
+              {% endif %}
+            </div>
+          </td>
+          <td style="font-size: 0.85rem;">{{ booking.created_at|date:"M d, Y" }}</td>
+          <td class="text-end fw-semibold" style="font-size: 0.85rem;">Rs. {{ booking.total_amount }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  {% if page_obj.paginator.num_pages > 1 %}
+  <div class="px-3 py-3 border-top" style="border-color: var(--vd-line-soft) !important;">
+    <nav aria-label="Bookings pagination">
+      <ul class="pagination pagination-sm mb-0 justify-content-end flex-wrap">
+        {% if page_obj.has_previous %}
+        <li class="page-item">
+          <a class="page-link" href="?{% if pagination_query_string %}{{ pagination_query_string }}&{% endif %}page={{ page_obj.previous_page_number }}">Previous</a>
+        </li>
+        {% else %}
+        <li class="page-item disabled"><span class="page-link">Previous</span></li>
+        {% endif %}
+
+        {% for number in page_obj.paginator.page_range %}
+        <li class="page-item{% if page_obj.number == number %} active{% endif %}">
+          <a class="page-link" href="?{% if pagination_query_string %}{{ pagination_query_string }}&{% endif %}page={{ number }}">{{ number }}</a>
+        </li>
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="?{% if pagination_query_string %}{{ pagination_query_string }}&{% endif %}page={{ page_obj.next_page_number }}">Next</a>
+        </li>
+        {% else %}
+        <li class="page-item disabled"><span class="page-link">Next</span></li>
+        {% endif %}
+      </ul>
+    </nav>
+  </div>
+  {% endif %}
+  {% else %}
+  <div class="vd-empty">
+    <div><i class="bi bi-calendar-x"></i></div>
+    <p>{% if has_filters_applied %}No bookings match your current filters.{% else %}No bookings yet for your packages.{% endif %}</p>
+  </div>
+  {% endif %}
 </div>
 {% endblock %}
-
-{% block footer %}{% endblock %}

@@ -1,0 +1,706 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block page_title %}Vendor Dashboard{% endblock %} — TravelMate</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    /* ===== DESIGN TOKENS — 60/30/10 ===== */
+    :root {
+      --vd-ocean:        #006989;
+      --vd-ocean-dark:   #004E6A;
+      --vd-ocean-deeper: #003B50;
+      --vd-ocean-light:  #E8F4F8;
+      --vd-cream:        #EAEBED;
+      --vd-cream-light:  #F5F5F6;
+      --vd-white:        #FFFFFF;
+      --vd-accent:       #E8A838;
+      --vd-accent-hover: #D4952E;
+      --vd-text:         #1A2B3C;
+      --vd-text-muted:   #6B7C8D;
+      --vd-text-light:   #94A3B3;
+      --vd-line:         #D5D8DC;
+      --vd-line-soft:    #E2E5E9;
+      --vd-shadow:       0 1px 3px rgba(0,0,0,.06), 0 4px 12px rgba(0,105,137,.06);
+      --vd-shadow-lg:    0 4px 24px rgba(0,105,137,.10);
+      --vd-radius:       12px;
+      --vd-radius-sm:    8px;
+      --vd-radius-lg:    16px;
+      --vd-sidebar-w:    260px;
+      --vd-topbar-h:     60px;
+      --vd-transition:   180ms ease;
+
+      /* Status */
+      --vd-success:      #059669;
+      --vd-success-bg:   #ECFDF5;
+      --vd-warning:      #D97706;
+      --vd-warning-bg:   #FFFBEB;
+      --vd-danger:       #DC2626;
+      --vd-danger-bg:    #FEF2F2;
+      --vd-info:         #2563EB;
+      --vd-info-bg:      #EFF6FF;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--vd-cream);
+      color: var(--vd-text);
+      overflow-x: hidden;
+    }
+
+    /* ===== TOP NAVBAR ===== */
+    .vd-topbar {
+      position: fixed;
+      top: 0;
+      left: var(--vd-sidebar-w);
+      right: 0;
+      height: var(--vd-topbar-h);
+      background: var(--vd-white);
+      border-bottom: 1px solid var(--vd-line-soft);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      z-index: 1020;
+      box-shadow: 0 1px 4px rgba(0,0,0,.04);
+      transition: left var(--vd-transition);
+    }
+
+    .vd-topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .vd-topbar-toggle {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      width: 38px;
+      height: 38px;
+      border: none;
+      background: var(--vd-ocean-light);
+      color: var(--vd-ocean);
+      border-radius: var(--vd-radius-sm);
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: background var(--vd-transition);
+    }
+    .vd-topbar-toggle:hover { background: var(--vd-cream); }
+
+    .vd-breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.85rem;
+      color: var(--vd-text-muted);
+      min-width: 0;
+    }
+    .vd-breadcrumb a {
+      color: var(--vd-ocean);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .vd-breadcrumb a:hover { text-decoration: underline; }
+    .vd-breadcrumb .bi { font-size: 0.7rem; }
+
+    .vd-topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .vd-topbar-user {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--vd-text);
+    }
+
+    .vd-topbar-avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--vd-ocean), var(--vd-ocean-dark));
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+
+    .vd-btn-logout {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--vd-line);
+      background: var(--vd-white);
+      color: var(--vd-text-muted);
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all var(--vd-transition);
+    }
+    .vd-btn-logout:hover {
+      border-color: var(--vd-danger);
+      color: var(--vd-danger);
+      background: var(--vd-danger-bg);
+    }
+
+    /* ===== SIDEBAR ===== */
+    .vd-sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: var(--vd-sidebar-w);
+      background: linear-gradient(180deg, var(--vd-ocean) 0%, var(--vd-ocean-dark) 60%, var(--vd-ocean-deeper) 100%);
+      color: rgba(255,255,255,.85);
+      display: flex;
+      flex-direction: column;
+      z-index: 1030;
+      transition: transform var(--vd-transition);
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    .vd-sidebar-brand {
+      padding: 18px 20px 14px;
+      border-bottom: 1px solid rgba(255,255,255,.12);
+    }
+
+    .vd-sidebar-brand a {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: #fff;
+    }
+
+    .vd-sidebar-logo {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: rgba(255,255,255,.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+
+    .vd-sidebar-brand-text {
+      font-size: 1.02rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      line-height: 1.2;
+    }
+    .vd-sidebar-brand-sub {
+      font-size: 0.68rem;
+      color: rgba(255,255,255,.55);
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .vd-sidebar-section {
+      padding: 16px 12px 8px;
+    }
+    .vd-sidebar-section-label {
+      padding: 0 8px 8px;
+      font-size: 0.66rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.4);
+    }
+
+    .vd-nav { display: flex; flex-direction: column; gap: 2px; }
+
+    .vd-nav-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 12px;
+      border-radius: var(--vd-radius-sm);
+      text-decoration: none;
+      font-size: 0.86rem;
+      font-weight: 500;
+      color: rgba(255,255,255,.75);
+      transition: all var(--vd-transition);
+      position: relative;
+    }
+
+    .vd-nav-link:hover {
+      background: rgba(255,255,255,.1);
+      color: #fff;
+    }
+
+    .vd-nav-link.active {
+      background: rgba(255,255,255,.15);
+      color: #fff;
+      font-weight: 700;
+    }
+    .vd-nav-link.active::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 6px;
+      bottom: 6px;
+      width: 3px;
+      border-radius: 0 3px 3px 0;
+      background: var(--vd-accent);
+    }
+
+    .vd-nav-link .bi {
+      font-size: 1.08rem;
+      width: 22px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .vd-nav-badge {
+      margin-left: auto;
+      background: var(--vd-accent);
+      color: #fff;
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 999px;
+      line-height: 1.4;
+    }
+
+    .vd-sidebar-footer {
+      margin-top: auto;
+      padding: 14px 20px 18px;
+      border-top: 1px solid rgba(255,255,255,.1);
+    }
+
+    .vd-sidebar-footer a {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: rgba(255,255,255,.6);
+      text-decoration: none;
+      font-size: 0.82rem;
+      font-weight: 500;
+      transition: color var(--vd-transition);
+    }
+    .vd-sidebar-footer a:hover { color: #fff; }
+
+    /* ===== MAIN CONTENT ===== */
+    .vd-main {
+      margin-left: var(--vd-sidebar-w);
+      padding-top: var(--vd-topbar-h);
+      min-height: 100vh;
+      transition: margin-left var(--vd-transition);
+    }
+
+    .vd-content {
+      padding: 24px;
+      max-width: 1400px;
+    }
+
+    /* ===== OVERLAY (mobile) ===== */
+    .vd-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.4);
+      z-index: 1025;
+    }
+    .vd-overlay.show { display: block; }
+
+    /* ===== PAGE HEADER ===== */
+    .vd-page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+
+    .vd-page-title {
+      margin: 0;
+      font-size: 1.45rem;
+      font-weight: 700;
+      color: var(--vd-text);
+      letter-spacing: -0.02em;
+    }
+
+    .vd-page-subtitle {
+      margin: 2px 0 0;
+      font-size: 0.88rem;
+      color: var(--vd-text-muted);
+    }
+
+    /* ===== SHARED CARD ===== */
+    .vd-card {
+      background: var(--vd-white);
+      border: 1px solid var(--vd-line-soft);
+      border-radius: var(--vd-radius);
+      box-shadow: var(--vd-shadow);
+    }
+    .vd-card-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--vd-line-soft);
+      background: var(--vd-cream-light);
+      border-radius: var(--vd-radius) var(--vd-radius) 0 0;
+    }
+    .vd-card-header h2 {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--vd-text);
+    }
+    .vd-card-body { padding: 20px; }
+    .vd-card-body.p-0 { padding: 0; }
+
+    /* ===== BUTTONS ===== */
+    .vd-btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 18px;
+      border: none;
+      border-radius: var(--vd-radius-sm);
+      background: var(--vd-ocean);
+      color: #fff;
+      font-size: 0.86rem;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all var(--vd-transition);
+    }
+    .vd-btn-primary:hover {
+      background: var(--vd-ocean-dark);
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(0,105,137,.25);
+    }
+
+    .vd-btn-accent {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 18px;
+      border: none;
+      border-radius: var(--vd-radius-sm);
+      background: var(--vd-accent);
+      color: #fff;
+      font-size: 0.86rem;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all var(--vd-transition);
+    }
+    .vd-btn-accent:hover {
+      background: var(--vd-accent-hover);
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(232,168,56,.3);
+    }
+
+    .vd-btn-outline {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 16px;
+      border: 1px solid var(--vd-line);
+      border-radius: var(--vd-radius-sm);
+      background: var(--vd-white);
+      color: var(--vd-text);
+      font-size: 0.86rem;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all var(--vd-transition);
+    }
+    .vd-btn-outline:hover {
+      border-color: var(--vd-ocean);
+      color: var(--vd-ocean);
+      background: var(--vd-ocean-light);
+    }
+
+    /* ===== FILTER TOOLBAR ===== */
+    .vd-filters {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--vd-line-soft);
+      background: var(--vd-cream-light);
+    }
+
+    /* ===== TABLE ===== */
+    .vd-table-wrap { overflow-x: auto; }
+    .vd-table-wrap table { margin-bottom: 0; }
+    .vd-table-wrap thead th {
+      color: var(--vd-text-muted);
+      font-weight: 700;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      background: var(--vd-ocean-light);
+      border-bottom: 1px solid var(--vd-line-soft);
+      white-space: nowrap;
+      padding: 10px 14px;
+    }
+    .vd-table-wrap tbody td {
+      padding: 10px 14px;
+      font-size: 0.88rem;
+      vertical-align: middle;
+      border-bottom: 1px solid var(--vd-line-soft);
+    }
+    .vd-table-wrap tbody tr {
+      transition: background var(--vd-transition);
+    }
+    .vd-table-wrap tbody tr:hover {
+      background: rgba(0, 105, 137, 0.03);
+    }
+
+    /* ===== STATUS BADGES ===== */
+    .vd-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 0.74rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .vd-badge-success { color: var(--vd-success); background: var(--vd-success-bg); }
+    .vd-badge-warning { color: var(--vd-warning); background: var(--vd-warning-bg); }
+    .vd-badge-danger  { color: var(--vd-danger);  background: var(--vd-danger-bg); }
+    .vd-badge-info    { color: var(--vd-info);     background: var(--vd-info-bg); }
+    .vd-badge-muted   { color: #6B7280; background: #F3F4F6; }
+
+    /* ===== ALERTS ===== */
+    .vd-alert {
+      padding: 14px 18px;
+      border-radius: var(--vd-radius-sm);
+      font-size: 0.88rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .vd-alert-success { background: var(--vd-success-bg); color: var(--vd-success); border: 1px solid #A7F3D0; }
+    .vd-alert-warning { background: var(--vd-warning-bg); color: #92400E; border: 1px solid #FDE68A; }
+    .vd-alert-danger  { background: var(--vd-danger-bg);  color: var(--vd-danger); border: 1px solid #FECACA; }
+    .vd-alert-info    { background: var(--vd-info-bg);    color: var(--vd-info); border: 1px solid #BFDBFE; }
+    .vd-alert .bi     { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+
+    /* ===== EMPTY STATE ===== */
+    .vd-empty {
+      padding: 40px 20px;
+      text-align: center;
+      color: var(--vd-text-muted);
+    }
+    .vd-empty .bi { font-size: 2rem; margin-bottom: 10px; opacity: .4; }
+    .vd-empty p { margin: 0; font-size: 0.9rem; }
+
+    /* ===== FORM STYLING ===== */
+    .vd-form-label {
+      font-size: 0.84rem;
+      font-weight: 600;
+      color: var(--vd-text);
+      margin-bottom: 4px;
+    }
+
+    .vd-content .form-control,
+    .vd-content .form-select {
+      border: 1px solid var(--vd-line);
+      border-radius: var(--vd-radius-sm);
+      font-size: 0.88rem;
+      padding: 8px 12px;
+      transition: border-color var(--vd-transition), box-shadow var(--vd-transition);
+    }
+    .vd-content .form-control:focus,
+    .vd-content .form-select:focus {
+      border-color: var(--vd-ocean);
+      box-shadow: 0 0 0 3px rgba(0,105,137,.12);
+    }
+
+    /* ===== ANIMATIONS ===== */
+    .vd-fade-in {
+      opacity: 0;
+      transform: translateY(8px);
+      animation: vdFadeIn 400ms ease forwards;
+    }
+    .vd-fade-in-1 { animation-delay: 50ms; }
+    .vd-fade-in-2 { animation-delay: 100ms; }
+    .vd-fade-in-3 { animation-delay: 150ms; }
+    .vd-fade-in-4 { animation-delay: 200ms; }
+
+    @keyframes vdFadeIn {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 991.98px) {
+      .vd-sidebar {
+        transform: translateX(-100%);
+      }
+      .vd-sidebar.show {
+        transform: translateX(0);
+      }
+      .vd-topbar {
+        left: 0;
+      }
+      .vd-main {
+        margin-left: 0;
+      }
+      .vd-topbar-toggle {
+        display: flex;
+      }
+    }
+
+    @media (max-width: 575.98px) {
+      .vd-content {
+        padding: 16px;
+      }
+      .vd-page-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+  </style>
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="vd-sidebar" id="vdSidebar">
+    <div class="vd-sidebar-brand">
+      <a href="{% url 'vendor:dashboard' %}">
+        <div class="vd-sidebar-logo"><i class="bi bi-compass"></i></div>
+        <div>
+          <div class="vd-sidebar-brand-text">TravelMate</div>
+          <div class="vd-sidebar-brand-sub">Vendor Portal</div>
+        </div>
+      </a>
+    </div>
+
+    <div class="vd-sidebar-section">
+      <div class="vd-sidebar-section-label">Main Menu</div>
+      <nav class="vd-nav">
+        <a class="vd-nav-link {% block nav_dashboard %}{% endblock %}" href="{% url 'vendor:dashboard' %}">
+          <i class="bi bi-grid-1x2"></i> Dashboard
+        </a>
+        <a class="vd-nav-link {% block nav_packages %}{% endblock %}" href="{% url 'vendor:package_list' %}">
+          <i class="bi bi-box-seam"></i> Packages
+        </a>
+        <a class="vd-nav-link {% block nav_activities %}{% endblock %}" href="{% url 'vendor:activity_list' %}">
+          <i class="bi bi-lightning"></i> Activities
+        </a>
+        <a class="vd-nav-link {% block nav_bookings %}{% endblock %}" href="{% url 'vendor:booking_list' %}">
+          <i class="bi bi-calendar-check"></i> Bookings
+        </a>
+      </nav>
+    </div>
+
+    <div class="vd-sidebar-section">
+      <div class="vd-sidebar-section-label">Marketing</div>
+      <nav class="vd-nav">
+        <a class="vd-nav-link {% block nav_hotsales %}{% endblock %}" href="{% url 'vendor:hot_sale_list' %}">
+          <i class="bi bi-fire"></i> Hot Sales
+        </a>
+        <a class="vd-nav-link {% block nav_inquiries %}{% endblock %}" href="{% url 'vendor:inquiry_list' %}">
+          <i class="bi bi-chat-dots"></i> Inquiries
+        </a>
+      </nav>
+    </div>
+
+    <div class="vd-sidebar-footer">
+      <a href="{% url 'home' %}"><i class="bi bi-globe2"></i> View Storefront</a>
+    </div>
+  </aside>
+
+  <!-- ===== OVERLAY (mobile) ===== -->
+  <div class="vd-overlay" id="vdOverlay"></div>
+
+  <!-- ===== TOP NAVBAR ===== -->
+  <header class="vd-topbar">
+    <div class="vd-topbar-left">
+      <button class="vd-topbar-toggle" id="vdToggle" aria-label="Toggle sidebar">
+        <i class="bi bi-list"></i>
+      </button>
+      <div class="vd-breadcrumb">
+        {% block breadcrumb %}
+          <a href="{% url 'vendor:dashboard' %}">Dashboard</a>
+        {% endblock %}
+      </div>
+    </div>
+    <div class="vd-topbar-right">
+      <div class="vd-topbar-user">
+        <div class="vd-topbar-avatar">
+          {{ request.user.username|make_list|first|upper }}
+        </div>
+        <span class="d-none d-sm-inline">{{ request.user.username }}</span>
+      </div>
+      <a class="vd-btn-logout" href="{% url 'logout' %}">
+        <i class="bi bi-box-arrow-right"></i>
+        <span class="d-none d-sm-inline">Logout</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- ===== MAIN CONTENT ===== -->
+  <main class="vd-main">
+    <div class="vd-content">
+      <!-- Django Messages -->
+      {% if messages %}
+        {% for message in messages %}
+          <div class="vd-alert vd-alert-{% if message.tags == 'error' %}danger{% elif message.tags %}{{ message.tags }}{% else %}info{% endif %}">
+            <i class="bi {% if message.tags == 'success' %}bi-check-circle-fill{% elif message.tags == 'error' %}bi-exclamation-triangle-fill{% elif message.tags == 'warning' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %}"></i>
+            <span>{{ message }}</span>
+          </div>
+        {% endfor %}
+      {% endif %}
+
+      {% block vendor_content %}{% endblock %}
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    (function() {
+      var sidebar = document.getElementById('vdSidebar');
+      var overlay = document.getElementById('vdOverlay');
+      var toggle  = document.getElementById('vdToggle');
+
+      function openSidebar() {
+        sidebar.classList.add('show');
+        overlay.classList.add('show');
+      }
+      function closeSidebar() {
+        sidebar.classList.remove('show');
+        overlay.classList.remove('show');
+      }
+
+      if (toggle) toggle.addEventListener('click', function() {
+        sidebar.classList.contains('show') ? closeSidebar() : openSidebar();
+      });
+      if (overlay) overlay.addEventListener('click', closeSidebar);
+    })();
+  </script>
+  {% block vendor_scripts %}{% endblock %}
+</body>
+</html>

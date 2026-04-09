@@ -1,201 +1,118 @@
-{% extends 'base.html' %}
+{% extends 'vendor/vendor_base.html' %}
 
-{% block title %}Vendor Packages{% endblock %}
+{% block page_title %}My Packages{% endblock %}
+{% block nav_packages %}active{% endblock %}
 
-{% block extrastyle %}
-<style>
-  :root {
-    --vd-bg-page: #f3f6fb;
-    --vd-bg-surface: #ffffff;
-    --vd-text-muted: #5b6475;
-    --vd-line: #dbe2ec;
-    --vd-line-soft: #e9eef5;
-    --vd-shadow-soft: 0 10px 24px rgba(17, 24, 39, 0.06);
-  }
-  .vendor-wrap {
-    max-width: 1240px;
-  }
-  .vendor-shell {
-    background: var(--vd-bg-page);
-    border: 1px solid var(--vd-line-soft);
-    border-radius: 14px;
-    padding: 18px;
-  }
-  .page-hero {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 14px;
-    background: linear-gradient(120deg, #0b3d69, #0a4f8a 45%, #0e6bb7);
-    color: #fff;
-    border-radius: 14px;
-    padding: 18px 20px;
-    margin-bottom: 16px;
-    box-shadow: var(--vd-shadow-soft);
-  }
-  .page-hero h1 {
-    margin: 0;
-    font-size: 1.3rem;
-    color: #fff;
-  }
-  .page-hero p {
-    margin: 5px 0 0;
-    color: rgba(255, 255, 255, 0.9);
-    font-size: 0.9rem;
-  }
-  .hero-actions {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-  }
-  .hero-actions .btn {
-    border-radius: 999px;
-    font-weight: 600;
-  }
-  .list-card {
-    background: var(--vd-bg-surface);
-    border: 1px solid var(--vd-line);
-    border-radius: 12px;
-    box-shadow: var(--vd-shadow-soft);
-  }
-  .filters-toolbar {
-    padding: 14px;
-    border-bottom: 1px solid var(--vd-line-soft);
-    background: #f8fbff;
-  }
-  .table-wrap {
-    overflow-x: auto;
-  }
-  .table-wrap table {
-    margin-bottom: 0;
-  }
-  .table-wrap thead th {
-    color: var(--vd-text-muted);
-    font-weight: 700;
-    font-size: 0.82rem;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-    background: #f8fafc;
-    border-bottom: 1px solid var(--vd-line-soft);
-  }
-  .table-wrap tbody tr:hover {
-    background: #f8fbff;
-  }
-</style>
+{% block breadcrumb %}
+  <a href="{% url 'vendor:dashboard' %}">Dashboard</a>
+  <i class="bi bi-chevron-right"></i>
+  <span>Packages</span>
 {% endblock %}
 
-{% block content %}
-<div class="container vendor-wrap py-4 py-md-5">
-  <div class="vendor-shell">
-    <section class="page-hero">
-      <div>
-        <h1>My Packages</h1>
-        <p>Create and update your package listings.</p>
-      </div>
-      <div class="hero-actions">
-        <a href="{% url 'vendor:dashboard' %}" class="btn btn-outline-light">Dashboard</a>
-        <a href="{% url 'vendor:package_create' %}" class="btn btn-light text-primary">+ Add Package</a>
-      </div>
-    </section>
-
-    <div class="list-card">
-      <div class="filters-toolbar">
-        <form method="get" class="row g-2 align-items-end">
-          <div class="col-lg-4">
-            <label for="package-search" class="form-label mb-1 small text-muted">Search</label>
-            <input id="package-search" type="text" name="q" value="{{ search_query }}" class="form-control" placeholder="Title, destination, city, region...">
-          </div>
-          <div class="col-lg-2 col-md-4">
-            <label for="package-status" class="form-label mb-1 small text-muted">Approval</label>
-            <select id="package-status" name="status" class="form-select">
-              <option value="all">All statuses</option>
-              {% for value, label in package_status_options %}
-              <option value="{{ value }}"{% if selected_status == value %} selected{% endif %}>{{ label }}</option>
-              {% endfor %}
-            </select>
-          </div>
-          <div class="col-lg-2 col-md-4">
-            <label for="package-active" class="form-label mb-1 small text-muted">Visibility</label>
-            <select id="package-active" name="active" class="form-select">
-              <option value="all"{% if selected_active == 'all' %} selected{% endif %}>All</option>
-              <option value="active"{% if selected_active == 'active' %} selected{% endif %}>Active</option>
-              <option value="inactive"{% if selected_active == 'inactive' %} selected{% endif %}>Inactive</option>
-            </select>
-          </div>
-          <div class="col-lg-2 col-md-4">
-            <label for="package-category" class="form-label mb-1 small text-muted">Category</label>
-            <select id="package-category" name="category" class="form-select">
-              <option value="all">All categories</option>
-              {% for value, label in package_category_options %}
-              <option value="{{ value }}"{% if selected_category == value %} selected{% endif %}>{{ label }}</option>
-              {% endfor %}
-            </select>
-          </div>
-          <div class="col-lg-2 col-md-12 d-grid gap-2">
-            <button type="submit" class="btn btn-primary">Apply</button>
-            <a href="{% url 'vendor:package_list' %}" class="btn btn-outline-secondary">Clear</a>
-          </div>
-        </form>
-      </div>
-
-      {% if packages %}
-      <div class="table-wrap">
-        <table class="table align-middle">
-          <thead>
-            <tr>
-              <th>Title</th>
-              <th>Category</th>
-              <th>Price</th>
-              <th>Status</th>
-              <th class="text-end">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for package in packages %}
-            <tr>
-              <td>
-                <div class="fw-semibold">{{ package.title }}</div>
-                <div class="small text-muted">{{ package.destination.name|default:'No destination' }}</div>
-              </td>
-              <td>{{ package.get_category_display }}</td>
-              <td>Rs. {{ package.price }}</td>
-              <td>
-                {% if package.approval_status == 'APPROVED' %}
-                  {% if package.is_active %}
-                  <span class="badge text-bg-success">Live</span>
-                  {% else %}
-                  <span class="badge text-bg-secondary">Paused</span>
-                  {% endif %}
-                {% elif package.approval_status == 'PENDING' %}
-                  <span class="badge text-bg-warning text-dark">Under Review</span>
-                {% elif package.approval_status == 'REJECTED' %}
-                  <span class="badge text-bg-danger">Rejected</span>
-                  {% if package.rejection_reason %}
-                  <div class="mt-1 small text-danger">Note: {{ package.rejection_reason }}</div>
-                  {% endif %}
-                {% endif %}
-              </td>
-              <td class="text-end">
-                <a href="{% url 'vendor:package_availability' package.pk %}" class="btn btn-sm btn-outline-primary">Availability</a>
-                <a href="{% url 'vendor:package_edit' package.pk %}" class="btn btn-sm btn-outline-secondary">Edit</a>
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-      {% else %}
-      <div class="p-4 text-center text-muted">
-        {% if has_filters_applied %}
-        No packages match your current filters.
-        {% else %}
-        No packages yet. Add your first package to start selling trips.
-        {% endif %}
-      </div>
-      {% endif %}
-    </div>
+{% block vendor_content %}
+<div class="vd-page-header vd-fade-in">
+  <div>
+    <h1 class="vd-page-title">My Packages</h1>
+    <p class="vd-page-subtitle">Create and update your package listings.</p>
   </div>
+  <a href="{% url 'vendor:package_create' %}" class="vd-btn-accent"><i class="bi bi-plus-lg"></i> Add Package</a>
+</div>
+
+<div class="vd-card vd-fade-in vd-fade-in-1">
+  <!-- Filters -->
+  <div class="vd-filters">
+    <form method="get" class="row g-2 align-items-end">
+      <div class="col-lg-4">
+        <label for="package-search" class="vd-form-label">Search</label>
+        <input id="package-search" type="text" name="q" value="{{ search_query }}" class="form-control" placeholder="Title, destination, city, region...">
+      </div>
+      <div class="col-lg-2 col-md-4">
+        <label for="package-status" class="vd-form-label">Approval</label>
+        <select id="package-status" name="status" class="form-select">
+          <option value="all">All statuses</option>
+          {% for value, label in package_status_options %}
+          <option value="{{ value }}"{% if selected_status == value %} selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-lg-2 col-md-4">
+        <label for="package-active" class="vd-form-label">Visibility</label>
+        <select id="package-active" name="active" class="form-select">
+          <option value="all"{% if selected_active == 'all' %} selected{% endif %}>All</option>
+          <option value="active"{% if selected_active == 'active' %} selected{% endif %}>Active</option>
+          <option value="inactive"{% if selected_active == 'inactive' %} selected{% endif %}>Inactive</option>
+        </select>
+      </div>
+      <div class="col-lg-2 col-md-4">
+        <label for="package-category" class="vd-form-label">Category</label>
+        <select id="package-category" name="category" class="form-select">
+          <option value="all">All categories</option>
+          {% for value, label in package_category_options %}
+          <option value="{{ value }}"{% if selected_category == value %} selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-lg-2 col-md-12 d-grid gap-2">
+        <button type="submit" class="vd-btn-primary" style="justify-content: center;">Apply</button>
+        <a href="{% url 'vendor:package_list' %}" class="vd-btn-outline" style="justify-content: center;">Clear</a>
+      </div>
+    </form>
+  </div>
+
+  <!-- Table -->
+  {% if packages %}
+  <div class="vd-table-wrap">
+    <table class="table mb-0">
+      <thead>
+        <tr>
+          <th>Title</th>
+          <th>Category</th>
+          <th>Price</th>
+          <th>Status</th>
+          <th class="text-end">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for package in packages %}
+        <tr>
+          <td>
+            <div class="fw-semibold">{{ package.title }}</div>
+            <div class="small" style="color: var(--vd-text-muted);">{{ package.destination.name|default:'No destination' }}</div>
+          </td>
+          <td>{{ package.get_category_display }}</td>
+          <td>Rs. {{ package.price }}</td>
+          <td>
+            {% if package.approval_status == 'APPROVED' %}
+              {% if package.is_active %}
+              <span class="vd-badge vd-badge-success"><i class="bi bi-check-circle-fill"></i> Live</span>
+              {% else %}
+              <span class="vd-badge vd-badge-muted">Paused</span>
+              {% endif %}
+            {% elif package.approval_status == 'PENDING' %}
+              <span class="vd-badge vd-badge-warning"><i class="bi bi-clock"></i> Under Review</span>
+            {% elif package.approval_status == 'REJECTED' %}
+              <span class="vd-badge vd-badge-danger"><i class="bi bi-x-circle"></i> Rejected</span>
+              {% if package.rejection_reason %}
+              <div class="mt-1 small" style="color: var(--vd-danger);">{{ package.rejection_reason }}</div>
+              {% endif %}
+            {% endif %}
+          </td>
+          <td class="text-end">
+            <div class="d-flex gap-1 justify-content-end">
+              <a href="{% url 'vendor:package_availability' package.pk %}" class="vd-btn-outline" style="padding: 4px 10px; font-size: 0.76rem;">Availability</a>
+              <a href="{% url 'vendor:package_edit' package.pk %}" class="vd-btn-primary" style="padding: 4px 10px; font-size: 0.76rem;">Edit</a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="vd-empty">
+    <div><i class="bi bi-box-seam"></i></div>
+    <p>{% if has_filters_applied %}No packages match your current filters.{% else %}No packages yet. Add your first package to start selling trips.{% endif %}</p>
+  </div>
+  {% endif %}
 </div>
 {% endblock %}
-
-{% block footer %}{% endblock %}

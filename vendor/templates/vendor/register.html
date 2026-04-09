@@ -2,11 +2,56 @@
 
 {% block title %}Become Vendor{% endblock %}
 
+{% block extrastyle %}
+<style>
+  .vendor-register-wrapper {
+    min-height: 70vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .vendor-register-card {
+    border: none;
+    border-radius: 16px;
+    box-shadow: 0 4px 24px rgba(0, 105, 137, 0.10);
+    overflow: hidden;
+  }
+  .vendor-register-card .card-body {
+    padding: 2rem 2.5rem;
+  }
+  .vendor-register-card h3 {
+    color: #006989;
+    font-weight: 700;
+  }
+  .vendor-register-card .btn-primary {
+    background: #006989;
+    border-color: #006989;
+    border-radius: 8px;
+    font-weight: 600;
+    padding: 10px;
+  }
+  .vendor-register-card .btn-primary:hover {
+    background: #004E6A;
+    border-color: #004E6A;
+  }
+  .vendor-register-card .form-control,
+  .vendor-register-card .form-select {
+    border-radius: 8px;
+    border: 1px solid #D5D8DC;
+  }
+  .vendor-register-card .form-control:focus,
+  .vendor-register-card .form-select:focus {
+    border-color: #006989;
+    box-shadow: 0 0 0 3px rgba(0, 105, 137, 0.12);
+  }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container mt-5 mb-5">
-  <div class="row justify-content-center">
+<div class="container mt-5 mb-5 vendor-register-wrapper">
+  <div class="row justify-content-center w-100">
     <div class="col-lg-7">
-      <div class="card shadow">
+      <div class="card vendor-register-card">
         <div class="card-body p-4 p-md-5">
           <h3 class="mb-3">Become a Vendor</h3>
           <p class="text-muted mb-4">Complete the form below to submit your vendor registration for admin approval.</p>
@@ -95,7 +140,6 @@
               {{ form.password1 }}
               <div class="text-danger small">{{ form.password1.errors }}</div>
             </div>
-          
 
             <div class="mb-4">
               <label class="form-label">Confirm Password</label>

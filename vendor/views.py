@@ -5,9 +5,10 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Avg, Q, Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 
 from app.models import (
 	Activity,
@@ -97,23 +98,50 @@ def dashboard(request):
 		return redirect('home')
 
 	package_qs = Package.objects.filter(vendor=vendor_profile)
+	activity_qs = Activity.objects.filter(vendor=vendor_profile)
 	visible_bookings = Booking.objects.visible_in_listings()
+	vendor_bookings = visible_bookings.filter(package__vendor=vendor_profile)
+
 	recent_bookings = (
-		visible_bookings
-		.filter(package__vendor=vendor_profile)
+		vendor_bookings
 		.select_related('package', 'user')[:5]
 	)
 	recent_inquiries = Inquiry.objects.filter(package__vendor=vendor_profile).select_related('package', 'user')[:5]
+
+	# Monthly KPIs
+	now = timezone.now()
+	month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+	month_bookings = vendor_bookings.filter(created_at__gte=month_start)
+	month_earnings = (
+		month_bookings
+		.filter(payment_status=Booking.PaymentStatus.PAID)
+		.aggregate(total=Sum('total_amount'))['total']
+	) or 0
+
+	# Pending approval counts
+	pending_package_count = package_qs.filter(approval_status=ApprovalStatus.PENDING).count()
+	pending_activity_count = activity_qs.filter(approval_status=ApprovalStatus.PENDING).count()
+
+	# Average package rating
+	avg_rating = package_qs.aggregate(avg=Avg('rating'))['avg'] or 0
+	avg_rating = round(avg_rating, 1)
 
 	context = {
 		'vendor_profile': vendor_profile,
 		'package_count': package_qs.count(),
 		'active_package_count': package_qs.filter(is_active=True).count(),
+		'activity_count': activity_qs.count(),
+		'active_activity_count': activity_qs.filter(is_active=True).count(),
 		'hot_sale_count': HotSale.objects.filter(
 			Q(package__vendor=vendor_profile) | Q(activity__vendor=vendor_profile),
 			is_active=True,
 		).count(),
-		'booking_count': visible_bookings.filter(package__vendor=vendor_profile).count(),
+		'booking_count': vendor_bookings.count(),
+		'month_booking_count': month_bookings.count(),
+		'month_earnings': month_earnings,
+		'pending_package_count': pending_package_count,
+		'pending_activity_count': pending_activity_count,
+		'avg_rating': avg_rating,
 		'inquiry_count': Inquiry.objects.filter(package__vendor=vendor_profile).count(),
 		'recent_bookings': recent_bookings,
 		'recent_inquiries': recent_inquiries,

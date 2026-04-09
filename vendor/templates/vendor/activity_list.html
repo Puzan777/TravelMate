@@ -1,141 +1,130 @@
-{% extends 'base.html' %}
+{% extends 'vendor/vendor_base.html' %}
 
-{% block title %}Vendor Activities{% endblock %}
+{% block page_title %}My Activities{% endblock %}
+{% block nav_activities %}active{% endblock %}
 
-{% block extrastyle %}
-<style>
-  .filters-toolbar {
-    padding: 14px;
-    border-bottom: 1px solid #e9eef5;
-    background: #f8fbff;
-  }
-</style>
+{% block breadcrumb %}
+  <a href="{% url 'vendor:dashboard' %}">Dashboard</a>
+  <i class="bi bi-chevron-right"></i>
+  <span>Activities</span>
 {% endblock %}
 
-{% block content %}
-<div class="container py-5">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <div>
-      <h1 class="h3 mb-1">My Activities</h1>
-      <p class="text-muted mb-0">Create and manage vendor-owned activities grouped by admin categories.</p>
-    </div>
-    <div class="d-flex gap-2">
-      <a href="{% url 'vendor:dashboard' %}" class="btn btn-outline-secondary">Dashboard</a>
-      <a href="{% url 'vendor:activity_create' %}" class="btn btn-primary">+ Add Activity</a>
-    </div>
+{% block vendor_content %}
+<div class="vd-page-header vd-fade-in">
+  <div>
+    <h1 class="vd-page-title">My Activities</h1>
+    <p class="vd-page-subtitle">Create and manage vendor-owned activities grouped by admin categories.</p>
+  </div>
+  <a href="{% url 'vendor:activity_create' %}" class="vd-btn-accent"><i class="bi bi-plus-lg"></i> Add Activity</a>
+</div>
+
+<div class="vd-card vd-fade-in vd-fade-in-1">
+  <!-- Filters -->
+  <div class="vd-filters">
+    <form method="get" class="row g-2 align-items-end">
+      <div class="col-lg-3">
+        <label for="activity-search" class="vd-form-label">Search</label>
+        <input id="activity-search" type="text" name="q" value="{{ search_query }}" class="form-control" placeholder="Name, description, category...">
+      </div>
+      <div class="col-lg-2 col-md-4">
+        <label for="activity-status" class="vd-form-label">Approval</label>
+        <select id="activity-status" name="status" class="form-select">
+          <option value="all">All statuses</option>
+          {% for value, label in activity_status_options %}
+          <option value="{{ value }}"{% if selected_status == value %} selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-lg-2 col-md-4">
+        <label for="activity-active" class="vd-form-label">Visibility</label>
+        <select id="activity-active" name="active" class="form-select">
+          <option value="all"{% if selected_active == 'all' %} selected{% endif %}>All</option>
+          <option value="active"{% if selected_active == 'active' %} selected{% endif %}>Active</option>
+          <option value="inactive"{% if selected_active == 'inactive' %} selected{% endif %}>Inactive</option>
+        </select>
+      </div>
+      <div class="col-lg-2 col-md-4">
+        <label for="activity-category" class="vd-form-label">Category</label>
+        <select id="activity-category" name="category" class="form-select">
+          <option value="all">All categories</option>
+          {% for category in activity_category_options %}
+          <option value="{{ category.id }}"{% if selected_category == category.id|stringformat:'s' %} selected{% endif %}>{{ category.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-lg-1 col-md-6">
+        <label for="activity-difficulty" class="vd-form-label">Difficulty</label>
+        <select id="activity-difficulty" name="difficulty" class="form-select">
+          <option value="all">All</option>
+          {% for value, label in activity_difficulty_options %}
+          <option value="{{ value }}"{% if selected_difficulty == value %} selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-lg-2 col-md-6 d-grid gap-2">
+        <button type="submit" class="vd-btn-primary" style="justify-content: center;">Apply</button>
+        <a href="{% url 'vendor:activity_list' %}" class="vd-btn-outline" style="justify-content: center;">Clear</a>
+      </div>
+    </form>
   </div>
 
-  <div class="card shadow-sm border-0">
-    <div class="filters-toolbar">
-      <form method="get" class="row g-2 align-items-end">
-        <div class="col-lg-4">
-          <label for="activity-search" class="form-label mb-1 small text-muted">Search</label>
-          <input id="activity-search" type="text" name="q" value="{{ search_query }}" class="form-control" placeholder="Name, description, category...">
-        </div>
-        <div class="col-lg-2 col-md-4">
-          <label for="activity-status" class="form-label mb-1 small text-muted">Approval</label>
-          <select id="activity-status" name="status" class="form-select">
-            <option value="all">All statuses</option>
-            {% for value, label in activity_status_options %}
-            <option value="{{ value }}"{% if selected_status == value %} selected{% endif %}>{{ label }}</option>
-            {% endfor %}
-          </select>
-        </div>
-        <div class="col-lg-2 col-md-4">
-          <label for="activity-active" class="form-label mb-1 small text-muted">Visibility</label>
-          <select id="activity-active" name="active" class="form-select">
-            <option value="all"{% if selected_active == 'all' %} selected{% endif %}>All</option>
-            <option value="active"{% if selected_active == 'active' %} selected{% endif %}>Active</option>
-            <option value="inactive"{% if selected_active == 'inactive' %} selected{% endif %}>Inactive</option>
-          </select>
-        </div>
-        <div class="col-lg-2 col-md-4">
-          <label for="activity-category" class="form-label mb-1 small text-muted">Category</label>
-          <select id="activity-category" name="category" class="form-select">
-            <option value="all">All categories</option>
-            {% for category in activity_category_options %}
-            <option value="{{ category.id }}"{% if selected_category == category.id|stringformat:'s' %} selected{% endif %}>{{ category.name }}</option>
-            {% endfor %}
-          </select>
-        </div>
-        <div class="col-lg-2 col-md-6">
-          <label for="activity-difficulty" class="form-label mb-1 small text-muted">Difficulty</label>
-          <select id="activity-difficulty" name="difficulty" class="form-select">
-            <option value="all">All levels</option>
-            {% for value, label in activity_difficulty_options %}
-            <option value="{{ value }}"{% if selected_difficulty == value %} selected{% endif %}>{{ label }}</option>
-            {% endfor %}
-          </select>
-        </div>
-        <div class="col-lg-2 col-md-6 d-grid gap-2">
-          <button type="submit" class="btn btn-primary">Apply</button>
-          <a href="{% url 'vendor:activity_list' %}" class="btn btn-outline-secondary">Clear</a>
-        </div>
-      </form>
-    </div>
-
-    <div class="card-body p-0">
-      {% if activities %}
-      <div class="table-responsive">
-        <table class="table align-middle mb-0">
-          <thead class="table-light">
-            <tr>
-              <th>Name</th>
-              <th>Category</th>
-              <th>Duration</th>
-              <th>Difficulty</th>
-              <th>Status</th>
-              <th class="text-end">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for activity in activities %}
-            <tr>
-              <td>
-                <div class="fw-semibold">{{ activity.name }}</div>
-                <div class="small text-muted">{{ activity.description|truncatechars:90 }}</div>
-              </td>
-              <td>{{ activity.category.name }}</td>
-              <td>{{ activity.duration }}</td>
-              <td>{{ activity.get_difficulty_level_display }}</td>
-              <td>
-                {% if activity.approval_status == 'APPROVED' %}
-                  {% if activity.is_active %}
-                  <span class="badge text-bg-success">Live</span>
-                  {% else %}
-                  <span class="badge text-bg-secondary">Paused</span>
-                  {% endif %}
-                {% elif activity.approval_status == 'PENDING' %}
-                  <span class="badge text-bg-warning text-dark">Under Review</span>
-                {% elif activity.approval_status == 'REJECTED' %}
-                  <span class="badge text-bg-danger">Rejected</span>
-                  {% if activity.rejection_reason %}
-                  <div class="mt-1 small text-danger">Note: {{ activity.rejection_reason }}</div>
-                  {% endif %}
-                {% endif %}
-              </td>
-              <td class="text-end">
-                <a href="{% url 'vendor:activity_availability' activity.pk %}" class="btn btn-sm btn-outline-secondary">Availability</a>
-                <a href="{% url 'vendor:activity_edit' activity.pk %}" class="btn btn-sm btn-outline-primary">Edit</a>
-                <a href="{% url 'vendor:activity_delete' activity.pk %}" class="btn btn-sm btn-outline-danger">Delete</a>
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-      {% else %}
-      <div class="p-4 text-center text-muted">
-        {% if has_filters_applied %}
-        No activities match your current filters.
-        {% else %}
-        No activities yet. Create your first activity to get started.
-        {% endif %}
-      </div>
-      {% endif %}
-    </div>
+  <!-- Table -->
+  {% if activities %}
+  <div class="vd-table-wrap">
+    <table class="table mb-0">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Category</th>
+          <th>Duration</th>
+          <th>Difficulty</th>
+          <th>Status</th>
+          <th class="text-end">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for activity in activities %}
+        <tr>
+          <td>
+            <div class="fw-semibold">{{ activity.name }}</div>
+            <div class="small" style="color: var(--vd-text-muted);">{{ activity.description|truncatechars:60 }}</div>
+          </td>
+          <td>{{ activity.category.name }}</td>
+          <td>{{ activity.duration }}</td>
+          <td>{{ activity.get_difficulty_level_display }}</td>
+          <td>
+            {% if activity.approval_status == 'APPROVED' %}
+              {% if activity.is_active %}
+              <span class="vd-badge vd-badge-success"><i class="bi bi-check-circle-fill"></i> Live</span>
+              {% else %}
+              <span class="vd-badge vd-badge-muted">Paused</span>
+              {% endif %}
+            {% elif activity.approval_status == 'PENDING' %}
+              <span class="vd-badge vd-badge-warning"><i class="bi bi-clock"></i> Under Review</span>
+            {% elif activity.approval_status == 'REJECTED' %}
+              <span class="vd-badge vd-badge-danger"><i class="bi bi-x-circle"></i> Rejected</span>
+              {% if activity.rejection_reason %}
+              <div class="mt-1 small" style="color: var(--vd-danger);">{{ activity.rejection_reason }}</div>
+              {% endif %}
+            {% endif %}
+          </td>
+          <td class="text-end">
+            <div class="d-flex gap-1 justify-content-end">
+              <a href="{% url 'vendor:activity_availability' activity.pk %}" class="vd-btn-outline" style="padding: 4px 10px; font-size: 0.76rem;">Availability</a>
+              <a href="{% url 'vendor:activity_edit' activity.pk %}" class="vd-btn-primary" style="padding: 4px 10px; font-size: 0.76rem;">Edit</a>
+              <a href="{% url 'vendor:activity_delete' activity.pk %}" class="vd-btn-outline" style="padding: 4px 10px; font-size: 0.76rem; border-color: var(--vd-danger); color: var(--vd-danger);">Delete</a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
+  {% else %}
+  <div class="vd-empty">
+    <div><i class="bi bi-lightning"></i></div>
+    <p>{% if has_filters_applied %}No activities match your current filters.{% else %}No activities yet. Create your first activity to get started.{% endif %}</p>
+  </div>
+  {% endif %}
 </div>
 {% endblock %}
-
-{% block footer %}{% endblock %}

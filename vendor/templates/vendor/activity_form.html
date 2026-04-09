@@ -1,212 +1,236 @@
-{% extends 'base.html' %}
+{% extends 'vendor/vendor_base.html' %}
 
-{% block title %}{{ page_title }}{% endblock %}
+{% block page_title %}{{ page_title }}{% endblock %}
+{% block nav_activities %}active{% endblock %}
 
-{% block content %}
-<div class="container py-5">
-  <style>
-    .cover-preview-frame {
-      border: 1px dashed #cbd5e1;
-      border-radius: 16px;
-      background: linear-gradient(180deg, #f8fbff 0%, #f3f7fc 100%);
-      min-height: 240px;
-      max-width: 460px;
-      display: grid;
-      place-items: center;
-      overflow: hidden;
-    }
-    .cover-preview-frame img {
-      width: 100%;
-      height: 240px;
-      object-fit: cover;
-      display: block;
-    }
-    .cover-preview-placeholder {
-      color: #64748b;
-      font-size: 0.92rem;
-      text-align: center;
-      padding: 16px;
-    }
-    .pending-remove {
-      opacity: 0.45;
-      filter: grayscale(80%);
-      position: relative;
-    }
-    .pending-remove::after {
-      content: 'Marked for removal';
-      position: absolute;
-      inset: auto 8px 8px 8px;
-      text-align: center;
-      font-size: 0.72rem;
-      font-weight: 700;
-      color: #991b1b;
-      background: rgba(254, 226, 226, 0.92);
-      border: 1px solid #fecaca;
-      border-radius: 6px;
-      padding: 3px 6px;
-    }
-  </style>
+{% block breadcrumb %}
+  <a href="{% url 'vendor:dashboard' %}">Dashboard</a>
+  <i class="bi bi-chevron-right"></i>
+  <a href="{% url 'vendor:activity_list' %}">Activities</a>
+  <i class="bi bi-chevron-right"></i>
+  <span>{{ page_title }}</span>
+{% endblock %}
 
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h3 mb-0">{{ page_title }}</h1>
-    <a href="{% url 'vendor:activity_list' %}" class="btn btn-outline-secondary">Back to Activities</a>
+{% block extra_css %}
+<style>
+  .cover-preview-frame {
+    border: 1px dashed var(--vd-line);
+    border-radius: var(--vd-radius);
+    background: var(--vd-cream-light);
+    min-height: 240px;
+    max-width: 460px;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+  }
+  .cover-preview-frame img {
+    width: 100%;
+    height: 240px;
+    object-fit: cover;
+    display: block;
+  }
+  .cover-preview-placeholder {
+    color: var(--vd-text-muted);
+    font-size: 0.92rem;
+    text-align: center;
+    padding: 16px;
+  }
+  .pending-remove {
+    opacity: 0.45;
+    filter: grayscale(80%);
+    position: relative;
+  }
+  .pending-remove::after {
+    content: 'Marked for removal';
+    position: absolute;
+    inset: auto 8px 8px 8px;
+    text-align: center;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #991b1b;
+    background: rgba(254, 226, 226, 0.92);
+    border: 1px solid #fecaca;
+    border-radius: 6px;
+    padding: 3px 6px;
+  }
+</style>
+{% endblock %}
+
+{% block vendor_content %}
+<div class="vd-page-header vd-fade-in">
+  <div>
+    <h1 class="vd-page-title">{{ page_title }}</h1>
   </div>
-
-  <div class="card shadow-sm border-0">
-    <div class="card-body p-4">
-      {% if form.errors %}
-      <div class="alert alert-danger">Please fix the errors below.</div>
-      {% endif %}
-      {% if form.non_field_errors %}
-      <div class="alert alert-danger">
-        {% for error in form.non_field_errors %}
-        <div>{{ error }}</div>
-        {% endfor %}
-      </div>
-      {% endif %}
-
-      <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        <input type="hidden" name="selected_new_primary_index" id="activity-selected-new-primary-index" value="">
-        <div class="row g-3">
-          <div class="col-md-6">
-            <label class="form-label">Category</label>
-            {{ form.category }}
-            <div class="text-danger small">{{ form.category.errors }}</div>
-          </div>
-
-          <div class="col-md-6">
-            <label class="form-label">Name</label>
-            {{ form.name }}
-            <div class="text-danger small">{{ form.name.errors }}</div>
-          </div>
-
-          <div class="col-12">
-            <label class="form-label">Description</label>
-            {{ form.description }}
-            <div class="text-danger small">{{ form.description.errors }}</div>
-          </div>
-
-          <div class="col-md-6">
-            <label class="form-label">Price</label>
-            {{ form.price }}
-            <div class="text-danger small">{{ form.price.errors }}</div>
-          </div>
-
-          <div class="col-md-6">
-            <label class="form-label">Max group size (optional)</label>
-            {{ form.max_group_size }}
-            <div class="text-danger small">{{ form.max_group_size.errors }}</div>
-          </div>
-
-          <div class="col-12">
-            <label class="form-label">Equipment provided - What's included</label>
-            {{ form.equipment_provided }}
-            <div class="text-danger small">{{ form.equipment_provided.errors }}</div>
-          </div>
-
-          <div class="col-12">
-            <label class="form-label">Special instructions or warnings - Safety notes</label>
-            {{ form.safety_notes }}
-            <div class="text-danger small">{{ form.safety_notes.errors }}</div>
-          </div>
-
-          <div class="col-lg-5 col-12">
-            <label class="form-label">Cover Preview</label>
-            <div class="cover-preview-frame" id="activity-cover-preview-frame">
-              {% with primary_activity_image=activity_images|first %}
-                {% if primary_activity_image %}
-                  <img src="{{ primary_activity_image.image.url }}" alt="Activity cover preview" id="activity-cover-preview-image">
-                {% else %}
-                  <div class="cover-preview-placeholder" id="activity-cover-preview-placeholder">
-                    Add activity images below. Select one as cover in edit mode.
-                  </div>
-                  <img src="" alt="Activity cover preview" id="activity-cover-preview-image" style="display:none;">
-                {% endif %}
-              {% endwith %}
-            </div>
-          </div>
-
-          <div class="col-12">
-            <label class="form-label">Activity Images</label>
-            <input type="file" id="activity-image-picker" class="form-control" accept="image/*" multiple>
-            <input type="file" id="activity-images-input" name="images" accept="image/*" multiple style="display:none;">
-            <div class="form-text">Each selection is kept. Max 10 images. Allowed: JPG, JPEG, PNG, WEBP, GIF. Max size: 5MB each.</div>
-          </div>
-
-          <div class="col-12">
-            <label class="form-label">New image preview</label>
-            <div id="new-image-preview" class="d-flex flex-wrap gap-2"></div>
-          </div>
-
-          {% if activity_images %}
-          <div class="col-12">
-            <label class="form-label">Current Images</label>
-            <div class="d-flex flex-wrap gap-2">
-              {% for item in activity_images %}
-              <div class="border rounded p-2 js-image-card" style="width: 150px;">
-                <img src="{{ item.image.url }}" alt="Activity image" class="rounded border mb-2" style="height: 90px; width: 100%; object-fit: cover;">
-                <div class="form-check mb-1">
-                  <input class="form-check-input" type="radio" name="primary_image_id" value="{{ item.pk }}" id="primary-image-{{ item.pk }}" {% if item.is_primary %}checked{% endif %}>
-                  <label class="form-check-label small" for="primary-image-{{ item.pk }}">Set as cover</label>
-                </div>
-                <div class="form-check">
-                  <input class="form-check-input js-remove-image" type="checkbox" name="remove_image_ids" value="{{ item.pk }}" id="remove-image-{{ item.pk }}">
-                  <label class="form-check-label small text-danger" for="remove-image-{{ item.pk }}">Remove</label>
-                </div>
-              </div>
-              {% endfor %}
-            </div>
-          </div>
-          {% endif %}
-
-          <div class="col-md-6">
-            <label class="form-label">Duration</label>
-            {{ form.duration }}
-            <div class="text-danger small">{{ form.duration.errors }}</div>
-          </div>
-
-          <div class="col-md-6">
-            <label class="form-label">Difficulty Level</label>
-            {{ form.difficulty_level }}
-            <div class="text-danger small">{{ form.difficulty_level.errors }}</div>
-          </div>
-
-          <div class="col-md-4">
-            <label class="form-label">Minimum Age</label>
-            {{ form.min_age }}
-            <div class="text-danger small">{{ form.min_age.errors }}</div>
-          </div>
-
-          <div class="col-md-4">
-            <label class="form-label">Minimum Weight</label>
-            {{ form.min_weight }}
-            <div class="text-danger small">{{ form.min_weight.errors }}</div>
-          </div>
-
-          <div class="col-md-4">
-            <label class="form-label">Maximum Weight</label>
-            {{ form.max_weight }}
-            <div class="text-danger small">{{ form.max_weight.errors }}</div>
-          </div>
-
-          <div class="col-12">
-            <div class="form-check">
-              {{ form.is_active }}
-              <label class="form-check-label" for="{{ form.is_active.id_for_label }}">Active</label>
-            </div>
-          </div>
-        </div>
-
-        <div class="d-flex gap-2 mt-4">
-          <a href="{% url 'vendor:activity_list' %}" class="btn btn-outline-secondary">Cancel</a>
-          <button type="submit" class="btn btn-primary">{{ submit_label }}</button>
-        </div>
-      </form>
-    </div>
-  </div>
+  <a href="{% url 'vendor:activity_list' %}" class="vd-btn-outline"><i class="bi bi-arrow-left"></i> Back to Activities</a>
 </div>
 
+<div class="vd-card vd-fade-in vd-fade-in-1">
+  <div class="vd-card-body">
+    {% if form.errors %}
+    <div class="vd-alert vd-alert-danger"><i class="bi bi-exclamation-triangle-fill"></i> Please fix the errors below.</div>
+    {% endif %}
+    {% if form.non_field_errors %}
+    <div class="vd-alert vd-alert-danger">
+      <i class="bi bi-exclamation-triangle-fill"></i>
+      <div>{% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}</div>
+    </div>
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <input type="hidden" name="selected_new_primary_index" id="activity-selected-new-primary-index" value="">
+
+      <!-- Basic Info Section -->
+      <div class="vd-card mb-3" style="border-color: var(--vd-line-soft);">
+        <div class="vd-card-header"><h2><i class="bi bi-info-circle me-2" style="color: var(--vd-ocean);"></i>Basic Information</h2></div>
+        <div class="vd-card-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="vd-form-label">Category</label>
+              {{ form.category }}
+              <div class="text-danger small">{{ form.category.errors }}</div>
+            </div>
+            <div class="col-md-6">
+              <label class="vd-form-label">Name</label>
+              {{ form.name }}
+              <div class="text-danger small">{{ form.name.errors }}</div>
+            </div>
+            <div class="col-12">
+              <label class="vd-form-label">Description</label>
+              {{ form.description }}
+              <div class="text-danger small">{{ form.description.errors }}</div>
+            </div>
+            <div class="col-md-6">
+              <label class="vd-form-label">Price</label>
+              {{ form.price }}
+              <div class="text-danger small">{{ form.price.errors }}</div>
+            </div>
+            <div class="col-md-6">
+              <label class="vd-form-label">Max group size (optional)</label>
+              {{ form.max_group_size }}
+              <div class="text-danger small">{{ form.max_group_size.errors }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Details Section -->
+      <div class="vd-card mb-3" style="border-color: var(--vd-line-soft);">
+        <div class="vd-card-header"><h2><i class="bi bi-list-check me-2" style="color: var(--vd-ocean);"></i>Details</h2></div>
+        <div class="vd-card-body">
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="vd-form-label">Equipment provided — What's included</label>
+              {{ form.equipment_provided }}
+              <div class="text-danger small">{{ form.equipment_provided.errors }}</div>
+            </div>
+            <div class="col-12">
+              <label class="vd-form-label">Special instructions or warnings — Safety notes</label>
+              {{ form.safety_notes }}
+              <div class="text-danger small">{{ form.safety_notes.errors }}</div>
+            </div>
+            <div class="col-md-6">
+              <label class="vd-form-label">Duration</label>
+              {{ form.duration }}
+              <div class="text-danger small">{{ form.duration.errors }}</div>
+            </div>
+            <div class="col-md-6">
+              <label class="vd-form-label">Difficulty Level</label>
+              {{ form.difficulty_level }}
+              <div class="text-danger small">{{ form.difficulty_level.errors }}</div>
+            </div>
+            <div class="col-md-4">
+              <label class="vd-form-label">Minimum Age</label>
+              {{ form.min_age }}
+              <div class="text-danger small">{{ form.min_age.errors }}</div>
+            </div>
+            <div class="col-md-4">
+              <label class="vd-form-label">Minimum Weight</label>
+              {{ form.min_weight }}
+              <div class="text-danger small">{{ form.min_weight.errors }}</div>
+            </div>
+            <div class="col-md-4">
+              <label class="vd-form-label">Maximum Weight</label>
+              {{ form.max_weight }}
+              <div class="text-danger small">{{ form.max_weight.errors }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Images Section -->
+      <div class="vd-card mb-3" style="border-color: var(--vd-line-soft);">
+        <div class="vd-card-header"><h2><i class="bi bi-images me-2" style="color: var(--vd-ocean);"></i>Images</h2></div>
+        <div class="vd-card-body">
+          <div class="row g-3">
+            <div class="col-lg-5 col-12">
+              <label class="vd-form-label">Cover Preview</label>
+              <div class="cover-preview-frame" id="activity-cover-preview-frame">
+                {% with primary_activity_image=activity_images|first %}
+                  {% if primary_activity_image %}
+                    <img src="{{ primary_activity_image.image.url }}" alt="Activity cover preview" id="activity-cover-preview-image">
+                  {% else %}
+                    <div class="cover-preview-placeholder" id="activity-cover-preview-placeholder">
+                      Add activity images below. Select one as cover in edit mode.
+                    </div>
+                    <img src="" alt="Activity cover preview" id="activity-cover-preview-image" style="display:none;">
+                  {% endif %}
+                {% endwith %}
+              </div>
+            </div>
+            <div class="col-lg-7 col-12">
+              <label class="vd-form-label">Activity Images</label>
+              <input type="file" id="activity-image-picker" class="form-control" accept="image/*" multiple>
+              <input type="file" id="activity-images-input" name="images" accept="image/*" multiple style="display:none;">
+              <div class="form-text">Each selection is kept. Max 10 images. Allowed: JPG, JPEG, PNG, WEBP, GIF. Max size: 5MB each.</div>
+
+              <label class="vd-form-label mt-3">New image preview</label>
+              <div id="new-image-preview" class="d-flex flex-wrap gap-2"></div>
+            </div>
+
+            {% if activity_images %}
+            <div class="col-12">
+              <label class="vd-form-label">Current Images</label>
+              <div class="d-flex flex-wrap gap-2">
+                {% for item in activity_images %}
+                <div class="border rounded p-2 js-image-card" style="width: 150px;">
+                  <img src="{{ item.image.url }}" alt="Activity image" class="rounded border mb-2" style="height: 90px; width: 100%; object-fit: cover;">
+                  <div class="form-check mb-1">
+                    <input class="form-check-input" type="radio" name="primary_image_id" value="{{ item.pk }}" id="primary-image-{{ item.pk }}" {% if item.is_primary %}checked{% endif %}>
+                    <label class="form-check-label small" for="primary-image-{{ item.pk }}">Set as cover</label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input js-remove-image" type="checkbox" name="remove_image_ids" value="{{ item.pk }}" id="remove-image-{{ item.pk }}">
+                    <label class="form-check-label small text-danger" for="remove-image-{{ item.pk }}">Remove</label>
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Active & Submit -->
+      <div class="vd-card" style="border-color: var(--vd-line-soft);">
+        <div class="vd-card-body d-flex justify-content-between align-items-center flex-wrap gap-3">
+          <div class="form-check">
+            {{ form.is_active }}
+            <label class="form-check-label" for="{{ form.is_active.id_for_label }}">Active</label>
+          </div>
+          <div class="d-flex gap-2">
+            <a href="{% url 'vendor:activity_list' %}" class="vd-btn-outline">Cancel</a>
+            <button type="submit" class="vd-btn-primary">{{ submit_label }}</button>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block vendor_scripts %}
 <script>
   (function () {
     const activityImagePicker = document.getElementById('activity-image-picker');
@@ -420,5 +444,3 @@
   })();
 </script>
 {% endblock %}
-
-{% block footer %}{% endblock %}

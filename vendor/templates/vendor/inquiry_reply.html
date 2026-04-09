@@ -1,44 +1,60 @@
-{% extends 'base.html' %}
+{% extends 'vendor/vendor_base.html' %}
 
-{% block title %}Reply Inquiry{% endblock %}
+{% block page_title %}Reply Inquiry{% endblock %}
+{% block nav_inquiries %}active{% endblock %}
 
-{% block content %}
-<div class="container py-5">
-  <div class="row justify-content-center">
-    <div class="col-lg-8">
-      <div class="d-flex justify-content-between align-items-center mb-3">
-        <h1 class="h3 mb-0">Reply Inquiry</h1>
-        <a href="{% url 'vendor:inquiry_list' %}" class="btn btn-outline-secondary">Back to Inquiries</a>
+{% block breadcrumb %}
+  <a href="{% url 'vendor:dashboard' %}">Dashboard</a>
+  <i class="bi bi-chevron-right"></i>
+  <a href="{% url 'vendor:inquiry_list' %}">Inquiries</a>
+  <i class="bi bi-chevron-right"></i>
+  <span>Reply</span>
+{% endblock %}
+
+{% block vendor_content %}
+<div class="vd-page-header vd-fade-in">
+  <div>
+    <h1 class="vd-page-title">Reply to Inquiry</h1>
+  </div>
+  <a href="{% url 'vendor:inquiry_list' %}" class="vd-btn-outline"><i class="bi bi-arrow-left"></i> Back to Inquiries</a>
+</div>
+
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <!-- Inquiry Details -->
+    <div class="vd-card mb-3 vd-fade-in vd-fade-in-1">
+      <div class="vd-card-header">
+        <h2><i class="bi bi-envelope-open me-2" style="color: var(--vd-ocean);"></i>Inquiry Details</h2>
       </div>
-
-      <div class="card shadow-sm border-0 mb-3">
-        <div class="card-body">
-          <div class="mb-2"><strong>Package:</strong> {{ inquiry.package.title }}</div>
-          <div class="mb-2"><strong>Customer:</strong> {{ inquiry.full_name }} ({{ inquiry.email }})</div>
-          <div class="mb-0"><strong>Message:</strong> {{ inquiry.message }}</div>
-        </div>
+      <div class="vd-card-body">
+        <div class="mb-2"><strong>Package:</strong> {{ inquiry.package.title }}</div>
+        <div class="mb-2"><strong>Customer:</strong> {{ inquiry.full_name }} ({{ inquiry.email }})</div>
+        <div><strong>Message:</strong></div>
+        <div class="p-3 rounded-3 mt-1" style="background: var(--vd-cream-light); font-size: 0.9rem;">{{ inquiry.message }}</div>
       </div>
+    </div>
 
-      <div class="card shadow-sm border-0">
-        <div class="card-body">
-          {% if form.errors %}
-          <div class="alert alert-danger">Please fix the errors below.</div>
-          {% endif %}
+    <!-- Reply Form -->
+    <div class="vd-card vd-fade-in vd-fade-in-2">
+      <div class="vd-card-header">
+        <h2><i class="bi bi-reply me-2" style="color: var(--vd-ocean);"></i>Your Reply</h2>
+      </div>
+      <div class="vd-card-body">
+        {% if form.errors %}
+        <div class="vd-alert vd-alert-danger"><i class="bi bi-exclamation-triangle-fill"></i> Please fix the errors below.</div>
+        {% endif %}
 
-          <form method="post">
-            {% csrf_token %}
-            <div class="mb-3">
-              {{ form.admin_reply.label_tag }}
-              {{ form.admin_reply }}
-              <div class="text-danger small">{{ form.admin_reply.errors }}</div>
-            </div>
-            <button type="submit" class="btn btn-primary w-100">Save Reply</button>
-          </form>
-        </div>
+        <form method="post">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="vd-form-label">{{ form.admin_reply.label }}</label>
+            {{ form.admin_reply }}
+            <div class="text-danger small">{{ form.admin_reply.errors }}</div>
+          </div>
+          <button type="submit" class="vd-btn-primary w-100" style="justify-content: center;"><i class="bi bi-send"></i> Save Reply</button>
+        </form>
       </div>
     </div>
   </div>
 </div>
 {% endblock %}
-
-{% block footer %}{% endblock %}

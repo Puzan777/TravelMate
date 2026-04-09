@@ -1,182 +1,95 @@
-{% extends 'base.html' %}
+{% extends 'vendor/vendor_base.html' %}
 
-{% block title %}Vendor Hot Sales{% endblock %}
+{% block page_title %}Hot Sales{% endblock %}
+{% block nav_hotsales %}active{% endblock %}
 
-{% block extrastyle %}
-<style>
-  :root {
-    --vd-bg-page: #f3f6fb;
-    --vd-bg-surface: #ffffff;
-    --vd-text-muted: #5b6475;
-    --vd-line: #dbe2ec;
-    --vd-line-soft: #e9eef5;
-    --vd-shadow-soft: 0 10px 24px rgba(17, 24, 39, 0.06);
-  }
-  .vendor-wrap {
-    max-width: 1240px;
-  }
-  .vendor-shell {
-    background: var(--vd-bg-page);
-    border: 1px solid var(--vd-line-soft);
-    border-radius: 14px;
-    padding: 18px;
-  }
-  .page-hero {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 14px;
-    background: linear-gradient(120deg, #0b3d69, #0a4f8a 45%, #0e6bb7);
-    color: #fff;
-    border-radius: 14px;
-    padding: 18px 20px;
-    margin-bottom: 16px;
-    box-shadow: var(--vd-shadow-soft);
-  }
-  .page-hero h1 {
-    margin: 0;
-    font-size: 1.3rem;
-    color: #fff;
-  }
-  .page-hero p {
-    margin: 5px 0 0;
-    color: rgba(255, 255, 255, 0.9);
-    font-size: 0.9rem;
-  }
-  .hero-actions {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-  }
-  .hero-actions .btn {
-    border-radius: 999px;
-    font-weight: 600;
-  }
-  .list-card {
-    background: var(--vd-bg-surface);
-    border: 1px solid var(--vd-line);
-    border-radius: 12px;
-    box-shadow: var(--vd-shadow-soft);
-  }
-  .filters-toolbar {
-    padding: 14px;
-    border-bottom: 1px solid var(--vd-line-soft);
-    background: #f8fbff;
-  }
-  .table-wrap {
-    overflow-x: auto;
-  }
-  .table-wrap table {
-    margin-bottom: 0;
-  }
-  .table-wrap thead th {
-    color: var(--vd-text-muted);
-    font-weight: 700;
-    font-size: 0.82rem;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-    background: #f8fafc;
-    border-bottom: 1px solid var(--vd-line-soft);
-  }
-  .table-wrap tbody tr:hover {
-    background: #f8fbff;
-  }
-</style>
+{% block breadcrumb %}
+  <a href="{% url 'vendor:dashboard' %}">Dashboard</a>
+  <i class="bi bi-chevron-right"></i>
+  <span>Hot Sales</span>
 {% endblock %}
 
-{% block content %}
-<div class="container vendor-wrap py-4 py-md-5">
-  <div class="vendor-shell">
-    <section class="page-hero">
-      <div>
-        <h1>My Hot Sales</h1>
-        <p>Create and manage discounted prices for your packages and activities.</p>
-      </div>
-      <div class="hero-actions">
-        <a href="{% url 'vendor:dashboard' %}" class="btn btn-outline-light">Dashboard</a>
-        <a href="{% url 'vendor:hot_sale_create' %}" class="btn btn-light text-primary">+ Add Hot Sale</a>
-      </div>
-    </section>
-
-    <div class="list-card">
-      <div class="filters-toolbar">
-        <form method="get" class="row g-2 align-items-end">
-          <div class="col-lg-6">
-            <label for="hotsale-search" class="form-label mb-1 small text-muted">Search</label>
-            <input id="hotsale-search" type="text" name="q" value="{{ search_query }}" class="form-control" placeholder="Offer name or note...">
-          </div>
-          <div class="col-lg-2 col-md-4">
-            <label for="hotsale-type" class="form-label mb-1 small text-muted">Type</label>
-            <select id="hotsale-type" name="type" class="form-select">
-              <option value="all"{% if selected_type == 'all' %} selected{% endif %}>All types</option>
-              <option value="package"{% if selected_type == 'package' %} selected{% endif %}>Package</option>
-              <option value="activity"{% if selected_type == 'activity' %} selected{% endif %}>Activity</option>
-            </select>
-          </div>
-          <div class="col-lg-2 col-md-4">
-            <label for="hotsale-status" class="form-label mb-1 small text-muted">Status</label>
-            <select id="hotsale-status" name="status" class="form-select">
-              <option value="all"{% if selected_status == 'all' %} selected{% endif %}>All</option>
-              <option value="active"{% if selected_status == 'active' %} selected{% endif %}>Active</option>
-              <option value="inactive"{% if selected_status == 'inactive' %} selected{% endif %}>Inactive</option>
-            </select>
-          </div>
-          <div class="col-lg-2 col-md-4 d-grid gap-2">
-            <button type="submit" class="btn btn-primary">Apply</button>
-            <a href="{% url 'vendor:hot_sale_list' %}" class="btn btn-outline-secondary">Clear</a>
-          </div>
-        </form>
-      </div>
-
-      {% if hot_sales %}
-      <div class="table-wrap">
-        <table class="table align-middle">
-          <thead>
-            <tr>
-              <th>Type</th>
-              <th>Offer</th>
-              <th>Original Price</th>
-              <th>Sale Price</th>
-              <th>Savings</th>
-              <th>Status</th>
-              <th class="text-end">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for hot_sale in hot_sales %}
-            <tr>
-              <td>{{ hot_sale.target_type }}</td>
-              <td class="fw-semibold">{{ hot_sale.target_name }}</td>
-              <td>Rs. {{ hot_sale.original_price }}</td>
-              <td>Rs. {{ hot_sale.sale_price }}</td>
-              <td>Rs. {{ hot_sale.savings_amount }}</td>
-              <td>
-                {% if hot_sale.is_active %}
-                <span class="badge text-bg-success">Active</span>
-                {% else %}
-                <span class="badge text-bg-secondary">Inactive</span>
-                {% endif %}
-              </td>
-              <td class="text-end">
-                <a href="{% url 'vendor:hot_sale_edit' hot_sale.pk %}" class="btn btn-sm btn-outline-secondary">Edit</a>
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-      {% else %}
-      <div class="p-4 text-center text-muted">
-        {% if has_filters_applied %}
-        No hot sales match your current filters.
-        {% else %}
-        No hot sales yet. Add one to promote a package or activity separately.
-        {% endif %}
-      </div>
-      {% endif %}
-    </div>
+{% block vendor_content %}
+<div class="vd-page-header vd-fade-in">
+  <div>
+    <h1 class="vd-page-title">My Hot Sales</h1>
+    <p class="vd-page-subtitle">Create and manage discounted prices for your packages and activities.</p>
   </div>
+  <a href="{% url 'vendor:hot_sale_create' %}" class="vd-btn-accent"><i class="bi bi-plus-lg"></i> Add Hot Sale</a>
+</div>
+
+<div class="vd-card vd-fade-in vd-fade-in-1">
+  <div class="vd-filters">
+    <form method="get" class="row g-2 align-items-end">
+      <div class="col-lg-6">
+        <label for="hotsale-search" class="vd-form-label">Search</label>
+        <input id="hotsale-search" type="text" name="q" value="{{ search_query }}" class="form-control" placeholder="Offer name or note...">
+      </div>
+      <div class="col-lg-2 col-md-4">
+        <label for="hotsale-type" class="vd-form-label">Type</label>
+        <select id="hotsale-type" name="type" class="form-select">
+          <option value="all"{% if selected_type == 'all' %} selected{% endif %}>All types</option>
+          <option value="package"{% if selected_type == 'package' %} selected{% endif %}>Package</option>
+          <option value="activity"{% if selected_type == 'activity' %} selected{% endif %}>Activity</option>
+        </select>
+      </div>
+      <div class="col-lg-2 col-md-4">
+        <label for="hotsale-status" class="vd-form-label">Status</label>
+        <select id="hotsale-status" name="status" class="form-select">
+          <option value="all"{% if selected_status == 'all' %} selected{% endif %}>All</option>
+          <option value="active"{% if selected_status == 'active' %} selected{% endif %}>Active</option>
+          <option value="inactive"{% if selected_status == 'inactive' %} selected{% endif %}>Inactive</option>
+        </select>
+      </div>
+      <div class="col-lg-2 col-md-4 d-grid gap-2">
+        <button type="submit" class="vd-btn-primary" style="justify-content: center;">Apply</button>
+        <a href="{% url 'vendor:hot_sale_list' %}" class="vd-btn-outline" style="justify-content: center;">Clear</a>
+      </div>
+    </form>
+  </div>
+
+  {% if hot_sales %}
+  <div class="vd-table-wrap">
+    <table class="table mb-0">
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Offer</th>
+          <th>Original Price</th>
+          <th>Sale Price</th>
+          <th>Savings</th>
+          <th>Status</th>
+          <th class="text-end">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for hot_sale in hot_sales %}
+        <tr>
+          <td><span class="vd-badge vd-badge-info">{{ hot_sale.target_type }}</span></td>
+          <td class="fw-semibold">{{ hot_sale.target_name }}</td>
+          <td>Rs. {{ hot_sale.original_price }}</td>
+          <td style="color: var(--vd-success); font-weight: 600;">Rs. {{ hot_sale.sale_price }}</td>
+          <td>Rs. {{ hot_sale.savings_amount }}</td>
+          <td>
+            {% if hot_sale.is_active %}
+            <span class="vd-badge vd-badge-success">Active</span>
+            {% else %}
+            <span class="vd-badge vd-badge-muted">Inactive</span>
+            {% endif %}
+          </td>
+          <td class="text-end">
+            <a href="{% url 'vendor:hot_sale_edit' hot_sale.pk %}" class="vd-btn-primary" style="padding: 4px 10px; font-size: 0.76rem;">Edit</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="vd-empty">
+    <div><i class="bi bi-fire"></i></div>
+    <p>{% if has_filters_applied %}No hot sales match your current filters.{% else %}No hot sales yet. Add one to promote a package or activity.{% endif %}</p>
+  </div>
+  {% endif %}
 </div>
 {% endblock %}
-
-{% block footer %}{% endblock %}
