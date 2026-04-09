@@ -12,7 +12,7 @@ from django.utils import timezone
 from django.utils.html import format_html
 
 from .models import (
-    Activity, ActivityCategory, ActivityImage, ApprovalStatus, Booking, CustomUser, Destination,
+    Activity, ActivityBooking, ActivityCategory, ActivityImage, ApprovalStatus, Booking, CustomUser, Destination,
     HotSale, Package, PackageImage, PackageItinerary,
 )
 
@@ -390,6 +390,78 @@ class BookingAdmin(admin.ModelAdmin):
         if not obj.package or obj.package.price is None:
             return '-'
         return obj.package.price * obj.number_of_people
+
+
+@admin.register(ActivityBooking)
+class ActivityBookingAdmin(admin.ModelAdmin):
+    list_per_page = 20
+    list_display = (
+        'activity_name',
+        'vendor_name',
+        'full_name',
+        'number_of_people',
+        'payment_method',
+        'payment_status',
+        'total_amount',
+        'travel_date',
+        'created_at',
+    )
+    list_filter = ('activity__vendor', 'payment_method', 'payment_status', 'travel_date', 'created_at')
+    search_fields = (
+        'activity__name',
+        'activity__vendor__company_name',
+        'user__username',
+        'full_name',
+        'nationality',
+        'pickup_location',
+        'transaction_reference',
+    )
+    readonly_fields = ('total_amount', 'paid_at', 'created_at')
+    fieldsets = (
+        ('Booking', {'fields': ('activity', 'user', 'travel_date', 'number_of_people')}),
+        ('Traveler', {'fields': ('full_name', 'email', 'phone', 'nationality', 'emergency_contact', 'pickup_location')}),
+        ('Payment', {'fields': ('payment_method', 'transaction_reference', 'payment_status', 'total_amount', 'paid_at')}),
+        ('System', {'fields': ('created_at',)}),
+    )
+
+    def get_queryset(self, request):
+        qs = (
+            super().get_queryset(request).visible_in_listings()
+            .select_related('activity', 'activity__vendor', 'user')
+        )
+        if request.user.is_superuser:
+            return qs
+        vendor_profile = _current_vendor_profile(request.user)
+        if vendor_profile:
+            return qs.filter(activity__vendor=vendor_profile)
+        return qs.none()
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return request.user.is_active and request.user.is_staff and obj is None
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_view_permission(self, request, obj=None):
+        return request.user.is_active and request.user.is_staff
+
+    @admin.display(description='Vendor')
+    def vendor_name(self, obj):
+        if obj.activity and obj.activity.vendor:
+            return obj.activity.vendor.company_name
+        return '-'
+
+    @admin.display(description='Activity')
+    def activity_name(self, obj):
+        if not obj.activity:
+            return '-'
+        name = obj.activity.name or ''
+        if len(name) <= 20:
+            return name
+        return f"{name[:20]}..."
 
 
 # ────────────────────────────────────────────────────────────────────

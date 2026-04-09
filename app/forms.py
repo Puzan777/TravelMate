@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.utils import timezone
-from .models import ActivityCategory, Booking, CustomUser, Inquiry
+from .models import ActivityBooking, ActivityCategory, Booking, CustomUser, Inquiry
 
 class SignUpForm(UserCreationForm):
     email = forms.EmailField(required=True)
@@ -123,6 +123,71 @@ class InquiryForm(forms.ModelForm):
             "phone": forms.TextInput(attrs={"class": "form-control", "placeholder": "Phone (optional)"}),
             "message": forms.Textarea(attrs={"class": "form-control", "rows": 4, "placeholder": "Tell us what you need"}),
         }
+
+
+class ActivityBookingForm(forms.ModelForm):
+    def __init__(self, *args, activity=None, **kwargs):
+        self.activity = activity
+        super().__init__(*args, **kwargs)
+
+    class Meta:
+        model = ActivityBooking
+        fields = (
+            'full_name',
+            'email',
+            'phone',
+            'travel_date',
+            'number_of_people',
+            'payment_method',
+            'transaction_reference',
+            'pickup_location',
+            'nationality',
+            'emergency_contact',
+        )
+        widgets = {
+            'full_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Traveler full name'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Traveler email'}),
+            'phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Phone number'}),
+            'travel_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'number_of_people': forms.NumberInput(attrs={'class': 'form-control', 'min': '1', 'placeholder': 'Number of travelers'}),
+            'payment_method': forms.Select(attrs={'class': 'form-control'}),
+            'transaction_reference': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Transaction/reference ID (required for bank transfer)'}),
+            'pickup_location': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Meet-up location or pickup point'}),
+            'nationality': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nationality'}),
+            'emergency_contact': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Emergency contact'}),
+        }
+
+    def clean_travel_date(self):
+        travel_date = self.cleaned_data['travel_date']
+        if travel_date < timezone.localdate():
+            raise forms.ValidationError('Please choose today or a future date.')
+        if self.activity and self.activity.unavailable_dates.filter(date=travel_date).exists():
+            raise forms.ValidationError('This date is unavailable for booking. Please select another date.')
+        return travel_date
+
+    def clean_number_of_people(self):
+        number_of_people = self.cleaned_data['number_of_people']
+        if number_of_people < 1:
+            raise forms.ValidationError('At least one traveler is required.')
+        if self.activity and self.activity.max_group_size and number_of_people > self.activity.max_group_size:
+            raise forms.ValidationError(
+                f'This activity allows up to {self.activity.max_group_size} travelers per booking.'
+            )
+        return number_of_people
+
+    def clean(self):
+        cleaned_data = super().clean()
+        payment_method = cleaned_data.get('payment_method')
+        transaction_reference = (cleaned_data.get('transaction_reference') or '').strip()
+
+        if payment_method == ActivityBooking.PaymentMethod.BANK_TRANSFER and not transaction_reference:
+            self.add_error('transaction_reference', 'Transaction/reference ID is required for bank transfer payments.')
+
+        if payment_method == ActivityBooking.PaymentMethod.CASH:
+            transaction_reference = ''
+
+        cleaned_data['transaction_reference'] = transaction_reference
+        return cleaned_data
 
 
 class ActivityCategoryForm(forms.ModelForm):
