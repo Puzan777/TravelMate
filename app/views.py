@@ -21,8 +21,8 @@ from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
-from .forms import ActivityCategoryForm, SignUpForm, LoginForm, BookingForm, InquiryForm
-from .models import ActivityCategory, ApprovalStatus, Booking, CustomUser, Destination, HotSale, Inquiry, Package
+from .forms import ActivityBookingForm, ActivityCategoryForm, SignUpForm, LoginForm, BookingForm, InquiryForm
+from .models import Activity, ActivityBooking, ActivityCategory, ApprovalStatus, Booking, CustomUser, Destination, HotSale, Inquiry, Package
 
 
 def _request_param(request, name):
@@ -172,6 +172,70 @@ def _send_new_booking_emails(booking):
             f'Payment method: {payment_method}\n'
             f'Total amount: {amount}\n\n'
             'Please check your vendor dashboard for full details.\n\n'
+            'TravelMate System'
+        )
+        send_mail(
+            vendor_subject,
+            vendor_message,
+            from_email,
+            [vendor_email],
+            fail_silently=True,
+        )
+
+
+def _send_new_activity_booking_emails(activity_booking):
+    from_email = (
+        getattr(settings, 'DEFAULT_FROM_EMAIL', None)
+        or getattr(settings, 'EMAIL_HOST_USER', None)
+        or 'no-reply@travelmate.local'
+    )
+
+    activity_name = activity_booking.activity.name
+    travel_date = activity_booking.travel_date.strftime('%Y-%m-%d')
+    amount = activity_booking.total_amount
+    payment_method = activity_booking.get_payment_method_display()
+    customer_name = activity_booking.full_name
+
+    customer_email = (activity_booking.email or '').strip()
+    vendor_email = ''
+    vendor_profile = getattr(activity_booking.activity, 'vendor', None)
+    if vendor_profile and vendor_profile.user:
+        vendor_email = (vendor_profile.user.email or '').strip()
+
+    if customer_email:
+        customer_subject = f'Activity Booking Confirmation - {activity_name}'
+        customer_message = (
+            f'Hello {customer_name},\n\n'
+            f'Your booking request has been received for {activity_name}.\n\n'
+            f'Travel date: {travel_date}\n'
+            f'Number of people: {activity_booking.number_of_people}\n'
+            f'Payment method: {payment_method}\n'
+            f'Total amount: {amount}\n\n'
+            'We will contact you if any additional details are needed.\n\n'
+            'Thank you,\n'
+            'TravelMate Team'
+        )
+        send_mail(
+            customer_subject,
+            customer_message,
+            from_email,
+            [customer_email],
+            fail_silently=True,
+        )
+
+    if vendor_email:
+        vendor_subject = f'New Activity Booking Alert - {activity_name}'
+        vendor_message = (
+            'Hello,\n\n'
+            f'You have received a new booking for activity {activity_name}.\n\n'
+            f'Traveler: {customer_name}\n'
+            f'Email: {activity_booking.email}\n'
+            f'Phone: {activity_booking.phone}\n'
+            f'Travel date: {travel_date}\n'
+            f'People: {activity_booking.number_of_people}\n'
+            f'Payment method: {payment_method}\n'
+            f'Total amount: {amount}\n\n'
+            'Please check your admin dashboard for full details.\n\n'
             'TravelMate System'
         )
         send_mail(
@@ -425,11 +489,58 @@ def hot_sale_list(request):
     ).filter(
         Q(package__is_active=True, package__approval_status=ApprovalStatus.APPROVED)
         | Q(activity__is_active=True, activity__approval_status=ApprovalStatus.APPROVED),
-    ).select_related('package', 'package__destination', 'activity').prefetch_related('activity__images')
+    ).select_related('package', 'package__destination', 'activity', 'activity__category').prefetch_related('activity__images')
 
     return render(request, 'hot_sales.html', {
         'hot_sales': hot_sales,
         'title': 'Hot Sales',
+    })
+
+
+def activity_detail(request, pk):
+    activity = get_object_or_404(
+        Activity.objects.select_related('category', 'vendor', 'vendor__user').prefetch_related('images'),
+        pk=pk,
+        is_active=True,
+        approval_status=ApprovalStatus.APPROVED,
+    )
+    active_hot_sale = activity.hot_sale_entries.filter(is_active=True).order_by('-updated_at', '-created_at').first()
+    activity_primary_image = activity.images.first()
+    booking_unit_price = active_hot_sale.sale_price if active_hot_sale else activity.price
+    blocked_dates = list(activity.unavailable_dates.filter(date__gte=timezone.localdate()).order_by('date'))
+    blocked_dates_iso = [entry.date.isoformat() for entry in blocked_dates]
+
+    booking_initial = {'travel_date': timezone.localdate(), 'number_of_people': 1}
+    if request.user.is_authenticated:
+        booking_initial.update({
+            'full_name': request.user.get_full_name() or request.user.username,
+            'email': request.user.email,
+        })
+
+    if request.method == 'POST':
+        if not request.user.is_authenticated:
+            return redirect('login')
+
+        booking_form = ActivityBookingForm(request.POST, activity=activity)
+        if booking_form.is_valid():
+            activity_booking = booking_form.save(commit=False)
+            activity_booking.activity = activity
+            activity_booking.user = request.user
+            activity_booking.save()
+            _send_new_activity_booking_emails(activity_booking)
+            messages.success(request, 'Your activity booking request has been submitted successfully.')
+            return redirect('activity_detail', pk=activity.pk)
+    else:
+        booking_form = ActivityBookingForm(initial=booking_initial, activity=activity)
+
+    return render(request, 'activity_detail.html', {
+        'activity': activity,
+        'active_hot_sale': active_hot_sale,
+        'activity_primary_image': activity_primary_image,
+        'booking_form': booking_form,
+        'booking_unit_price': booking_unit_price,
+        'blocked_dates': blocked_dates,
+        'blocked_dates_iso': blocked_dates_iso,
     })
 
 
@@ -444,6 +555,9 @@ def package_detail(request, slug):
     itinerary_days = list(package.itinerary_entries.all())
     blocked_dates = list(package.unavailable_dates.filter(date__gte=timezone.localdate()).order_by('date'))
     blocked_dates_iso = [entry.date.isoformat() for entry in blocked_dates]
+    active_hot_sale = package.hot_sale_entries.filter(is_active=True).order_by('-updated_at', '-created_at').first()
+    booking_unit_price = active_hot_sale.sale_price if active_hot_sale else package.price
+    open_booking_box = request.method == 'GET' and request.GET.get('open_booking') in {'1', 'true', 'yes'}
 
     if request.user.is_authenticated:
         is_favorite = request.user.favorite_packages.filter(pk=package.pk).exists()
@@ -518,6 +632,9 @@ def package_detail(request, slug):
         'itinerary_days': itinerary_days,
         'blocked_dates': blocked_dates,
         'blocked_dates_iso': blocked_dates_iso,
+        'active_hot_sale': active_hot_sale,
+        'booking_unit_price': booking_unit_price,
+        'open_booking_box': open_booking_box,
     })
 
 
@@ -533,11 +650,20 @@ def profile_view(request):
         .select_related('package', 'package__destination')
         .order_by('-created_at')
     )
+    activity_bookings = (
+        ActivityBooking.objects
+        .filter(user=request.user)
+        .visible_in_listings()
+        .select_related('activity', 'activity__category')
+        .order_by('-created_at')
+    )
     inquiries = Inquiry.objects.filter(user=request.user).select_related('package').order_by('-created_at')
     favorite_packages = request.user.favorite_packages.filter(is_active=True).select_related('destination').order_by('-updated_at')
 
     return render(request, 'profile.html', {
         'bookings': bookings,
+        'activity_bookings': activity_bookings,
+        'total_booking_count': bookings.count() + activity_bookings.count(),
         'inquiries': inquiries,
         'favorite_packages': favorite_packages,
     })

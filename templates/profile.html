@@ -260,7 +260,7 @@
       <div class="metrics-grid">
         <div class="metric">
           <p class="metric-label">Bookings</p>
-          <p class="metric-value">{{ bookings|length }}</p>
+          <p class="metric-value">{{ total_booking_count }}</p>
         </div>
         <div class="metric">
           <p class="metric-label">Inquiries</p>
@@ -336,6 +336,48 @@
               </div>
             {% else %}
               <p class="empty-state">You have no bookings yet.</p>
+            {% endif %}
+
+            <h2 class="section-title mt-4">Activity Booking History</h2>
+            {% if activity_bookings %}
+              <div class="table-responsive table-wrap">
+                <table class="table table-sm align-middle mb-0">
+                  <thead>
+                    <tr>
+                      <th>Activity</th>
+                      <th>Traveler</th>
+                      <th>Category</th>
+                      <th>Travel Date</th>
+                      <th>People</th>
+                      <th>Booked On</th>
+                      <th>Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for booking in activity_bookings %}
+                      <tr>
+                        <td>
+                          <a href="{% url 'activity_detail' booking.activity.pk %}" class="text-decoration-none fw-semibold">
+                            {{ booking.activity.name }}
+                          </a>
+                          <div class="small text-muted">{{ booking.activity.duration }}</div>
+                        </td>
+                        <td>
+                          <div class="fw-semibold">{{ booking.full_name }}</div>
+                          <div class="small text-muted">{{ booking.email }}</div>
+                        </td>
+                        <td>{{ booking.activity.category.name }}</td>
+                        <td>{{ booking.travel_date|date:'M d, Y' }}</td>
+                        <td>{{ booking.number_of_people }}</td>
+                        <td>{{ booking.created_at|date:'M d, Y' }}</td>
+                        <td>${{ booking.total_amount }}</td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            {% else %}
+              <p class="empty-state">You have no activity bookings yet.</p>
             {% endif %}
           </div>
         </div>
