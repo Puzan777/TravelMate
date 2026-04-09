@@ -467,6 +467,7 @@ class ActivityBookingQuerySet(models.QuerySet):
 class ActivityBooking(models.Model):
     class PaymentMethod(models.TextChoices):
         CASH = 'CASH', 'Cash on arrival'
+        ESEWA = 'ESEWA', 'eSewa'
         BANK_TRANSFER = 'BANK_TRANSFER', 'Bank transfer'
 
     class PaymentStatus(models.TextChoices):
@@ -498,7 +499,7 @@ class ActivityBooking(models.Model):
 
     @classmethod
     def visible_in_listings_q(cls, prefix=''):
-        return models.Q()
+        return models.Q(**{f'{prefix}payment_status': cls.PaymentStatus.PAID}) | ~models.Q(**{f'{prefix}payment_method': cls.PaymentMethod.ESEWA})
 
     def __str__(self):
         return f"{self.activity.name} - {self.full_name} - {self.travel_date}"

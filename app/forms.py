@@ -183,7 +183,7 @@ class ActivityBookingForm(forms.ModelForm):
         if payment_method == ActivityBooking.PaymentMethod.BANK_TRANSFER and not transaction_reference:
             self.add_error('transaction_reference', 'Transaction/reference ID is required for bank transfer payments.')
 
-        if payment_method == ActivityBooking.PaymentMethod.CASH:
+        if payment_method in {ActivityBooking.PaymentMethod.CASH, ActivityBooking.PaymentMethod.ESEWA}:
             transaction_reference = ''
 
         cleaned_data['transaction_reference'] = transaction_reference

@@ -29,21 +29,25 @@ def _request_param(request, name):
     return request.POST.get(name) or request.GET.get(name)
 
 
-def _extract_booking_id_from_token(token):
+def _extract_booking_target_from_token(token):
     if token is None:
-        return None
+        return None, None
 
     value = str(token).strip()
     if not value:
-        return None
+        return None, None
 
     if value.isdigit():
-        return int(value)
+        return 'package', int(value)
 
     match = re.search(r'(\d+)$', value)
     if not match:
-        return None
-    return int(match.group(1))
+        return None, None
+
+    token_upper = value.upper()
+    if token_upper.startswith('ACTIVITY-BOOKING-') or token_upper.startswith('ACTIVITYBOOKING-'):
+        return 'activity', int(match.group(1))
+    return 'package', int(match.group(1))
 
 
 def _parse_decimal_amount(value):
@@ -306,10 +310,9 @@ def _generate_esewa_v2_signature(total_amount, transaction_uuid, product_code):
     return base64.b64encode(digest).decode('utf-8')
 
 
-def _build_esewa_payment_request(request, booking):
+def _build_esewa_payment_request(request, amount, payment_token):
     payment_url = str(getattr(settings, 'ESEWA_FORM_URL', '')).strip()
     product_code = str(getattr(settings, 'ESEWA_PRODUCT_CODE', '')).strip()
-    amount = _parse_decimal_amount(booking.total_amount)
 
     if not product_code:
         return None, 'eSewa product code is not configured.'
@@ -320,7 +323,6 @@ def _build_esewa_payment_request(request, booking):
     if amount is None or amount <= 0:
         return None, 'Invalid booking total for eSewa payment.'
 
-    payment_token = f'BOOKING-{booking.pk}'
     success_url = request.build_absolute_uri(reverse('esewa_callback'))
     failure_url = request.build_absolute_uri(reverse('esewa_failure'))
 
@@ -348,6 +350,18 @@ def _build_esewa_payment_request(request, booking):
         'payment_token': payment_token,
         'amount': amount,
     }, ''
+
+
+def _build_package_esewa_payment_request(request, booking):
+    amount = _parse_decimal_amount(booking.total_amount)
+    payment_token = f'BOOKING-{booking.pk}'
+    return _build_esewa_payment_request(request, amount, payment_token)
+
+
+def _build_activity_esewa_payment_request(request, activity_booking):
+    amount = _parse_decimal_amount(activity_booking.total_amount)
+    payment_token = f'ACTIVITY-BOOKING-{activity_booking.pk}'
+    return _build_esewa_payment_request(request, amount, payment_token)
 
 
 def _redirect_after_login(request, user):
@@ -528,6 +542,23 @@ def activity_detail(request, pk):
             activity_booking.user = request.user
             activity_booking.save()
             _send_new_activity_booking_emails(activity_booking)
+            if activity_booking.payment_method == ActivityBooking.PaymentMethod.ESEWA:
+                payment_request, payment_error = _build_activity_esewa_payment_request(request, activity_booking)
+                if payment_error:
+                    activity_booking.payment_status = ActivityBooking.PaymentStatus.FAILED
+                    activity_booking.save()
+                    messages.error(request, f'Could not start eSewa payment: {payment_error}')
+                    return redirect('activity_detail', pk=activity.pk)
+
+                return render(request, 'esewa_redirect.html', {
+                    'booking': activity_booking,
+                    'item_name': activity.name,
+                    'item_type': 'activity',
+                    'cancel_url': reverse('activity_detail', kwargs={'pk': activity.pk}),
+                    'esewa_payment_url': payment_request['payment_url'],
+                    'esewa_payload': payment_request['payment_payload'],
+                })
+
             messages.success(request, 'Your activity booking request has been submitted successfully.')
             return redirect('activity_detail', pk=activity.pk)
     else:
@@ -590,7 +621,7 @@ def package_detail(request, slug):
                 booking.save()
                 _send_new_booking_emails(booking)
                 if booking.payment_method == Booking.PaymentMethod.ESEWA:
-                    payment_request, payment_error = _build_esewa_payment_request(request, booking)
+                    payment_request, payment_error = _build_package_esewa_payment_request(request, booking)
                     if payment_error:
                         booking.payment_status = Booking.PaymentStatus.FAILED
                         booking.save()
@@ -598,8 +629,10 @@ def package_detail(request, slug):
                         return redirect('package_detail', slug=slug)
 
                     return render(request, 'esewa_redirect.html', {
-                        'package': package,
                         'booking': booking,
+                        'item_name': package.title,
+                        'item_type': 'package',
+                        'cancel_url': reverse('package_detail', kwargs={'slug': package.slug}),
                         'esewa_payment_url': payment_request['payment_url'],
                         'esewa_payload': payment_request['payment_payload'],
                     })
@@ -691,10 +724,66 @@ def toggle_favorite_package(request, slug):
 @csrf_exempt
 def esewa_callback(request):
     callback = _read_esewa_callback_payload(request)
-    booking_id = _extract_booking_id_from_token(callback['booking_token'])
+    booking_target, booking_id = _extract_booking_target_from_token(callback['booking_token'])
     if booking_id is None:
         messages.error(request, 'Invalid eSewa callback: booking identifier is missing.')
         return redirect('home')
+
+    if booking_target == 'activity':
+        booking = ActivityBooking.objects.filter(pk=booking_id).select_related('activity').first()
+        if not booking:
+            messages.error(request, 'Unable to verify payment: activity booking was not found.')
+            return redirect('home')
+
+        if booking.payment_status == ActivityBooking.PaymentStatus.PAID:
+            messages.info(request, 'This activity booking is already marked as paid.')
+            return redirect('activity_detail', pk=booking.activity.pk)
+
+        callback_amount = _parse_decimal_amount(callback['amount'])
+        expected_amount = _parse_decimal_amount(booking.total_amount)
+
+        if callback_amount is None:
+            booking.payment_status = ActivityBooking.PaymentStatus.FAILED
+            booking.save()
+            messages.error(request, 'Payment callback did not include a valid amount.')
+            return redirect('activity_detail', pk=booking.activity.pk)
+
+        if expected_amount is None or callback_amount != expected_amount:
+            booking.payment_status = ActivityBooking.PaymentStatus.FAILED
+            booking.save()
+            messages.error(request, 'Payment verification failed because the amount does not match the booking total.')
+            return redirect('activity_detail', pk=booking.activity.pk)
+
+        status_text = str(callback.get('status') or '').strip().upper()
+        if status_text and status_text in {'FAILED', 'CANCELED', 'CANCELLED', 'ERROR'}:
+            booking.payment_status = ActivityBooking.PaymentStatus.FAILED
+            if callback['reference']:
+                booking.transaction_reference = str(callback['reference']).strip()
+            booking.save()
+            messages.error(request, 'eSewa marked this payment as failed.')
+            return redirect('activity_detail', pk=booking.activity.pk)
+
+        verified, reason, verified_reference = _verify_esewa_transaction(
+            reference=callback['reference'],
+            payment_token=callback['booking_token'],
+            amount=callback_amount,
+            product_code=callback['product_code'],
+        )
+
+        if not verified:
+            booking.payment_status = ActivityBooking.PaymentStatus.FAILED
+            if callback['reference'] or verified_reference:
+                booking.transaction_reference = str(callback['reference'] or verified_reference).strip()
+            booking.save()
+            messages.error(request, f'Payment verification failed: {reason}')
+            return redirect('activity_detail', pk=booking.activity.pk)
+
+        booking.payment_method = ActivityBooking.PaymentMethod.ESEWA
+        booking.payment_status = ActivityBooking.PaymentStatus.PAID
+        booking.transaction_reference = str(verified_reference or callback['reference'] or '').strip()
+        booking.save()
+        messages.success(request, 'Activity payment verified successfully through eSewa.')
+        return redirect('activity_detail', pk=booking.activity.pk)
 
     booking = Booking.objects.filter(pk=booking_id).select_related('package').first()
     if not booking:
@@ -755,10 +844,27 @@ def esewa_callback(request):
 @csrf_exempt
 def esewa_failure(request):
     callback = _read_esewa_callback_payload(request)
-    booking_id = _extract_booking_id_from_token(callback['booking_token'])
+    booking_target, booking_id = _extract_booking_target_from_token(callback['booking_token'])
     if booking_id is None:
         messages.error(request, 'eSewa payment was cancelled.')
         return redirect('home')
+
+    if booking_target == 'activity':
+        booking = ActivityBooking.objects.filter(pk=booking_id).select_related('activity').first()
+        if not booking:
+            messages.error(request, 'eSewa payment was cancelled.')
+            return redirect('home')
+
+        if booking.payment_status == ActivityBooking.PaymentStatus.PAID:
+            messages.info(request, 'This activity booking is already paid.')
+            return redirect('activity_detail', pk=booking.activity.pk)
+
+        booking.payment_status = ActivityBooking.PaymentStatus.FAILED
+        if callback['reference']:
+            booking.transaction_reference = str(callback['reference']).strip()
+        booking.save()
+        messages.error(request, 'eSewa payment was cancelled or failed.')
+        return redirect('activity_detail', pk=booking.activity.pk)
 
     booking = Booking.objects.filter(pk=booking_id).select_related('package').first()
     if not booking:

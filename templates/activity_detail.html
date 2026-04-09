@@ -271,6 +271,9 @@
       if (paymentMethodInput.value === 'BANK_TRANSFER') {
         transactionReferenceHint.textContent = '(required for bank transfer)';
         transactionReferenceInput.required = true;
+      } else if (paymentMethodInput.value === 'ESEWA') {
+        transactionReferenceHint.textContent = '(filled automatically after eSewa callback verification)';
+        transactionReferenceInput.required = false;
       } else {
         transactionReferenceHint.textContent = '(optional)';
         transactionReferenceInput.required = false;
