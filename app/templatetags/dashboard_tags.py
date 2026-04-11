@@ -1,7 +1,8 @@
 from datetime import date
 
 from django import template
-from django.db.models import Count, Sum
+from django.db.models import Count, Sum, Avg
+from django.utils import timezone
 from django.db.models.functions import TruncMonth
 
 from app.models import Activity, ApprovalStatus, Booking, CustomUser, Destination, HotSale, Inquiry, Package
@@ -319,3 +320,28 @@ def dashboard_monthly_bookings(months=6):
         {'label': label, 'total': counts_by_key.get(key, 0)}
         for label, key in zip(labels, keys)
     ]
+
+
+@register.simple_tag
+def dashboard_monthly_revenue():
+    now = timezone.now()
+    bookings = Booking.objects.visible_in_listings().filter(
+        created_at__year=now.year, created_at__month=now.month
+    )
+    total = bookings.aggregate(total=Sum('total_amount'))['total']
+    return total or 0
+
+
+@register.simple_tag
+def dashboard_monthly_booking_count():
+    now = timezone.now()
+    return Booking.objects.visible_in_listings().filter(
+        created_at__year=now.year, created_at__month=now.month
+    ).count()
+
+
+@register.simple_tag
+def dashboard_average_platform_rating():
+    pkg_avg = Package.objects.filter(is_active=True).aggregate(avg=Avg('rating'))['avg']
+    return round(float(pkg_avg), 1) if pkg_avg is not None else 0.0
+

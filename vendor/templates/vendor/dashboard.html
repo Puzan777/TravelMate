@@ -9,142 +9,440 @@
   <span>Overview</span>
 {% endblock %}
 
+{% block extra_css %}
+<style>
+  .vd-dash-shell {
+    display: grid;
+    gap: 16px;
+  }
+
+  .vd-dash-hero {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.24);
+    border-radius: 20px;
+    padding: 22px;
+    color: #fff;
+    background:
+      radial-gradient(circle at 85% 18%, rgba(255, 255, 255, 0.18), transparent 18%),
+      linear-gradient(135deg, #004e6a 0%, #006989 52%, #0f7f9f 100%);
+    box-shadow: var(--vd-shadow-lg);
+  }
+
+  .vd-dash-hero::after {
+    content: "";
+    position: absolute;
+    width: 190px;
+    height: 190px;
+    border-radius: 50%;
+    right: -55px;
+    bottom: -75px;
+    background: rgba(255, 255, 255, 0.14);
+  }
+
+  .vd-dash-hero-head {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+
+  .vd-dash-eyebrow {
+    margin: 0 0 6px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.75);
+  }
+
+  .vd-dash-hero-title {
+    margin: 0;
+    font-size: 1.75rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: #fff;
+  }
+
+  .vd-dash-hero-sub {
+    margin: 6px 0 0;
+    max-width: 650px;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.85);
+  }
+
+  .vd-dash-hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .vd-dash-hero-actions .vd-btn-primary,
+  .vd-dash-hero-actions .vd-btn-accent,
+  .vd-dash-hero-actions .vd-btn-outline {
+    min-height: 38px;
+    border-radius: 999px;
+    padding: 0 14px;
+    font-size: 0.8rem;
+    font-weight: 700;
+  }
+
+  .vd-dash-hero-actions .vd-btn-outline {
+    background: rgba(255, 255, 255, 0.14);
+    border-color: rgba(255, 255, 255, 0.36);
+    color: #fff;
+  }
+
+  .vd-dash-hero-actions .vd-btn-outline:hover {
+    background: rgba(255, 255, 255, 0.24);
+    border-color: rgba(255, 255, 255, 0.48);
+    color: #fff;
+  }
+
+  .vd-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .vd-kpi-card {
+    border: 1px solid var(--vd-line-soft);
+    border-radius: 14px;
+    background: var(--vd-white);
+    box-shadow: var(--vd-shadow);
+    padding: 12px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .vd-kpi-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 3px;
+    background: var(--kpi-color, var(--vd-ocean));
+  }
+
+  .vd-kpi-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .vd-kpi-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 9px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+    color: var(--kpi-color, var(--vd-ocean));
+    background: color-mix(in srgb, var(--kpi-color, var(--vd-ocean)) 14%, #ffffff);
+  }
+
+  .vd-kpi-label {
+    margin: 0;
+    font-size: 0.69rem;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--vd-text-muted);
+    font-weight: 700;
+  }
+
+  .vd-kpi-value {
+    margin: 0;
+    font-size: 1.25rem;
+    line-height: 1.1;
+    font-weight: 800;
+    color: var(--vd-text);
+  }
+
+  .vd-kpi-meta {
+    margin-top: 6px;
+    font-size: 0.73rem;
+    color: var(--vd-text-muted);
+  }
+
+  .vd-kpi-meta a {
+    color: var(--vd-ocean);
+    text-decoration: none;
+    font-weight: 700;
+  }
+
+  .vd-kpi-meta a:hover {
+    text-decoration: underline;
+  }
+
+  .vd-panel {
+    border: 1px solid var(--vd-line-soft);
+    border-radius: 14px;
+    background: var(--vd-white);
+    box-shadow: var(--vd-shadow);
+    overflow: hidden;
+  }
+
+  .vd-panel-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--vd-line-soft);
+    background: linear-gradient(180deg, #f9fbfc 0%, #f4f8fa 100%);
+  }
+
+  .vd-panel-title {
+    margin: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.98rem;
+    font-weight: 800;
+    color: var(--vd-text);
+  }
+
+  .vd-action-grid {
+    padding: 14px;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .vd-action-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid var(--vd-line-soft);
+    border-radius: 10px;
+    padding: 11px 12px;
+    text-decoration: none;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--vd-text);
+    background: #fff;
+    transition: transform var(--vd-transition), box-shadow var(--vd-transition), border-color var(--vd-transition);
+  }
+
+  .vd-action-link:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--vd-shadow);
+    border-color: rgba(0, 105, 137, 0.28);
+  }
+
+  .vd-action-link.is-primary {
+    background: var(--vd-ocean-light);
+    color: var(--vd-ocean);
+  }
+
+  .vd-action-link.is-warm {
+    background: #fff7ed;
+    color: #c2410c;
+  }
+
+  .vd-split {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .vd-mini-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 30px;
+    padding: 0 10px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+
+  .vd-table-wrap thead th,
+  .vd-table-wrap tbody td {
+    font-size: 0.82rem;
+  }
+
+  .vd-profile-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    padding: 14px;
+  }
+
+  .vd-profile-item {
+    border: 1px solid var(--vd-line-soft);
+    border-radius: 10px;
+    padding: 10px 11px;
+    background: #fff;
+  }
+
+  .vd-profile-label {
+    margin: 0 0 4px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--vd-text-muted);
+  }
+
+  .vd-profile-value {
+    margin: 0;
+    font-size: 0.87rem;
+    font-weight: 700;
+    color: var(--vd-text);
+  }
+
+  .vd-panel-note {
+    margin: 0;
+    padding: 0 14px 14px;
+    font-size: 0.78rem;
+    color: var(--vd-text-light);
+  }
+
+  @media (max-width: 1399px) {
+    .vd-kpi-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 991px) {
+    .vd-kpi-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .vd-action-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .vd-split {
+      grid-template-columns: 1fr;
+    }
+
+    .vd-profile-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 576px) {
+    .vd-kpi-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .vd-action-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+{% endblock %}
+
 {% block vendor_content %}
-<!-- Page Header -->
-<div class="vd-page-header vd-fade-in">
-  <div>
-    <h1 class="vd-page-title">Welcome back, {{ vendor_profile.company_name }}</h1>
-    <p class="vd-page-subtitle">Here's what's happening with your business today.</p>
-  </div>
-  <div class="d-flex gap-2 flex-wrap">
-    <a href="{% url 'vendor:package_create' %}" class="vd-btn-accent"><i class="bi bi-plus-lg"></i> New Package</a>
-    <a href="{% url 'vendor:activity_create' %}" class="vd-btn-primary"><i class="bi bi-plus-lg"></i> New Activity</a>
-  </div>
-</div>
+<div class="vd-dash-shell">
+  <section class="vd-dash-hero vd-fade-in">
+    <div class="vd-dash-hero-head">
+      <div>
+        <p class="vd-dash-eyebrow">Vendor Workspace</p>
+        <h1 class="vd-dash-hero-title">Welcome back, {{ vendor_profile.company_name }}</h1>
+        <p class="vd-dash-hero-sub">Track approvals, bookings, hot sales, and customer activity from one streamlined dashboard.</p>
+      </div>
+      <div class="vd-dash-hero-actions">
+        <a href="{% url 'vendor:package_create' %}" class="vd-btn-accent"><i class="bi bi-plus-lg"></i> New Package</a>
+        <a href="{% url 'vendor:activity_create' %}" class="vd-btn-primary"><i class="bi bi-plus-lg"></i> New Activity</a>
+        <a href="{% url 'vendor:hot_sale_create' %}" class="vd-btn-outline"><i class="bi bi-fire"></i> New Hot Sale</a>
+      </div>
+    </div>
+  </section>
 
-<!-- Rejected Alert -->
-{% if rejected_package_count > 0 or rejected_activity_count > 0 %}
-<div class="vd-alert vd-alert-danger vd-fade-in">
-  <i class="bi bi-exclamation-triangle-fill"></i>
-  <div>
-    <strong>Action required:</strong> You have
-    {% if rejected_package_count > 0 %}<strong>{{ rejected_package_count }}</strong> rejected package{{ rejected_package_count|pluralize }}{% endif %}{% if rejected_package_count > 0 and rejected_activity_count > 0 %} and {% endif %}{% if rejected_activity_count > 0 %}<strong>{{ rejected_activity_count }}</strong> rejected activit{{ rejected_activity_count|pluralize:"y,ies" }}{% endif %}
-    that need revision.
-    {% if rejected_package_count > 0 %}<a href="{% url 'vendor:package_list' %}" class="fw-bold text-decoration-underline">View Packages</a>{% endif %}
-    {% if rejected_activity_count > 0 %}<a href="{% url 'vendor:activity_list' %}" class="fw-bold text-decoration-underline ms-2">View Activities</a>{% endif %}
+  {% if rejected_package_count > 0 or rejected_activity_count > 0 %}
+  <div class="vd-alert vd-alert-danger vd-fade-in">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    <div>
+      <strong>Action required:</strong> You currently have
+      {% if rejected_package_count > 0 %}<strong>{{ rejected_package_count }}</strong> rejected package{{ rejected_package_count|pluralize }}{% endif %}{% if rejected_package_count > 0 and rejected_activity_count > 0 %} and {% endif %}{% if rejected_activity_count > 0 %}<strong>{{ rejected_activity_count }}</strong> rejected activit{{ rejected_activity_count|pluralize:"y,ies" }}{% endif %}.
+      {% if rejected_package_count > 0 %}<a href="{% url 'vendor:package_list' %}" class="fw-bold text-decoration-underline">View packages</a>{% endif %}
+      {% if rejected_activity_count > 0 %}<a href="{% url 'vendor:activity_list' %}" class="fw-bold text-decoration-underline ms-2">View activities</a>{% endif %}
+    </div>
   </div>
-</div>
-{% endif %}
+  {% endif %}
 
-<!-- KPI Cards -->
-<div class="row g-3 mb-4 vd-fade-in vd-fade-in-1">
-  <!-- Active Packages -->
-  <div class="col-xl-2 col-lg-4 col-sm-6">
-    <div class="vd-card h-100" style="border-top: 3px solid var(--vd-ocean);">
-      <div class="vd-card-body text-center py-3">
-        <div style="color: var(--vd-ocean); font-size: 1.5rem; margin-bottom: 4px;"><i class="bi bi-box-seam"></i></div>
-        <div style="font-size: 1.6rem; font-weight: 800; color: var(--vd-text);">{{ active_package_count }}</div>
-        <div style="font-size: 0.76rem; color: var(--vd-text-muted); font-weight: 600;">Active Packages</div>
-        <a href="{% url 'vendor:package_list' %}" style="font-size: 0.74rem; color: var(--vd-ocean); text-decoration: none; font-weight: 600;">View all {{ package_count }} →</a>
+  <section class="vd-kpi-grid vd-fade-in vd-fade-in-1">
+    <article class="vd-kpi-card" style="--kpi-color: var(--vd-ocean);">
+      <div class="vd-kpi-top">
+        <p class="vd-kpi-label">Active Packages</p>
+        <span class="vd-kpi-icon"><i class="bi bi-box-seam"></i></span>
       </div>
-    </div>
-  </div>
-  <!-- Active Activities -->
-  <div class="col-xl-2 col-lg-4 col-sm-6">
-    <div class="vd-card h-100" style="border-top: 3px solid var(--vd-ocean);">
-      <div class="vd-card-body text-center py-3">
-        <div style="color: var(--vd-ocean); font-size: 1.5rem; margin-bottom: 4px;"><i class="bi bi-lightning"></i></div>
-        <div style="font-size: 1.6rem; font-weight: 800; color: var(--vd-text);">{{ active_activity_count }}</div>
-        <div style="font-size: 0.76rem; color: var(--vd-text-muted); font-weight: 600;">Active Activities</div>
-        <a href="{% url 'vendor:activity_list' %}" style="font-size: 0.74rem; color: var(--vd-ocean); text-decoration: none; font-weight: 600;">View all {{ activity_count }} →</a>
-      </div>
-    </div>
-  </div>
-  <!-- Bookings This Month -->
-  <div class="col-xl-2 col-lg-4 col-sm-6">
-    <div class="vd-card h-100" style="border-top: 3px solid var(--vd-accent);">
-      <div class="vd-card-body text-center py-3">
-        <div style="color: var(--vd-accent); font-size: 1.5rem; margin-bottom: 4px;"><i class="bi bi-calendar-check"></i></div>
-        <div style="font-size: 1.6rem; font-weight: 800; color: var(--vd-text);">{{ month_booking_count }}</div>
-        <div style="font-size: 0.76rem; color: var(--vd-text-muted); font-weight: 600;">Bookings This Month</div>
-        <a href="{% url 'vendor:booking_list' %}" style="font-size: 0.74rem; color: var(--vd-ocean); text-decoration: none; font-weight: 600;">{{ booking_count }} total →</a>
-      </div>
-    </div>
-  </div>
-  <!-- Earnings This Month -->
-  <div class="col-xl-2 col-lg-4 col-sm-6">
-    <div class="vd-card h-100" style="border-top: 3px solid var(--vd-success);">
-      <div class="vd-card-body text-center py-3">
-        <div style="color: var(--vd-success); font-size: 1.5rem; margin-bottom: 4px;"><i class="bi bi-cash-stack"></i></div>
-        <div style="font-size: 1.6rem; font-weight: 800; color: var(--vd-text);">Rs. {{ month_earnings }}</div>
-        <div style="font-size: 0.76rem; color: var(--vd-text-muted); font-weight: 600;">Earnings This Month</div>
-        <span style="font-size: 0.74rem; color: var(--vd-text-light);">Paid bookings only</span>
-      </div>
-    </div>
-  </div>
-  <!-- Pending Approvals -->
-  <div class="col-xl-2 col-lg-4 col-sm-6">
-    <div class="vd-card h-100" style="border-top: 3px solid var(--vd-warning);">
-      <div class="vd-card-body text-center py-3">
-        <div style="color: var(--vd-warning); font-size: 1.5rem; margin-bottom: 4px;"><i class="bi bi-hourglass-split"></i></div>
-        <div style="font-size: 1.6rem; font-weight: 800; color: var(--vd-text);">{{ pending_package_count|add:pending_activity_count }}</div>
-        <div style="font-size: 0.76rem; color: var(--vd-text-muted); font-weight: 600;">Pending Approvals</div>
-        <span style="font-size: 0.74rem; color: var(--vd-text-light);">{{ pending_package_count }} pkg · {{ pending_activity_count }} act</span>
-      </div>
-    </div>
-  </div>
-  <!-- Average Rating -->
-  <div class="col-xl-2 col-lg-4 col-sm-6">
-    <div class="vd-card h-100" style="border-top: 3px solid var(--vd-accent);">
-      <div class="vd-card-body text-center py-3">
-        <div style="color: var(--vd-accent); font-size: 1.5rem; margin-bottom: 4px;"><i class="bi bi-star-fill"></i></div>
-        <div style="font-size: 1.6rem; font-weight: 800; color: var(--vd-text);">{{ avg_rating }}</div>
-        <div style="font-size: 0.76rem; color: var(--vd-text-muted); font-weight: 600;">Avg Package Rating</div>
-        <span style="font-size: 0.74rem; color: var(--vd-text-light);">Out of 5.0</span>
-      </div>
-    </div>
-  </div>
-</div>
+      <p class="vd-kpi-value">{{ active_package_count }}</p>
+      <div class="vd-kpi-meta"><a href="{% url 'vendor:package_list' %}">View all {{ package_count }}</a></div>
+    </article>
 
-<!-- Quick Actions -->
-<div class="vd-card mb-4 vd-fade-in vd-fade-in-2">
-  <div class="vd-card-header d-flex justify-content-between align-items-center">
-    <h2><i class="bi bi-rocket-takeoff me-2" style="color: var(--vd-ocean);"></i>Quick Actions</h2>
-  </div>
-  <div class="vd-card-body">
-    <div class="row g-2">
-      <div class="col-lg-3 col-md-4 col-6">
-        <a href="{% url 'vendor:package_create' %}" class="d-flex align-items-center gap-2 p-3 rounded-3 text-decoration-none" style="background: var(--vd-ocean-light); color: var(--vd-ocean); font-weight: 600; font-size: 0.86rem; transition: all 180ms;">
-          <i class="bi bi-plus-circle" style="font-size: 1.1rem;"></i> Add Package
-        </a>
+    <article class="vd-kpi-card" style="--kpi-color: var(--vd-ocean);">
+      <div class="vd-kpi-top">
+        <p class="vd-kpi-label">Active Activities</p>
+        <span class="vd-kpi-icon"><i class="bi bi-lightning"></i></span>
       </div>
-      <div class="col-lg-3 col-md-4 col-6">
-        <a href="{% url 'vendor:activity_create' %}" class="d-flex align-items-center gap-2 p-3 rounded-3 text-decoration-none" style="background: var(--vd-ocean-light); color: var(--vd-ocean); font-weight: 600; font-size: 0.86rem;">
-          <i class="bi bi-plus-circle" style="font-size: 1.1rem;"></i> Add Activity
-        </a>
-      </div>
-      <div class="col-lg-3 col-md-4 col-6">
-        <a href="{% url 'vendor:hot_sale_create' %}" class="d-flex align-items-center gap-2 p-3 rounded-3 text-decoration-none" style="background: #FFF7ED; color: #C2410C; font-weight: 600; font-size: 0.86rem;">
-          <i class="bi bi-fire" style="font-size: 1.1rem;"></i> Add Hot Sale
-        </a>
-      </div>
-      <div class="col-lg-3 col-md-4 col-6">
-        <a href="{% url 'vendor:booking_list' %}" class="d-flex align-items-center gap-2 p-3 rounded-3 text-decoration-none" style="background: var(--vd-cream-light); color: var(--vd-text); font-weight: 600; font-size: 0.86rem;">
-          <i class="bi bi-calendar-check" style="font-size: 1.1rem;"></i> View Bookings
-        </a>
-      </div>
-    </div>
-  </div>
-</div>
+      <p class="vd-kpi-value">{{ active_activity_count }}</p>
+      <div class="vd-kpi-meta"><a href="{% url 'vendor:activity_list' %}">View all {{ activity_count }}</a></div>
+    </article>
 
-<!-- Recent Bookings + Recent Inquiries -->
-<div class="row g-3 mb-4 vd-fade-in vd-fade-in-3">
-  <!-- Recent Bookings -->
-  <div class="col-lg-6">
-    <div class="vd-card h-100">
-      <div class="vd-card-header d-flex justify-content-between align-items-center">
-        <h2><i class="bi bi-calendar-check me-2" style="color: var(--vd-ocean);"></i>Recent Bookings</h2>
-        <a href="{% url 'vendor:booking_list' %}" class="vd-btn-outline" style="padding: 4px 12px; font-size: 0.78rem;">View All</a>
+    <article class="vd-kpi-card" style="--kpi-color: var(--vd-accent);">
+      <div class="vd-kpi-top">
+        <p class="vd-kpi-label">Bookings This Month</p>
+        <span class="vd-kpi-icon"><i class="bi bi-calendar-check"></i></span>
+      </div>
+      <p class="vd-kpi-value">{{ month_booking_count }}</p>
+      <div class="vd-kpi-meta"><a href="{% url 'vendor:booking_list' %}">{{ booking_count }} total bookings</a></div>
+    </article>
+
+    <article class="vd-kpi-card" style="--kpi-color: var(--vd-success);">
+      <div class="vd-kpi-top">
+        <p class="vd-kpi-label">Earnings This Month</p>
+        <span class="vd-kpi-icon"><i class="bi bi-cash-stack"></i></span>
+      </div>
+      <p class="vd-kpi-value">Rs. {{ month_earnings }}</p>
+      <div class="vd-kpi-meta">Paid bookings only</div>
+    </article>
+
+    <article class="vd-kpi-card" style="--kpi-color: var(--vd-warning);">
+      <div class="vd-kpi-top">
+        <p class="vd-kpi-label">Pending Approvals</p>
+        <span class="vd-kpi-icon"><i class="bi bi-hourglass-split"></i></span>
+      </div>
+      <p class="vd-kpi-value">{{ pending_package_count|add:pending_activity_count }}</p>
+      <div class="vd-kpi-meta">{{ pending_package_count }} pkg | {{ pending_activity_count }} act</div>
+    </article>
+
+    <article class="vd-kpi-card" style="--kpi-color: var(--vd-accent);">
+      <div class="vd-kpi-top">
+        <p class="vd-kpi-label">Average Rating</p>
+        <span class="vd-kpi-icon"><i class="bi bi-star-fill"></i></span>
+      </div>
+      <p class="vd-kpi-value">{{ avg_rating }}</p>
+      <div class="vd-kpi-meta">Out of 5.0</div>
+    </article>
+  </section>
+
+  <section class="vd-panel vd-fade-in vd-fade-in-2">
+    <div class="vd-panel-head">
+      <h2 class="vd-panel-title"><i class="bi bi-rocket-takeoff"></i> Quick Actions</h2>
+    </div>
+    <div class="vd-action-grid">
+      <a href="{% url 'vendor:package_create' %}" class="vd-action-link is-primary"><i class="bi bi-plus-circle"></i> Add Package</a>
+      <a href="{% url 'vendor:activity_create' %}" class="vd-action-link is-primary"><i class="bi bi-plus-circle"></i> Add Activity</a>
+      <a href="{% url 'vendor:hot_sale_create' %}" class="vd-action-link is-warm"><i class="bi bi-fire"></i> Add Hot Sale</a>
+      <a href="{% url 'vendor:booking_list' %}" class="vd-action-link"><i class="bi bi-calendar-check"></i> View Bookings</a>
+    </div>
+  </section>
+
+  <section class="vd-split vd-fade-in vd-fade-in-3">
+    <article class="vd-panel">
+      <div class="vd-panel-head">
+        <h2 class="vd-panel-title"><i class="bi bi-calendar-check"></i> Recent Bookings</h2>
+        <a href="{% url 'vendor:booking_list' %}" class="vd-btn-outline vd-mini-btn">View All</a>
       </div>
       {% if recent_bookings %}
       <div class="vd-table-wrap">
@@ -160,10 +458,10 @@
           <tbody>
             {% for booking in recent_bookings %}
             <tr>
-              <td class="fw-semibold" style="font-size: 0.85rem;">{{ booking.package.title|truncatechars:30 }}</td>
-              <td style="font-size: 0.85rem;">{{ booking.full_name }}</td>
-              <td style="font-size: 0.85rem;">{{ booking.travel_date|date:"M d, Y" }}</td>
-              <td class="text-center" style="font-size: 0.85rem;">{{ booking.number_of_people }}</td>
+              <td class="fw-semibold">{{ booking.package.title|truncatechars:30 }}</td>
+              <td>{{ booking.full_name }}</td>
+              <td>{{ booking.travel_date|date:"M d, Y" }}</td>
+              <td class="text-center">{{ booking.number_of_people }}</td>
             </tr>
             {% endfor %}
           </tbody>
@@ -172,17 +470,15 @@
       {% else %}
       <div class="vd-empty">
         <div><i class="bi bi-calendar-x"></i></div>
-        <p>No bookings yet. They'll show up here.</p>
+        <p>No bookings yet. They will appear here.</p>
       </div>
       {% endif %}
-    </div>
-  </div>
-  <!-- Recent Inquiries -->
-  <div class="col-lg-6">
-    <div class="vd-card h-100">
-      <div class="vd-card-header d-flex justify-content-between align-items-center">
-        <h2><i class="bi bi-chat-dots me-2" style="color: var(--vd-ocean);"></i>Recent Inquiries</h2>
-        <a href="{% url 'vendor:inquiry_list' %}" class="vd-btn-outline" style="padding: 4px 12px; font-size: 0.78rem;">View All</a>
+    </article>
+
+    <article class="vd-panel">
+      <div class="vd-panel-head">
+        <h2 class="vd-panel-title"><i class="bi bi-chat-dots"></i> Recent Inquiries</h2>
+        <a href="{% url 'vendor:inquiry_list' %}" class="vd-btn-outline vd-mini-btn">View All</a>
       </div>
       {% if recent_inquiries %}
       <div class="vd-table-wrap">
@@ -198,11 +494,11 @@
           <tbody>
             {% for inquiry in recent_inquiries %}
             <tr>
-              <td class="fw-semibold" style="font-size: 0.85rem;">{{ inquiry.package.title|truncatechars:25 }}</td>
-              <td style="font-size: 0.85rem;">{{ inquiry.full_name }}</td>
-              <td style="font-size: 0.85rem;">{{ inquiry.created_at|date:"M d" }}</td>
+              <td class="fw-semibold">{{ inquiry.package.title|truncatechars:25 }}</td>
+              <td>{{ inquiry.full_name }}</td>
+              <td>{{ inquiry.created_at|date:"M d" }}</td>
               <td class="text-end">
-                <a href="{% url 'vendor:inquiry_reply' inquiry.pk %}" class="vd-btn-outline" style="padding: 3px 10px; font-size: 0.76rem;">
+                <a href="{% url 'vendor:inquiry_reply' inquiry.pk %}" class="vd-btn-outline vd-mini-btn">
                   {% if inquiry.admin_reply %}Edit{% else %}Reply{% endif %}
                 </a>
               </td>
@@ -217,114 +513,109 @@
         <p>No inquiries yet.</p>
       </div>
       {% endif %}
-    </div>
-  </div>
-</div>
+    </article>
+  </section>
 
-<!-- Recent Hot Sales -->
-<div class="vd-card mb-4 vd-fade-in vd-fade-in-4">
-  <div class="vd-card-header d-flex justify-content-between align-items-center">
-    <h2><i class="bi bi-fire me-2" style="color: #EA580C;"></i>Recent Hot Sales</h2>
-    <div class="d-flex gap-2">
-      <a href="{% url 'vendor:hot_sale_create' %}" class="vd-btn-accent" style="padding: 4px 12px; font-size: 0.78rem;"><i class="bi bi-plus-lg"></i> Add</a>
-      <a href="{% url 'vendor:hot_sale_list' %}" class="vd-btn-outline" style="padding: 4px 12px; font-size: 0.78rem;">View All</a>
-    </div>
-  </div>
-  {% if recent_hot_sales %}
-  <div class="vd-table-wrap">
-    <table class="table mb-0">
-      <thead>
-        <tr>
-          <th>Type</th>
-          <th>Offer</th>
-          <th>Original</th>
-          <th>Sale Price</th>
-          <th>Status</th>
-          <th class="text-end">Action</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for sale in recent_hot_sales %}
-        <tr>
-          <td><span class="vd-badge vd-badge-info">{{ sale.target_type }}</span></td>
-          <td class="fw-semibold" style="font-size: 0.85rem;">{{ sale.target_name }}</td>
-          <td style="font-size: 0.85rem;">Rs. {{ sale.original_price }}</td>
-          <td style="font-size: 0.85rem; color: var(--vd-success); font-weight: 600;">Rs. {{ sale.sale_price }}</td>
-          <td>
-            {% if sale.is_active %}
-              <span class="vd-badge vd-badge-success">Active</span>
-            {% else %}
-              <span class="vd-badge vd-badge-muted">Inactive</span>
-            {% endif %}
-          </td>
-          <td class="text-end">
-            {% if sale.package %}
-              <a href="{{ sale.package.get_absolute_url }}" class="vd-btn-outline" style="padding: 3px 10px; font-size: 0.76rem;">View Details</a>
-            {% elif sale.activity %}
-              <a href="{% url 'activity_detail' sale.activity.pk %}" class="vd-btn-outline" style="padding: 3px 10px; font-size: 0.76rem;">View Details</a>
-            {% endif %}
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-  {% else %}
-  <div class="vd-empty">
-    <div><i class="bi bi-fire"></i></div>
-    <p>No hot sales yet. Create one to promote a package or activity.</p>
-  </div>
-  {% endif %}
-</div>
-
-<!-- Vendor Profile Card -->
-<div class="vd-card vd-fade-in vd-fade-in-4">
-  <div class="vd-card-header d-flex justify-content-between align-items-center">
-    <h2><i class="bi bi-person-circle me-2" style="color: var(--vd-ocean);"></i>Vendor Profile</h2>
-    <div class="d-flex align-items-center gap-2">
-      {% if vendor_profile.verification_status == 'APPROVED' %}
-        <span class="vd-badge vd-badge-success"><i class="bi bi-patch-check-fill"></i> Approved</span>
-      {% elif vendor_profile.verification_status == 'REJECTED' %}
-        <span class="vd-badge vd-badge-danger"><i class="bi bi-x-circle-fill"></i> Rejected</span>
-      {% else %}
-        <span class="vd-badge vd-badge-warning"><i class="bi bi-clock-fill"></i> Pending Review</span>
-      {% endif %}
-    </div>
-  </div>
-  <div class="vd-card-body">
-    <div class="row g-3">
-      <div class="col-md-6">
-        <div class="mb-3">
-          <div style="font-size: 0.74rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--vd-text-muted); margin-bottom: 2px;">Company</div>
-          <div style="font-weight: 600;">{{ vendor_profile.company_name }}</div>
-        </div>
-        <div class="mb-3">
-          <div style="font-size: 0.74rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--vd-text-muted); margin-bottom: 2px;">Owner</div>
-          <div style="font-weight: 600;">{{ vendor_profile.owner_full_name|default:'-' }}</div>
-        </div>
-        <div>
-          <div style="font-size: 0.74rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--vd-text-muted); margin-bottom: 2px;">Email</div>
-          <div style="font-weight: 600;">{{ request.user.email|default:'-' }}</div>
-        </div>
-      </div>
-      <div class="col-md-6">
-        <div class="mb-3">
-          <div style="font-size: 0.74rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--vd-text-muted); margin-bottom: 2px;">Account Holder</div>
-          <div style="font-weight: 600;">{{ vendor_profile.account_holder_name|default:'-' }}</div>
-        </div>
-        <div class="mb-3">
-          <div style="font-size: 0.74rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--vd-text-muted); margin-bottom: 2px;">eSewa Number</div>
-          <div style="font-weight: 600;">{{ vendor_profile.masked_mobile_payment_number }}</div>
-        </div>
+  <section class="vd-panel vd-fade-in vd-fade-in-4">
+    <div class="vd-panel-head">
+      <h2 class="vd-panel-title"><i class="bi bi-fire"></i> Recent Hot Sales</h2>
+      <div class="d-flex gap-2">
+        <a href="{% url 'vendor:hot_sale_create' %}" class="vd-btn-accent vd-mini-btn"><i class="bi bi-plus-lg"></i> Add</a>
+        <a href="{% url 'vendor:hot_sale_list' %}" class="vd-btn-outline vd-mini-btn">View All</a>
       </div>
     </div>
-    <p style="margin: 12px 0 0; font-size: 0.8rem; color: var(--vd-text-light);">Full payout details are only visible to admin during payout processing.</p>
+    {% if recent_hot_sales %}
+    <div class="vd-table-wrap">
+      <table class="table mb-0">
+        <thead>
+          <tr>
+            <th>Type</th>
+            <th>Offer</th>
+            <th>Original</th>
+            <th>Sale Price</th>
+            <th>Status</th>
+            <th class="text-end">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for sale in recent_hot_sales %}
+          <tr>
+            <td><span class="vd-badge vd-badge-info">{{ sale.target_type }}</span></td>
+            <td class="fw-semibold">{{ sale.target_name }}</td>
+            <td>Rs. {{ sale.original_price }}</td>
+            <td class="fw-semibold" style="color: var(--vd-success);">Rs. {{ sale.sale_price }}</td>
+            <td>
+              {% if sale.is_active %}
+                <span class="vd-badge vd-badge-success">Active</span>
+              {% else %}
+                <span class="vd-badge vd-badge-muted">Inactive</span>
+              {% endif %}
+            </td>
+            <td class="text-end">
+              {% if sale.package %}
+                <a href="{{ sale.package.get_absolute_url }}" class="vd-btn-outline vd-mini-btn">View Details</a>
+              {% elif sale.activity %}
+                <a href="{% url 'activity_detail' sale.activity.pk %}" class="vd-btn-outline vd-mini-btn">View Details</a>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="vd-empty">
+      <div><i class="bi bi-fire"></i></div>
+      <p>No hot sales yet. Create one to promote a package or activity.</p>
+    </div>
+    {% endif %}
+  </section>
+
+  <section class="vd-panel vd-fade-in vd-fade-in-4">
+    <div class="vd-panel-head">
+      <h2 class="vd-panel-title"><i class="bi bi-person-circle"></i> Vendor Profile</h2>
+      <div>
+        {% if vendor_profile.verification_status == 'APPROVED' %}
+          <span class="vd-badge vd-badge-success"><i class="bi bi-patch-check-fill"></i> Approved</span>
+        {% elif vendor_profile.verification_status == 'REJECTED' %}
+          <span class="vd-badge vd-badge-danger"><i class="bi bi-x-circle-fill"></i> Rejected</span>
+        {% else %}
+          <span class="vd-badge vd-badge-warning"><i class="bi bi-clock-fill"></i> Pending Review</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="vd-profile-grid">
+      <div class="vd-profile-item">
+        <p class="vd-profile-label">Company</p>
+        <p class="vd-profile-value">{{ vendor_profile.company_name }}</p>
+      </div>
+      <div class="vd-profile-item">
+        <p class="vd-profile-label">Owner</p>
+        <p class="vd-profile-value">{{ vendor_profile.owner_full_name|default:'-' }}</p>
+      </div>
+      <div class="vd-profile-item">
+        <p class="vd-profile-label">Email</p>
+        <p class="vd-profile-value">{{ request.user.email|default:'-' }}</p>
+      </div>
+      <div class="vd-profile-item">
+        <p class="vd-profile-label">Account Holder</p>
+        <p class="vd-profile-value">{{ vendor_profile.account_holder_name|default:'-' }}</p>
+      </div>
+      <div class="vd-profile-item">
+        <p class="vd-profile-label">eSewa Number</p>
+        <p class="vd-profile-value">{{ vendor_profile.masked_mobile_payment_number }}</p>
+      </div>
+    </div>
+
+    <p class="vd-panel-note">Full payout details are visible to admin only during payout processing.</p>
+
     {% if vendor_profile.verification_status == 'REJECTED' and vendor_profile.rejection_reason %}
-      <div class="vd-alert vd-alert-danger mt-3" style="margin-bottom: 0;">
+      <div class="vd-alert vd-alert-danger" style="margin: 0 14px 14px;">
         <i class="bi bi-exclamation-triangle-fill"></i>
         <div><strong>Rejection Reason:</strong> {{ vendor_profile.rejection_reason }}</div>
       </div>
     {% endif %}
-  </div>
+  </section>
 </div>
 {% endblock %}

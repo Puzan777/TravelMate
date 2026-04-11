@@ -108,12 +108,25 @@ class PackageImageInline(admin.TabularInline):
 class PackageAdmin(admin.ModelAdmin):
     inlines = [PackageImageInline]
     list_per_page = 20
-    list_display = ('title', 'vendor', 'category', 'price', 'rating', 'approval_status', 'is_active', 'created_at')
+    list_display = ('title', 'vendor', 'category', 'price', 'rating', 'approval_status', 'is_active', 'created_at', 'admin_actions')
     list_filter = ('vendor', 'category', 'approval_status', 'is_active')
     search_fields = ('title', 'slug', 'destination__name', 'description')
     prepopulated_fields = {'slug': ('title',)}
     readonly_fields = ('created_at', 'updated_at')
     list_editable = ('is_active',)
+    list_display_links = None
+
+    actions = None
+
+    @admin.display(description='Actions')
+    def admin_actions(self, obj):
+        view_url = reverse('package_detail', args=[obj.slug]) if obj.slug else '#'
+        return format_html(
+            '<div style="display:flex;gap:4px;">'
+            '<a class="button" href="{}" target="_blank" style="padding:4px 8px; font-size:11px; background:var(--vd-ocean); border-color:var(--vd-ocean);">View</a>'
+            '</div>',
+            view_url
+        )
 
     fieldsets = (
         (None, {'fields': ('vendor', 'title', 'slug', 'category', 'image', 'price', 'rating', 'description', 'destination')}),
@@ -177,10 +190,23 @@ class ActivityImageInline(admin.TabularInline):
 class ActivityAdmin(admin.ModelAdmin):
     inlines = [ActivityImageInline]
     list_per_page = 20
-    list_display = ('name', 'vendor', 'category', 'price', 'difficulty_level', 'approval_status', 'is_active', 'created_at')
+    list_display = ('name', 'vendor', 'category', 'price', 'difficulty_level', 'approval_status', 'is_active', 'created_at', 'admin_actions')
     list_filter = ('vendor', 'category', 'difficulty_level', 'approval_status', 'is_active', 'created_at')
     search_fields = ('name', 'description', 'vendor__company_name', 'category__name')
     readonly_fields = ('created_at',)
+    list_display_links = None
+
+    actions = None
+
+    @admin.display(description='Actions')
+    def admin_actions(self, obj):
+        view_url = '#'
+        return format_html(
+            '<div style="display:flex;gap:4px;">'
+            '<a class="button" href="{}" target="_blank" style="padding:4px 8px; font-size:11px; background:var(--vd-ocean); border-color:var(--vd-ocean);">View</a>'
+            '</div>',
+            view_url
+        )
 
     fieldsets = (
         (None, {'fields': ('vendor', 'category', 'name', 'description', 'price', 'approval_status', 'is_active')}),
@@ -690,6 +716,29 @@ def _live_products_view(request):
     return TemplateResponse(request, 'admin/live_products.html', context)
 
 
+
+
+def _earnings_view(request):
+    if not (request.user.is_active and request.user.is_staff):
+        from django.core.exceptions import PermissionDenied
+        raise PermissionDenied
+    context = {
+        **admin.site.each_context(request),
+        'title': 'Earnings & Transactions',
+    }
+    return TemplateResponse(request, 'admin/earnings.html', context)
+
+
+def _settings_view(request):
+    if not (request.user.is_active and request.user.is_staff):
+        from django.core.exceptions import PermissionDenied
+        raise PermissionDenied
+    context = {
+        **admin.site.each_context(request),
+        'title': 'System Settings',
+    }
+    return TemplateResponse(request, 'admin/settings.html', context)
+
 # Register custom admin URLs
 _original_get_urls = admin.AdminSite.get_urls
 
@@ -697,6 +746,8 @@ def _custom_get_urls(self):
     custom_urls = [
         path('pending-approvals/', self.admin_view(_pending_approvals_view), name='pending_approvals'),
         path('live-products/', self.admin_view(_live_products_view), name='live_products'),
+        path('earnings/', self.admin_view(_earnings_view), name='earnings'),
+        path('settings/', self.admin_view(_settings_view), name='settings'),
     ]
     return custom_urls + _original_get_urls(self)
 

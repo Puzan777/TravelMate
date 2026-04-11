@@ -7,21 +7,21 @@
 {{ block.super }}
 <style>
     :root {
-        --bg-page: #f0f4f8;
+        --bg-page: #F5F5F6;
         --bg-card: #ffffff;
         --text-main: #1a2332;
         --text-muted: #5e6e82;
-        --line-soft: #e8eff7;
-        --brand: #0d7377;
-        --good: #0f8b4c;
-        --bad: #c0392b;
+        --line-soft: #E2E5E9;
+        --brand: #006989;
+        --good: #059669;
+        --bad: #DC2626;
         --radius-lg: 16px;
     }
     #content-main {
         background: var(--bg-card);
         border: 1px solid var(--line-soft);
         border-radius: var(--radius-lg);
-        padding: 24px;
+        padding: 16px;
         box-shadow: 0 4px 12px rgba(0,0,0,0.05);
     }
     h1 {
@@ -58,18 +58,18 @@
         border: none;
     }
     .btn-approve {
-        background: #e9f8ef;
+        background: #ECFDF5;
         color: var(--good);
-        border: 1px solid #b9e6cc;
+        border: 1px solid #A7F3D0;
     }
     .btn-approve:hover {
         background: var(--good);
         color: white;
     }
     .btn-reject {
-        background: #fdecec;
+        background: #FEF2F2;
         color: var(--bad);
-        border: 1px solid #f7c7c7;
+        border: 1px solid #FECACA;
         margin-left: 8px;
     }
     .btn-reject:hover {
@@ -77,9 +77,9 @@
         color: white;
     }
     .btn-view {
-        background: #f0f4f8;
+        background: #E8F4F8;
         color: var(--brand);
-        border: 1px solid #cadaeb;
+        border: 1px solid #B8E0ED;
         margin-right: 8px;
     }
     .btn-view:hover {
@@ -132,8 +132,8 @@
         font-size: 0.85rem;
     }
     .rejection-input:focus {
-        outline: 2px solid rgba(13, 115, 119, 0.25);
-        border-color: #8bc2c3;
+        outline: 2px solid rgba(0, 105, 137, 0.25);
+        border-color: #006989;
     }
     .sr-only {
         position: absolute;
@@ -174,9 +174,9 @@
         vertical-align: middle;
     }
     .toolbar .btn-filter {
-        background: #f0f4f8;
+        background: #E8F4F8;
         color: var(--brand);
-        border: 1px solid #cadaeb;
+        border: 1px solid #B8E0ED;
     }
     .toolbar .btn-filter:hover {
         background: var(--brand);
@@ -193,7 +193,7 @@
         font-size: 0.9rem;
     }
     .pagination {
-        margin-top: 14px;
+        margin-top: 8px;
         display: flex;
         gap: 8px;
         align-items: center;
@@ -202,11 +202,11 @@
     .pagination a {
         padding: 5px 10px;
         border-radius: 6px;
-        border: 1px solid #cadaeb;
+        border: 1px solid #B8E0ED;
         color: var(--brand);
         text-decoration: none;
         font-weight: 600;
-        background: #f0f4f8;
+        background: #E8F4F8;
     }
 </style>
 {% endblock %}

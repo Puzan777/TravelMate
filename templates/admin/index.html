@@ -4,31 +4,6 @@
 {% block extrastyle %}
 {{ block.super }}
 <style>
-  #header {
-    position: fixed !important;
-    top: 0;
-    left: 0;
-    right: 0;
-  }
-
-  #container {
-    padding-top: 86px;
-  }
-
-  #nav-sidebar {
-    position: fixed !important;
-    top: 106px !important;
-    bottom: 24px !important;
-    z-index: 220 !important;
-  }
-
-  .main > #nav-sidebar + .content,
-  .main.shifted > #nav-sidebar + .content {
-    width: calc(100% - 332px) !important;
-    max-width: calc(100% - 332px) !important;
-    margin-left: 308px !important;
-  }
-
   .dash-stage {
     display: grid;
     gap: 20px;
@@ -44,7 +19,7 @@
       radial-gradient(circle at 82% 18%, rgba(255, 255, 255, 0.22), transparent 18%),
       linear-gradient(135deg, #0c394d 0%, #145c75 52%, #1b7f9c 100%);
     color: #fff9f0;
-    box-shadow: 0 24px 48px rgba(14, 65, 86, 0.2);
+    box-shadow: 0 16px 48px rgba(0, 105, 137, 0.2);
   }
 
   .dash-hero::after {
@@ -61,7 +36,7 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    gap: 18px;
+    gap: 12px;
     flex-wrap: wrap;
   }
 
@@ -70,13 +45,13 @@
     z-index: 1;
     display: grid;
     grid-template-columns: 1fr;
-    gap: 18px;
+    gap: 12px;
     align-items: start;
   }
 
   .dash-hero-main {
     display: grid;
-    gap: 18px;
+    gap: 12px;
   }
 
   .dash-eyebrow {
@@ -147,10 +122,10 @@
   }
 
   .dash-hero-stat {
-    padding: 14px 16px;
+    padding: 8px 16px;
     border: 1px solid rgba(255, 249, 240, 0.14);
     border-top: 3px solid rgba(255, 249, 240, 0.26);
-    border-radius: 18px;
+    border-radius: 12px;
     background: rgba(255, 249, 240, 0.08);
     backdrop-filter: blur(10px);
     min-width: 0;
@@ -222,7 +197,7 @@
     align-items: center;
     justify-content: center;
     min-height: 46px;
-    padding: 0 18px;
+    padding: 0 12px;
     border: 1px solid rgba(255, 249, 240, 0.18);
     border-radius: 999px;
     background: rgba(255, 249, 240, 0.12);
@@ -245,22 +220,22 @@
 
   .dash-link.is-accent {
     border-color: rgba(212, 140, 86, 0.22);
-    background: linear-gradient(135deg, #d48c56 0%, #b96f38 100%);
+    background: linear-gradient(135deg, #E8A838 0%, #D4952E 100%);
     color: #ffffff !important;
   }
 
   .dash-split {
     display: grid;
     grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.95fr);
-    gap: 18px;
+    gap: 12px;
   }
 
   .dash-panel {
     padding: 20px;
     border: 1px solid rgba(22, 48, 64, 0.1);
-    border-radius: 24px;
+    border-radius: 16px;
     background: rgba(255, 252, 246, 0.94);
-    box-shadow: 0 16px 36px rgba(14, 65, 86, 0.08);
+    box-shadow: 0 16px 36px rgba(0, 105, 137, 0.08);
   }
 
   .dash-panel h2 {
@@ -292,10 +267,10 @@
 
   .trend-switch-btn {
     min-height: 40px;
-    padding: 0 14px;
+    padding: 0 8px;
     border: 1px solid rgba(22, 48, 64, 0.1);
     border-radius: 999px;
-    background: rgba(29, 120, 149, 0.08);
+    background: rgba(0, 105, 137, 0.08);
     color: #163040;
     font-weight: 800;
     cursor: pointer;
@@ -303,10 +278,10 @@
   }
 
   .trend-switch-btn.is-active {
-    background: linear-gradient(135deg, #0e4156 0%, #1d7895 100%);
+    background: linear-gradient(135deg, #003B50 0%, #006989 100%);
     border-color: transparent;
     color: #fff9f0;
-    box-shadow: 0 14px 28px rgba(21, 92, 117, 0.18);
+    box-shadow: 0 8px 28px rgba(0, 105, 137, 0.18);
   }
 
   .trend-wrap {
@@ -329,7 +304,7 @@
     max-width: 58px;
     min-height: 8px;
     border-radius: 16px 16px 6px 6px;
-    background: linear-gradient(180deg, #58a6c0 0%, #1d7895 100%);
+    background: linear-gradient(180deg, #58a6c0 0%, #006989 100%);
     box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.28);
     transition: height 220ms ease;
   }
@@ -359,9 +334,9 @@
     align-items: flex-start;
     justify-content: space-between;
     gap: 12px;
-    padding: 14px 16px;
+    padding: 8px 16px;
     border: 1px solid rgba(22, 48, 64, 0.08);
-    border-radius: 18px;
+    border-radius: 12px;
     background: linear-gradient(180deg, #fffdf9 0%, #f7efe2 100%);
     min-height: 128px;
   }
@@ -398,7 +373,7 @@
 
   .dash-table th,
   .dash-table td {
-    padding: 12px 14px;
+    padding: 12px 8px;
     border-bottom: 1px solid rgba(22, 48, 64, 0.08);
     text-align: left;
     vertical-align: middle;
@@ -410,7 +385,7 @@
     font-weight: 800;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    background: rgba(29, 120, 149, 0.05);
+    background: rgba(0, 105, 137, 0.05);
   }
 
   .dash-table tbody tr:hover {
@@ -455,10 +430,10 @@
     align-items: center;
     justify-content: center;
     min-height: 40px;
-    padding: 0 14px;
+    padding: 0 8px;
     border: 1px solid rgba(22, 48, 64, 0.1);
     border-radius: 999px;
-    background: rgba(29, 120, 149, 0.08);
+    background: rgba(0, 105, 137, 0.08);
     color: #163040;
     font-size: 0.84rem;
     font-weight: 800;
@@ -466,7 +441,7 @@
   }
 
   .section-actions a:hover {
-    background: rgba(29, 120, 149, 0.14);
+    background: rgba(0, 105, 137, 0.14);
     color: #163040;
   }
 
@@ -477,42 +452,26 @@
   }
 
   @media (max-width: 720px) {
-    #container {
-      padding-top: 76px;
-    }
-
     .dash-hero {
-      padding: 22px 18px;
+      padding: 22px 12px;
     }
-
+    .dash-hero-stats {
+      grid-template-columns: 1fr 1fr;
+    }
     .dash-hero h1 {
-      font-size: 1.9rem !important;
-    }
-
-    .dash-hero-stats {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .trend-wrap {
-      grid-template-columns: repeat(3, minmax(56px, 1fr));
-    }
-
-    .snapshot-list {
-      grid-template-columns: 1fr;
-    }
-  }
-
-  @media (max-width: 560px) {
-    .dash-hero-stats {
-      grid-template-columns: 1fr;
+      font-size: 1.6rem !important;
     }
   }
 </style>
 {% endblock %}
 
-{% block content_title %}{% endblock %}
-
 {% block content %}
+{% dashboard_active_package_count as active_packages %}
+{% dashboard_active_activity_count as active_activities %}
+{% dashboard_monthly_booking_count as month_bookings %}
+{% dashboard_monthly_revenue as month_revenue %}
+{% dashboard_pending_product_count as pending_product %}
+{% dashboard_average_platform_rating as avg_rating %}
 {% dashboard_hot_sale_breakdown as hot_sale_breakdown %}
 {% dashboard_top_products 10 as top_products %}
 {% dashboard_product_trends 6 as product_trends %}
@@ -535,47 +494,46 @@
         </div>
         <div class="dash-hero-stats">
           <article class="dash-hero-stat is-revenue">
-            <p class="dash-hero-stat-label">Total Revenue</p>
-            <p class="dash-hero-stat-value">Rs {{ total_revenue|floatformat:0 }}</p>
-            <p class="dash-hero-stat-note">Based on visible booking totals.</p>
+            <p class="dash-hero-stat-label">Active Products</p>
+            <p class="dash-hero-stat-value">{{ active_packages|add:active_activities }}</p>
+            <p class="dash-hero-stat-note">Live packages and activities.</p>
           </article>
-          <a class="dash-hero-stat dash-hero-stat-link is-vendors" href="{% url 'admin:vendor_vendorprofile_changelist' %}?verification_status__exact=APPROVED">
-            <p class="dash-hero-stat-label">Approved Vendors</p>
-            <p class="dash-hero-stat-value">{{ total_vendors }}</p>
-            <p class="dash-hero-stat-note">Vendor profiles approved for platform use.</p>
-          </a>
-          <a class="dash-hero-stat dash-hero-stat-link is-users" href="{% url 'admin:app_customuser_changelist' %}?role__exact=CUSTOMER">
-            <p class="dash-hero-stat-label">Customers</p>
-            <p class="dash-hero-stat-value">{% dashboard_customer_count %}</p>
-            <p class="dash-hero-stat-note">Customer accounts only, excluding admins and vendors.</p>
-          </a>
-          <a class="dash-hero-stat dash-hero-stat-link is-pending" href="{% url 'admin:vendor_vendorprofile_changelist' %}?verification_status__exact=PENDING">
-            <p class="dash-hero-stat-label">Pending Vendors</p>
-            <p class="dash-hero-stat-value">{% dashboard_pending_vendor_count %}</p>
-            <p class="dash-hero-stat-note">Vendor applications waiting for review.</p>
+          <article class="dash-hero-stat is-users">
+            <p class="dash-hero-stat-label">Monthly Bookings</p>
+            <p class="dash-hero-stat-value">{{ month_bookings }}</p>
+            <p class="dash-hero-stat-note">New bookings this month.</p>
+          </article>
+          <article class="dash-hero-stat is-revenue">
+            <p class="dash-hero-stat-label">Monthly Earnings</p>
+            <p class="dash-hero-stat-value" style="color: var(--vd-accent);">Rs {{ month_revenue|floatformat:0 }}</p>
+            <p class="dash-hero-stat-note">Total revenue this month.</p>
+          </article>
+          <a class="dash-hero-stat dash-hero-stat-link is-pending" href="{% url 'admin:pending_approvals' %}">
+            <p class="dash-hero-stat-label">Pending Product Approvals</p>
+            <p class="dash-hero-stat-value" style="color: var(--vd-accent-hover);">{{ pending_product }}</p>
+            <p class="dash-hero-stat-note">Awaiting admin approval.</p>
           </a>
         </div>
       </div>
-      <aside class="dash-action-panel">
-        <div class="dash-actions">
-          <a class="dash-link is-accent" href="{% url 'admin:pending_approvals' %}">Approve Pending Products</a>
-          <a class="dash-link" href="{% url 'admin:live_products' %}">Inspect Live Products</a>
-          <a class="dash-link" href="{% url 'admin:app_booking_changelist' %}">Bookings</a>
-        </div>
-      </aside>
+      <div class="dash-actions dash-action-panel">
+        <a class="dash-link is-accent" href="{% url 'admin:pending_approvals' %}">Approve Pending Products</a>
+        <a class="dash-link" href="{% url 'admin:live_products' %}">Inspect Live Products</a>
+        <a class="dash-link" href="{% url 'admin:app_booking_changelist' %}">Bookings</a>
+      </div>
     </div>
   </section>
 
   <section class="dash-split">
     <div class="dash-panel">
       <h2>Product Trends</h2>
-      <div class="trend-toolbar">
-        <p id="trend-summary" class="dash-panel-copy" style="margin: 0;">Package bookings (last 6 months): {{ product_trends.total_package_bookings }}</p>
-        <div class="trend-switch" role="group" aria-label="Product trend mode">
-          <button type="button" class="trend-switch-btn is-active" data-trend-mode="package" aria-pressed="true">Packages</button>
-          <button type="button" class="trend-switch-btn" data-trend-mode="activity" aria-pressed="false">Activities</button>
+      <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:12px;">
+        <p id="trend-summary" class="dash-panel-copy" style="margin:0;">Package bookings (last 6 months): 0</p>
+        <div style="display:flex; gap:6px;">
+          <button class="trend-switch-btn is-active" data-trend-mode="package" aria-pressed="true">Packages</button>
+          <button class="trend-switch-btn" data-trend-mode="activity" aria-pressed="false">Activities</button>
         </div>
       </div>
+
       {% if product_trends.points %}
       <div id="product-trends-card" class="trend-wrap">
         {% for point in product_trends.points %}
@@ -703,7 +661,7 @@
 
   </section>
 
-  <section class="dash-split">
+  <section>
     <div class="dash-panel">
       <h2>Recent Vendor Applications</h2>
       {% if vendor_applications %}
@@ -742,40 +700,6 @@
       {% endif %}
       <div class="section-actions">
         <a href="{% url 'admin:vendor_vendorprofile_changelist' %}">Open vendor profiles</a>
-      </div>
-    </div>
-
-    <div class="dash-panel">
-      <h2>Recent Users</h2>
-      {% if recent_users %}
-      <div class="table-wrap">
-        <table class="dash-table" style="min-width: 520px;">
-          <thead>
-            <tr>
-              <th>Username</th>
-              <th>Email</th>
-              <th>Role</th>
-              <th>Joined</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for user in recent_users %}
-            <tr>
-              <td>{{ user.username }}</td>
-              <td>{{ user.email|default:"-" }}</td>
-              <td>{{ user.role|default:"-" }}</td>
-              <td>{{ user.date_joined|date:"M d, Y" }}</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-      {% else %}
-      <p class="dash-panel-copy">No users found.</p>
-      {% endif %}
-      <div class="section-actions">
-        <a href="{% url 'admin:app_customuser_changelist' %}?role__exact=CUSTOMER">Open customers</a>
-        <a href="{% url 'admin:app_customuser_add' %}">Add user</a>
       </div>
     </div>
   </section>
@@ -858,3 +782,4 @@
   });
 </script>
 {% endblock %}
+

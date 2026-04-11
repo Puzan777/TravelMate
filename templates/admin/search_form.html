@@ -5,10 +5,12 @@
     <div class="tm-admin-search-row">
         <input type="text" name="{{ search_var }}" value="{{ cl.query }}" id="searchbar" class="tm-admin-search-input" autofocus placeholder="{% translate 'Search details...' %}">
         <button type="submit" class="tm-admin-search-submit">{% translate 'Search' %}</button>
+        {% if cl.query %}
+        <a href="?{% for p in cl.params.items %}{% if p.0 != search_var %}{{ p.0 }}={{ p.1|urlencode }}&{% endif %}{% endfor %}" style="display:inline-flex; align-items:center; min-height:42px; padding:0 16px; border-radius:999px; border:1px solid var(--vd-line); background:#fff; color:var(--vd-text-muted); font-weight:700; text-decoration:none;">{% translate 'Clear' %}</a>
+        {% endif %}
         {% if show_result_count %}
             <span class="tm-admin-search-meta">
                 {% blocktranslate count counter=cl.result_count %}{{ counter }} result{% plural %}{{ counter }} results{% endblocktranslate %}
-                (<a href="?{% if cl.is_popup %}_popup=1{% endif %}">{% translate "clear" %}</a>)
             </span>
         {% endif %}
     </div>

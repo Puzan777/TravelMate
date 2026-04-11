@@ -7,933 +7,530 @@
 {{ block.super }}
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
 <style>
+  /* ===== DESIGN TOKENS — matches vendor_base.html exactly ===== */
   :root {
-    /* 60-30-10 palette: cream base, ocean structure, warm accent */
-    --tm-cream-50: #fdf9f2;
-    --tm-cream-100: #f7f0e4;
-    --tm-cream-200: #ecdfc8;
-    --tm-cream-300: #ddceb2;
-    --tm-ocean-700: #0e4156;
-    --tm-ocean-600: #155c75;
-    --tm-ocean-500: #1d7895;
-    --tm-ocean-100: #dcecf3;
-    --tm-accent: #d48c56;
-    --tm-accent-strong: #b96f38;
-    --tm-success: #2f7f64;
-    --tm-warning: #b8843c;
-    --tm-danger: #a65450;
-    --tm-text: #163040;
-    --tm-text-soft: #5f7481;
-    --tm-line: rgba(22, 48, 64, 0.12);
-    --tm-line-strong: rgba(22, 48, 64, 0.18);
-    --tm-shadow-soft: 0 16px 40px rgba(14, 65, 86, 0.08);
-    --tm-shadow-button: 0 14px 28px rgba(21, 92, 117, 0.2);
-    --tm-surface: rgba(255, 251, 245, 0.94);
-    --tm-shadow: var(--tm-shadow-soft);
-    --tm-primary: var(--tm-ocean-700);
-    --tm-text-muted: var(--tm-text-soft);
-    --tm-line-soft: rgba(22, 48, 64, 0.08);
-    --tm-radius-lg: 24px;
-    --tm-radius-md: 18px;
-    --tm-radius-sm: 14px;
-    --tm-transition: 180ms ease;
+    --vd-ocean:        #006989;
+    --vd-ocean-dark:   #004E6A;
+    --vd-ocean-deeper: #003B50;
+    --vd-ocean-light:  #E8F4F8;
+    --vd-cream:        #EAEBED;
+    --vd-cream-light:  #F5F5F6;
+    --vd-white:        #FFFFFF;
+    --vd-accent:       #E8A838;
+    --vd-accent-hover: #D4952E;
+    --vd-text:         #1A2B3C;
+    --vd-text-muted:   #6B7C8D;
+    --vd-text-light:   #94A3B3;
+    --vd-line:         #D5D8DC;
+    --vd-line-soft:    #E2E5E9;
+    --vd-shadow:       0 1px 3px rgba(0,0,0,.06), 0 4px 12px rgba(0,105,137,.06);
+    --vd-shadow-lg:    0 4px 24px rgba(0,105,137,.10);
+    --vd-radius:       12px;
+    --vd-radius-sm:    8px;
+    --vd-radius-lg:    16px;
+    --vd-sidebar-w:    260px;
+    --vd-topbar-h:     60px;
+    --vd-transition:   180ms ease;
+    --vd-success:      #059669;
+    --vd-success-bg:   #ECFDF5;
+    --vd-warning:      #D97706;
+    --vd-warning-bg:   #FFFBEB;
+    --vd-danger:       #DC2626;
+    --vd-danger-bg:    #FEF2F2;
+    --vd-info:         #2563EB;
+    --vd-info-bg:      #EFF6FF;
   }
 
-  * {
-    box-sizing: border-box;
-  }
-
-  html,
+  /* ===== GLOBAL RESET — kill all default Django Admin chrome ===== */
+  html, body { height: 100%; margin: 0; }
   body {
-    min-height: 100%;
-  }
-
-  html {
-    background: #fdf9f2 !important;
-  }
-
-  body {
-    position: relative;
-    isolation: isolate;
-    font-family: "Manrope", "Segoe UI", sans-serif !important;
-    color: var(--tm-text) !important;
-    background: transparent !important;
-    -webkit-font-smoothing: antialiased;
-  }
-
-  body::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    z-index: -1;
-    background:
-      radial-gradient(circle at top right, rgba(212, 140, 86, 0.12), transparent 28%),
-      linear-gradient(180deg, #fffdfa 0%, var(--tm-cream-50) 42%, #f4ecdf 100%);
-  }
-
-  #container,
-  #main {
-    background: transparent !important;
-  }
-
-  #container {
-    min-height: 100vh;
-  }
-
-  #main {
-    align-items: flex-start;
-  }
-
-  #header {
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-    padding: 16px 28px !important;
-    border-bottom: 1px solid rgba(255, 250, 242, 0.16) !important;
-    background:
-      radial-gradient(circle at 15% 20%, rgba(255, 255, 255, 0.12), transparent 28%),
-      linear-gradient(135deg, #0b3445 0%, var(--tm-ocean-700) 52%, var(--tm-ocean-500) 100%) !important;
-    box-shadow: 0 10px 34px rgba(14, 65, 86, 0.22);
-  }
-
-  #site-name a {
-    color: #fffaf3 !important;
-    font-family: "Fraunces", Georgia, serif !important;
-    font-size: 1.55rem !important;
-    font-weight: 700 !important;
-    letter-spacing: -0.03em;
-    text-decoration: none;
-  }
-
-  #user-tools {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 8px;
-    color: rgba(255, 250, 242, 0.86) !important;
-    font-size: 0.84rem;
-  }
-
-  #user-tools a {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 38px;
-    padding: 0 14px;
-    border-radius: 999px;
-    border: 1px solid rgba(255, 250, 242, 0.22);
-    background: rgba(255, 250, 242, 0.08);
-    color: #fffaf3 !important;
-    font-weight: 700;
-    text-decoration: none;
-    backdrop-filter: blur(8px);
-    transition: transform var(--tm-transition), background var(--tm-transition), border-color var(--tm-transition);
-  }
-
-  #user-tools a:hover {
-    transform: translateY(-1px);
-    background: rgba(255, 250, 242, 0.16);
-    border-color: rgba(255, 250, 242, 0.34);
-  }
-
-  .breadcrumbs {
-    margin: 18px 28px 0 !important;
-    padding: 14px 18px !important;
-    border: 1px solid rgba(22, 48, 64, 0.1) !important;
-    border-radius: var(--tm-radius-md);
-    background: rgba(255, 250, 242, 0.82) !important;
-    color: var(--tm-text-soft) !important;
-    box-shadow: var(--tm-shadow-soft);
-  }
-
-  .breadcrumbs a {
-    color: var(--tm-ocean-600) !important;
-    font-weight: 700;
-  }
-
-  #content {
-    padding: 24px 28px 28px !important;
-    background: transparent !important;
-  }
-
-  #content-start,
-  .content {
-    background: transparent !important;
-  }
-
-  #content h1 {
-    margin-bottom: 16px;
-    color: var(--tm-text) !important;
-    font-family: "Fraunces", Georgia, serif !important;
-    font-size: 1.9rem !important;
-    font-weight: 700 !important;
-    letter-spacing: -0.03em;
-  }
-
-  .messagelist {
-    margin: 0 0 18px;
-  }
-
-  .messagelist li {
-    margin: 0 0 10px !important;
-    padding: 14px 18px !important;
-    border: 1px solid transparent;
-    border-radius: var(--tm-radius-sm) !important;
-    box-shadow: var(--tm-shadow-soft);
-  }
-
-  .messagelist .success {
-    background: rgba(47, 127, 100, 0.14) !important;
-    border-color: rgba(47, 127, 100, 0.24) !important;
-    color: #275e4b !important;
-  }
-
-  .messagelist .warning {
-    background: rgba(184, 132, 60, 0.15) !important;
-    border-color: rgba(184, 132, 60, 0.25) !important;
-    color: #8b632f !important;
-  }
-
-  .messagelist .error {
-    background: rgba(166, 84, 80, 0.14) !important;
-    border-color: rgba(166, 84, 80, 0.24) !important;
-    color: #7c3c39 !important;
-  }
-
-  #nav-sidebar {
-    width: 262px !important;
-    flex: 0 0 262px !important;
-    left: 24px !important;
-    visibility: visible !important;
-    padding: 18px 12px 20px;
-    border: 1px solid rgba(255, 250, 242, 0.08) !important;
-    border-radius: var(--tm-radius-lg) !important;
-    background:
-      linear-gradient(180deg, #0c3648 0%, #0f4358 56%, #12546b 100%) !important;
-    box-shadow: 0 18px 36px rgba(14, 65, 86, 0.16);
-    position: fixed;
-    top: 104px;
-    bottom: 24px;
-    height: auto;
-    max-height: none;
-    margin: 0 !important;
-    z-index: 120;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    background: var(--vd-cream) !important;
+    color: var(--vd-text) !important;
     overflow-x: hidden;
-    overflow-y: auto;
+  }
+  body::before { display: none !important; }             /* remove Django gradient */
+
+  /* ===== HIDE DEFAULT DJANGO ELEMENTS ===== */
+  #branding { display: none !important; }                 /* default Django header branding */
+  #user-tools { display: none !important; }               /* default Django user tools row */
+  .breadcrumbs { display: none !important; }              /* default Django breadcrumbs bar */
+  #nav-sidebar { display: none !important; }              /* default Django sidebar — we use our own */
+  .sticky { display: none !important; }
+  .toggle-nav-sidebar { display: none !important; }       /* sidebar toggle button */
+  #content > h1, #content > h2 { display: none !important; } /* Hide 'Site administration' title */
+  #content-main > .module > caption { display: none !important; }
+
+  /* ===== CUSTOM TOPBAR — exact match vendor_base.html ===== */
+  #header {
+    position: fixed !important;
+    top: 0 !important;
+    left: var(--vd-sidebar-w) !important;
+    right: 0 !important;
+    height: var(--vd-topbar-h) !important;
+    background: var(--vd-white) !important;
+    border-bottom: 1px solid var(--vd-line-soft) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 0 24px !important;
+    z-index: 1020 !important;
+    box-shadow: 0 1px 4px rgba(0,0,0,.04) !important;
+    width: auto !important;
+    margin: 0 !important;
+    line-height: normal !important;
+    color: var(--vd-text) !important;
   }
 
-  #nav-sidebar::-webkit-scrollbar {
-    width: 8px;
-  }
-
-  #nav-sidebar::-webkit-scrollbar-track {
-    background: rgba(255, 250, 242, 0.06);
-    border-radius: 999px;
-  }
-
-  #nav-sidebar::-webkit-scrollbar-thumb {
-    background: rgba(255, 250, 242, 0.34);
-    border-radius: 999px;
-  }
-
-  #nav-sidebar::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 250, 242, 0.46);
-  }
-
-  .main > #nav-sidebar,
-  .main.shifted > #nav-sidebar {
-    left: 24px !important;
-    visibility: visible !important;
-  }
-
-  .main > #nav-sidebar + .content,
-  .main.shifted > #nav-sidebar + .content {
-    width: calc(100% - 332px) !important;
-    max-width: calc(100% - 332px) !important;
-    margin-left: 308px !important;
-  }
-
-  #nav-sidebar .module {
-    margin: 0 0 18px !important;
-    padding: 0 !important;
-    border: 0 !important;
-    background: transparent !important;
-    box-shadow: none !important;
-  }
-
-  #nav-sidebar .module caption,
-  #nav-sidebar .module h2 {
-    margin: 0 0 8px;
-    padding: 4px 10px !important;
-    background: transparent !important;
-    color: rgba(255, 250, 242, 0.82) !important;
-    font-size: 0.7rem !important;
-    font-weight: 800 !important;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-  }
-
-  #nav-sidebar .module table,
-  #nav-sidebar .module tbody {
-    display: block;
-    width: 100%;
-  }
-
-  #nav-sidebar .module tr {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto auto;
-    gap: 6px;
+  .tm-topbar-left {
+    display: flex;
     align-items: center;
-    width: 100%;
-    margin-bottom: 8px;
-  }
-
-  #nav-sidebar .module th,
-  #nav-sidebar .module td {
-    display: block;
-    padding: 0 !important;
-    border: 0 !important;
-    background: transparent !important;
-  }
-
-  #nav-sidebar .module th {
+    gap: 12px;
     min-width: 0;
   }
-
-  #nav-sidebar .module th a {
+  .tm-breadcrumb {
     display: flex;
     align-items: center;
-    min-height: 40px;
-    padding: 8px 12px;
-    border: 1px solid rgba(255, 250, 242, 0.42);
-    border-radius: 12px;
-    background: transparent !important;
-    color: #ffffff !important;
-    font-size: 0.88rem;
-    font-weight: 600;
-    line-height: 1.25;
-    white-space: normal;
-    word-break: break-word;
-    letter-spacing: 0.01em;
+    gap: 6px;
+    font-size: 0.85rem;
+    color: var(--vd-text-muted);
+  }
+  .tm-breadcrumb a {
+    color: var(--vd-ocean);
     text-decoration: none;
-    box-shadow: none;
-    transition: background var(--tm-transition), border-color var(--tm-transition), color var(--tm-transition);
+    font-weight: 600;
   }
+  .tm-breadcrumb a:hover { text-decoration: underline; }
 
-  #nav-sidebar .module th a:link,
-  #nav-sidebar .module th a:visited,
-  #nav-sidebar .module th a:active,
-  #nav-sidebar .module th a:focus-visible {
-    color: #ffffff !important;
+  .tm-topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
   }
-
-  #nav-sidebar .module td a {
-    display: inline-flex;
+  .tm-topbar-user {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--vd-text);
+  }
+  .tm-topbar-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--vd-ocean), var(--vd-ocean-dark));
+    color: #fff;
+    display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 36px;
-    padding: 0 12px;
-    border: 1px solid rgba(14, 65, 86, 0.16);
-    border-radius: 999px;
-    color: var(--tm-ocean-700) !important;
-    font-size: 0.74rem;
-    font-weight: 800;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    text-decoration: none;
-    background: rgba(255, 250, 242, 0.92) !important;
-    transition: transform var(--tm-transition), background var(--tm-transition), border-color var(--tm-transition), color var(--tm-transition);
-  }
-
-  #nav-sidebar .module th a:hover,
-  #nav-sidebar .module td a:hover {
-    background: rgba(255, 250, 242, 0.06) !important;
-    border-color: rgba(255, 250, 242, 0.62) !important;
-    color: #ffffff !important;
-  }
-
-  #nav-sidebar .current-model th a,
-  #nav-sidebar .module th a[aria-current="page"] {
-    background: rgba(255, 250, 242, 0.08) !important;
-    border-color: rgba(255, 250, 242, 0.82) !important;
-    color: #ffffff !important;
-    box-shadow: none;
-  }
-
-  #nav-sidebar .current-model th a:link,
-  #nav-sidebar .current-model th a:visited,
-  #nav-sidebar .module th a[aria-current="page"]:link,
-  #nav-sidebar .module th a[aria-current="page"]:visited {
-    color: #ffffff !important;
-  }
-
-  #nav-sidebar .current-model td a {
-    border-color: rgba(121, 66, 28, 0.24);
-    background: rgba(255, 242, 228, 0.94) !important;
-    color: #6d3b1a !important;
-  }
-
-  #nav-sidebar.tm-curated-nav .module tr {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  #nav-sidebar.tm-curated-nav .module th a {
-    min-height: 46px;
-    display: flex;
-    align-items: center;
-  }
-
-  #toggle-nav-sidebar {
-    display: none !important;
-  }
-
-  .module,
-  .inline-group,
-  .submit-row,
-  #changelist-filter,
-  #content-related .module,
-  #content-main {
-    border: 1px solid var(--tm-line) !important;
-    border-radius: var(--tm-radius-lg) !important;
-    background: rgba(255, 251, 245, 0.94) !important;
-    box-shadow: var(--tm-shadow-soft) !important;
-    overflow: hidden;
-  }
-
-  .module h2,
-  .module caption,
-  .inline-group h2 {
-    padding: 14px 18px !important;
-    background: linear-gradient(135deg, rgba(14, 65, 86, 0.96), rgba(29, 120, 149, 0.96)) !important;
-    color: #fff9f0 !important;
-    font-size: 0.84rem !important;
-    font-weight: 800 !important;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-
-  .form-row {
-    padding: 14px 18px !important;
-    border-bottom: 1px solid rgba(22, 48, 64, 0.08) !important;
-  }
-
-  .form-row:last-child {
-    border-bottom: 0 !important;
-  }
-
-  .aligned label,
-  .form-row label,
-  .actions label {
-    color: var(--tm-text) !important;
+    font-size: 0.8rem;
     font-weight: 700;
   }
-
-  .help,
-  .helptext {
-    color: var(--tm-text-soft) !important;
-    font-size: 0.82rem;
-  }
-
-  input[type="text"],
-  input[type="password"],
-  input[type="email"],
-  input[type="url"],
-  input[type="number"],
-  input[type="date"],
-  input[type="datetime-local"],
-  input[type="search"],
-  select,
-  textarea {
-    min-height: 44px;
-    padding: 10px 14px !important;
-    border: 1px solid rgba(22, 48, 64, 0.14) !important;
-    border-radius: 16px !important;
-    background: linear-gradient(180deg, #fffdf9 0%, #f9f3e8 100%) !important;
-    color: var(--tm-text) !important;
-    font-family: "Manrope", sans-serif !important;
-    font-size: 0.92rem !important;
-    line-height: 1.35 !important;
-    transition: border-color var(--tm-transition), box-shadow var(--tm-transition), background var(--tm-transition);
-  }
-
-  textarea {
-    min-height: 96px;
-    resize: vertical;
-  }
-
-  input[type="text"]:focus,
-  input[type="password"]:focus,
-  input[type="email"]:focus,
-  input[type="url"]:focus,
-  input[type="number"]:focus,
-  input[type="date"]:focus,
-  input[type="datetime-local"]:focus,
-  input[type="search"]:focus,
-  select:focus,
-  textarea:focus {
-    outline: none !important;
-    border-color: rgba(29, 120, 149, 0.5) !important;
-    box-shadow: 0 0 0 4px rgba(29, 120, 149, 0.12) !important;
-    background: #fffefb !important;
-  }
-
-  input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
-    accent-color: var(--tm-ocean-600);
-  }
-
-  .button,
-  button,
-  input[type="submit"],
-  input[type="button"],
-  .submit-row input,
-  a.button,
-  .object-tools a {
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    min-height: 46px;
-    padding: 0 18px !important;
-    border: 1px solid rgba(13, 65, 86, 0.12) !important;
-    border-radius: 999px !important;
-    background: linear-gradient(135deg, var(--tm-ocean-700) 0%, var(--tm-ocean-500) 100%) !important;
-    color: #fff9f0 !important;
-    font-family: "Manrope", sans-serif !important;
-    font-size: 0.87rem !important;
-    font-weight: 800 !important;
-    letter-spacing: 0.02em;
-    line-height: 1.2 !important;
-    text-decoration: none !important;
-    box-shadow: var(--tm-shadow-button);
-    transition: transform var(--tm-transition), box-shadow var(--tm-transition), filter var(--tm-transition);
-    cursor: pointer;
-  }
-
-  .button:hover,
-  button:hover,
-  input[type="submit"]:hover,
-  input[type="button"]:hover,
-  .submit-row input:hover,
-  a.button:hover,
-  .object-tools a:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 18px 34px rgba(21, 92, 117, 0.24);
-    filter: saturate(1.05);
-  }
-
-  .object-tools {
-    margin-bottom: 16px;
-  }
-
-  .object-tools a {
-    background: linear-gradient(135deg, var(--tm-accent) 0%, var(--tm-accent-strong) 100%) !important;
-    border-color: rgba(121, 66, 28, 0.16) !important;
-    box-shadow: 0 16px 30px rgba(185, 111, 56, 0.22);
-  }
-
-  .tm-soft-button,
-  a.button.tm-soft-button,
-  .object-tools a.tm-soft-button {
-    background: linear-gradient(135deg, #fffaf3 0%, var(--tm-cream-100) 100%) !important;
-    color: var(--tm-ocean-700) !important;
-    border-color: rgba(14, 65, 86, 0.12) !important;
-    box-shadow: 0 10px 20px rgba(14, 65, 86, 0.08) !important;
-  }
-
-  .deletelink,
-  a.deletelink,
-  .button.cancel,
-  a.button.cancel-link {
-    background: linear-gradient(135deg, #ba6761 0%, #9b4945 100%) !important;
-    border-color: rgba(91, 31, 28, 0.12) !important;
-    box-shadow: 0 16px 30px rgba(155, 73, 69, 0.2) !important;
-  }
-
-  .submit-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
+  .tm-btn-logout {
+    display: inline-flex;
     align-items: center;
-    padding: 16px 18px !important;
-    background: linear-gradient(180deg, rgba(255, 251, 245, 0.88), rgba(246, 238, 224, 0.96)) !important;
+    gap: 5px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--vd-line);
+    background: var(--vd-white);
+    color: var(--vd-text-muted);
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--vd-transition);
+  }
+  .tm-btn-logout:hover {
+    border-color: var(--vd-danger);
+    color: var(--vd-danger);
+    background: var(--vd-danger-bg);
   }
 
-  .actions {
+  /* ===== CUSTOM SIDEBAR — exact match vendor_base.html ===== */
+  .tm-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: var(--vd-sidebar-w);
+    background: linear-gradient(180deg, var(--vd-ocean) 0%, var(--vd-ocean-dark) 60%, var(--vd-ocean-deeper) 100%);
+    color: rgba(255,255,255,.85);
+    display: flex;
+    flex-direction: column;
+    z-index: 1030;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .tm-sidebar-brand {
+    padding: 18px 20px 14px;
+    border-bottom: 1px solid rgba(255,255,255,.12);
+  }
+  .tm-sidebar-brand a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: #fff;
+  }
+  .tm-sidebar-logo {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: rgba(255,255,255,.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+  }
+  .tm-sidebar-brand-text {
+    font-size: 1.02rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+  }
+  .tm-sidebar-brand-sub {
+    font-size: 0.68rem;
+    color: rgba(255,255,255,.9) !important;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .tm-sidebar-section {
+    padding: 16px 12px 8px;
+  }
+  .tm-sidebar-section-label {
+    padding: 0 8px 8px;
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,.85) !important;
+  }
+  .tm-nav { display: flex; flex-direction: column; gap: 2px; }
+
+  .tm-nav-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: var(--vd-radius-sm);
+    text-decoration: none;
+    font-size: 0.86rem;
+    font-weight: 600;
+    color: #fff !important;
+    transition: all var(--vd-transition);
+    position: relative;
+  }
+  .tm-nav-link:hover {
+    background: rgba(255,255,255,.1);
+    color: #fff !important;
+  }
+  .tm-nav-link.active {
+    background: rgba(255,255,255,.15);
+    color: #fff !important;
+    font-weight: 700;
+  }
+  .tm-nav-link.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 6px;
+    bottom: 6px;
+    width: 3px;
+    border-radius: 0 3px 3px 0;
+    background: var(--vd-accent);
+  }
+  .tm-nav-link .bi {
+    font-size: 1.08rem;
+    width: 22px;
+    text-align: center;
+    flex-shrink: 0;
+    color: #fff !important;
+  }
+
+  .tm-sidebar-footer {
+    margin-top: auto;
+    padding: 14px 20px 18px;
+    border-top: 1px solid rgba(255,255,255,.1);
+  }
+  .tm-sidebar-footer a {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #fff !important;
+    text-decoration: none;
+    font-size: 0.82rem;
+    font-weight: 500;
+    transition: color var(--vd-transition);
+  }
+  .tm-sidebar-footer a:hover { color: #fff; }
+
+  /* ===== MAIN CONTENT AREA ===== */
+  #container {
+    margin-left: 0 !important;
+    min-height: 100vh !important;
+  }
+  #main {
+    margin-left: var(--vd-sidebar-w) !important;
+    width: calc(100% - var(--vd-sidebar-w)) !important;
+    padding-top: var(--vd-topbar-h) !important;
+    background: var(--vd-cream) !important;
+  }
+  #content {
+    padding: 24px !important;
+    max-width: 1400px !important;
+  }
+
+  /* ===== DJANGO MODULE / CHANGELIST STYLING ===== */
+  #content .module {
+    border: none;
+    border-radius: var(--vd-radius);
+    background: var(--vd-white);
+    box-shadow: var(--vd-shadow);
     margin-bottom: 16px;
-    padding: 12px 16px !important;
-    border: 1px solid var(--tm-line) !important;
-    border-radius: var(--tm-radius-md) !important;
-    background: rgba(255, 249, 240, 0.86) !important;
-    box-shadow: var(--tm-shadow-soft);
   }
-
-  #content-main #changelist table,
-  #content-main .results table,
-  #content-main .module table,
-  #content-main table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-
-  #result_list {
-    overflow: hidden;
-    border-radius: var(--tm-radius-lg);
-  }
-
-  #content-main table th {
-    padding: 14px 16px !important;
-    background: linear-gradient(180deg, rgba(14, 65, 86, 0.08), rgba(14, 65, 86, 0.02)) !important;
-    border-bottom: 1px solid var(--tm-line-strong) !important;
-    color: var(--tm-text-soft) !important;
-    font-size: 0.76rem !important;
-    font-weight: 800 !important;
-    letter-spacing: 0.08em;
+  #content .module h2,
+  #content .module caption {
+    background: var(--vd-cream-light);
+    color: var(--vd-text);
+    font-size: 0.82rem;
+    font-weight: 700;
     text-transform: uppercase;
-    white-space: nowrap;
-  }
-
-  #content-main table th a:link,
-  #content-main table th a:visited {
-    color: var(--tm-text-soft) !important;
-  }
-
-  #content-main table td {
-    padding: 14px 16px !important;
-    border-bottom: 1px solid rgba(22, 48, 64, 0.08) !important;
-    color: var(--tm-text);
-    font-size: 0.92rem;
-    vertical-align: middle;
-  }
-
-  #content-main table tr:hover td {
-    background: rgba(220, 236, 243, 0.28) !important;
-  }
-
-  /* Re-assert sidebar nav styling after generic table rules. */
-  #nav-sidebar .module th,
-  #nav-sidebar .module td,
-  #nav-sidebar .module tr:hover td {
-    background: transparent !important;
-    color: inherit !important;
-  }
-
-  #nav-sidebar .module th a {
-    background: transparent !important;
-    color: #ffffff !important;
-    border-color: rgba(255, 250, 242, 0.42) !important;
-  }
-
-  #nav-sidebar .module td a {
-    background: rgba(255, 250, 242, 0.92) !important;
-    color: var(--tm-ocean-700) !important;
-  }
-
-  #nav-sidebar .module th a:hover,
-  #nav-sidebar .module td a:hover {
-    background: rgba(255, 250, 242, 0.06) !important;
-    border-color: rgba(255, 250, 242, 0.62) !important;
-    color: #ffffff !important;
-  }
-
-  #nav-sidebar .current-model th a,
-  #nav-sidebar .module th a[aria-current="page"] {
-    background: rgba(255, 250, 242, 0.08) !important;
-    border-color: rgba(255, 250, 242, 0.82) !important;
-    color: #ffffff !important;
-  }
-
-  #nav-sidebar .current-model td a {
-    background: rgba(255, 242, 228, 0.94) !important;
-    color: #6d3b1a !important;
-  }
-
-  /* Final sidebar override: transparent items, white border, white semi-bold text. */
-  #nav-sidebar.tm-curated-nav .module th a,
-  #nav-sidebar.tm-curated-nav .module th a:link,
-  #nav-sidebar.tm-curated-nav .module th a:visited,
-  #nav-sidebar.tm-curated-nav .module th a:active,
-  #nav-sidebar.tm-curated-nav .module th a:focus,
-  #nav-sidebar.tm-curated-nav .module th a:focus-visible {
-    background: transparent !important;
-    color: #ffffff !important;
-    border: 1px solid rgba(255, 255, 255, 0.42) !important;
-    box-shadow: none !important;
-    font-weight: 600 !important;
-  }
-
-  #nav-sidebar.tm-curated-nav .module th a:hover {
-    background: rgba(255, 255, 255, 0.04) !important;
-    color: #ffffff !important;
-    border-color: rgba(255, 255, 255, 0.64) !important;
-    box-shadow: none !important;
-  }
-
-  #nav-sidebar.tm-curated-nav .current-model th a,
-  #nav-sidebar.tm-curated-nav .current-model th a:link,
-  #nav-sidebar.tm-curated-nav .current-model th a:visited,
-  #nav-sidebar.tm-curated-nav .module th a[aria-current="page"] {
-    background: transparent !important;
-    color: #ffffff !important;
-    border: 1px solid rgba(255, 255, 255, 0.82) !important;
-    box-shadow: none !important;
-  }
-
-  /* Absolute final reset for curated sidebar visuals. */
-  #nav-sidebar.tm-curated-nav .module,
-  #nav-sidebar.tm-curated-nav .module table,
-  #nav-sidebar.tm-curated-nav .module tbody,
-  #nav-sidebar.tm-curated-nav .module tr,
-  #nav-sidebar.tm-curated-nav .module th,
-  #nav-sidebar.tm-curated-nav .module td {
-    background: transparent !important;
-    background-color: transparent !important;
-    background-image: none !important;
-    box-shadow: none !important;
-  }
-
-  #nav-sidebar.tm-curated-nav .module th a,
-  #nav-sidebar.tm-curated-nav .module th a:link,
-  #nav-sidebar.tm-curated-nav .module th a:visited,
-  #nav-sidebar.tm-curated-nav .module th a:active,
-  #nav-sidebar.tm-curated-nav .module th a:focus,
-  #nav-sidebar.tm-curated-nav .module th a:focus-visible,
-  #nav-sidebar.tm-curated-nav .module th a:hover {
-    background: none !important;
-    background-color: transparent !important;
-    background-image: none !important;
-    color: #ffffff !important;
-    border: 1px solid rgba(255, 255, 255, 0.46) !important;
-    border-radius: 12px !important;
-    font-weight: 600 !important;
-    box-shadow: none !important;
-    text-shadow: none !important;
-  }
-
-  #nav-sidebar.tm-curated-nav .current-model th a,
-  #nav-sidebar.tm-curated-nav .current-model th a:link,
-  #nav-sidebar.tm-curated-nav .current-model th a:visited,
-  #nav-sidebar.tm-curated-nav .module th a[aria-current="page"] {
-    border-color: rgba(255, 255, 255, 0.86) !important;
-  }
-
-  #changelist-filter {
-    width: 240px;
-    padding: 0 !important;
-    overflow: hidden;
-  }
-
-  #changelist-filter h2 {
-    padding: 14px 18px !important;
-    background: linear-gradient(135deg, rgba(14, 65, 86, 0.96), rgba(29, 120, 149, 0.96)) !important;
-    color: #fff9f0 !important;
-  }
-
-  #changelist-filter h3,
-  #changelist-filter details summary {
-    padding: 12px 18px !important;
-    color: var(--tm-text) !important;
-    font-size: 0.77rem;
-    font-weight: 800;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-
-  #changelist-filter ul {
-    margin: 0 !important;
-    padding: 0 0 10px !important;
-    list-style: none;
-  }
-
-  #changelist-filter li {
+    letter-spacing: 0.04em;
+    padding: 10px 16px;
+    border-radius: var(--vd-radius) var(--vd-radius) 0 0;
     margin: 0;
   }
-
-  #changelist-filter li a {
-    display: block;
-    padding: 7px 18px;
-    color: var(--tm-text-soft) !important;
-    border-left: 3px solid transparent;
+  #content .module table { width: 100%; }
+  #content .module table th,
+  #content .module table td {
+    padding: 8px 16px;
+    font-size: 0.88rem;
+    border-bottom: 1px solid var(--vd-line-soft);
+  }
+  #content .module table a {
+    color: var(--vd-ocean);
     text-decoration: none;
+    font-weight: 500;
   }
+  #content .module table a:hover { text-decoration: underline; }
 
-  #changelist-filter li.selected a,
-  #changelist-filter li a:hover {
-    background: rgba(220, 236, 243, 0.4) !important;
-    color: var(--tm-ocean-700) !important;
-    border-left-color: var(--tm-accent);
-  }
-
-  .paginator {
-    margin-top: 16px;
+  /* Submit row */
+  .submit-row {
+    border-radius: 0 0 var(--vd-radius) var(--vd-radius);
+    background: var(--vd-cream-light) !important;
+    border: none !important;
     padding: 12px 16px !important;
-    border: 1px solid var(--tm-line) !important;
-    border-radius: var(--tm-radius-md) !important;
-    background: rgba(255, 250, 242, 0.88) !important;
-    color: var(--tm-text-soft);
-    box-shadow: var(--tm-shadow-soft);
+  }
+  .submit-row input[type="submit"] {
+    background: var(--vd-ocean) !important;
+    border: none !important;
+    border-radius: var(--vd-radius-sm) !important;
+    padding: 8px 20px !important;
+    font-weight: 600 !important;
+    font-size: 0.85rem !important;
+    cursor: pointer;
+    transition: background var(--vd-transition);
+  }
+  .submit-row input[type="submit"]:hover { background: var(--vd-ocean-dark) !important; }
+
+  /* Object tools (add/edit buttons on changelists) */
+  .object-tools {
+    margin: 0 0 16px !important;
+    padding: 0 !important;
+    float: none !important;
+    display: flex;
+    gap: 8px;
+  }
+  .object-tools li {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .object-tools a {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--vd-ocean) !important;
+    color: #fff !important;
+    border-radius: var(--vd-radius-sm) !important;
+    padding: 7px 14px !important;
+    font-size: 0.82rem !important;
+    font-weight: 600 !important;
+    text-decoration: none !important;
+    transition: background var(--vd-transition);
+  }
+  .object-tools a:hover { background: var(--vd-ocean-dark) !important; }
+
+  /* Changelist filters */
+  #changelist-filter {
+    background: var(--vd-white);
+    border-radius: var(--vd-radius);
+    box-shadow: var(--vd-shadow);
+    border: none;
+    padding: 16px;
+  }
+  #changelist-filter h2 {
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--vd-text-muted);
+    margin: 0 0 12px;
   }
 
-  .calendarbox,
-  .clockbox {
-    border: 1px solid var(--tm-line) !important;
-    border-radius: var(--tm-radius-md) !important;
-    box-shadow: var(--tm-shadow-soft) !important;
+  /* Pagination */
+  .paginator {
+    font-size: 0.85rem;
+    color: var(--vd-text-muted);
+    padding: 12px 16px;
+  }
+  .paginator a {
+    color: var(--vd-ocean);
+    font-weight: 600;
   }
 
-  .calendar caption {
-    background: linear-gradient(135deg, var(--tm-ocean-700), var(--tm-ocean-500)) !important;
-    color: #fff9f0 !important;
-  }
-
-  .select2-container--admin-autocomplete .select2-selection--single,
-  .select2-container--admin-autocomplete .select2-selection--multiple {
-    min-height: 44px !important;
-    border: 1px solid rgba(22, 48, 64, 0.14) !important;
-    border-radius: 16px !important;
-    background: linear-gradient(180deg, #fffdf9 0%, #f9f3e8 100%) !important;
-  }
-
-  .select2-container--admin-autocomplete .select2-selection__rendered {
-    padding: 8px 12px !important;
-    color: var(--tm-text) !important;
-  }
-
-  @media (max-width: 1024px) {
-    #nav-sidebar {
-      position: static;
-      left: auto !important;
-      bottom: auto;
-      width: auto !important;
-      height: auto;
-      max-height: none;
-      margin: 16px;
-    }
-
-    .main > #nav-sidebar + .content,
-    .main.shifted > #nav-sidebar + .content {
-      width: auto !important;
-      max-width: 100% !important;
-      margin-left: 0 !important;
-    }
-
-    #content,
-    .breadcrumbs {
-      margin-left: 16px !important;
-      margin-right: 16px !important;
-      padding-left: 18px !important;
-      padding-right: 18px !important;
-    }
-  }
-
-  @media (max-width: 767px) {
-    #header {
-      padding: 14px 16px !important;
-    }
-
-    #content {
-      padding: 16px !important;
-    }
-
-    .breadcrumbs {
-      margin: 14px 16px 0 !important;
-      padding: 12px 14px !important;
-    }
-
-    #content h1 {
-      font-size: 1.55rem !important;
-    }
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 991.98px) {
+    .tm-sidebar { transform: translateX(-100%); transition: transform var(--vd-transition); }
+    .tm-sidebar.show { transform: translateX(0); }
+    #header { left: 0 !important; }
+    #container { margin-left: 0 !important; }
   }
 </style>
 {% endblock %}
 
-{% block branding %}
-<h1 id="site-name"><a href="{% url 'admin:index' %}">TravelMate Admin</a></h1>
+
+{% block header %}
+<!-- ===== SIDEBAR ===== -->
+<aside class="tm-sidebar" id="tmSidebar">
+  <div class="tm-sidebar-brand">
+    <a href="{% url 'admin:index' %}">
+      <div class="tm-sidebar-logo"><i class="bi bi-compass"></i></div>
+      <div>
+        <div class="tm-sidebar-brand-text">TravelMate</div>
+        <div class="tm-sidebar-brand-sub">Admin Portal</div>
+      </div>
+    </a>
+  </div>
+
+  <div class="tm-sidebar-section">
+    <div class="tm-sidebar-section-label">Overview</div>
+    <nav class="tm-nav">
+      <a class="tm-nav-link{% if request.path == '/admin/' %} active{% endif %}" href="{% url 'admin:index' %}">
+        <i class="bi bi-grid-1x2"></i> Dashboard
+      </a>
+    </nav>
+  </div>
+
+  <div class="tm-sidebar-section">
+    <div class="tm-sidebar-section-label">Catalog</div>
+    <nav class="tm-nav">
+      <a class="tm-nav-link{% if '/admin/app/activitycategory/' in request.path %} active{% endif %}" href="{% url 'admin:app_activitycategory_changelist' %}">
+        <i class="bi bi-tags"></i> Activity Categories
+      </a>
+      <a class="tm-nav-link{% if '/admin/app/activity/' in request.path %} active{% endif %}" href="{% url 'admin:app_activity_changelist' %}">
+        <i class="bi bi-lightning"></i> Activities
+      </a>
+      <a class="tm-nav-link{% if '/admin/app/destination/' in request.path %} active{% endif %}" href="{% url 'admin:app_destination_changelist' %}">
+        <i class="bi bi-geo-alt"></i> Destinations
+      </a>
+      <a class="tm-nav-link{% if '/admin/app/package/' in request.path %} active{% endif %}" href="{% url 'admin:app_package_changelist' %}">
+        <i class="bi bi-box-seam"></i> Packages
+      </a>
+      <a class="tm-nav-link{% if '/admin/app/hotsale/' in request.path %} active{% endif %}" href="{% url 'admin:app_hotsale_changelist' %}">
+        <i class="bi bi-fire"></i> Hot Sales
+      </a>
+    </nav>
+  </div>
+
+  <div class="tm-sidebar-section">
+    <div class="tm-sidebar-section-label">Approvals</div>
+    <nav class="tm-nav">
+      <a class="tm-nav-link{% if '/admin/pending-approvals/' in request.path %} active{% endif %}" href="{% url 'admin:pending_approvals' %}">
+        <i class="bi bi-clipboard-check"></i> Pending Approvals
+      </a>
+      <a class="tm-nav-link{% if '/admin/live-products/' in request.path %} active{% endif %}" href="{% url 'admin:live_products' %}">
+        <i class="bi bi-broadcast"></i> Live Products
+      </a>
+    </nav>
+  </div>
+
+  <div class="tm-sidebar-section">
+    <div class="tm-sidebar-section-label">Commerce</div>
+    <nav class="tm-nav">
+      <a class="tm-nav-link{% if '/admin/app/booking/' in request.path %} active{% endif %}" href="{% url 'admin:app_booking_changelist' %}">
+        <i class="bi bi-calendar-check"></i> Bookings
+      </a>
+      <a class="tm-nav-link{% if '/admin/earnings/' in request.path %} active{% endif %}" href="{% url 'admin:earnings' %}">
+        <i class="bi bi-currency-dollar"></i> Earnings
+      </a>
+    </nav>
+  </div>
+
+  <div class="tm-sidebar-section">
+    <div class="tm-sidebar-section-label">Users</div>
+    <nav class="tm-nav">
+      <a class="tm-nav-link{% if '/admin/app/customuser/' in request.path %} active{% endif %}" href="{% url 'admin:app_customuser_changelist' %}">
+        <i class="bi bi-people"></i> Users
+      </a>
+      <a class="tm-nav-link{% if '/admin/vendor/vendorprofile/' in request.path and 'verification_status__exact=PENDING' not in request.get_full_path %} active{% endif %}" href="{% url 'admin:vendor_vendorprofile_changelist' %}">
+        <i class="bi bi-shop"></i> Vendors
+      </a>
+      <a class="tm-nav-link{% if 'verification_status__exact=PENDING' in request.get_full_path %} active{% endif %}" href="{% url 'admin:vendor_vendorprofile_changelist' %}?verification_status__exact=PENDING">
+        <i class="bi bi-person-check"></i> Pending Verification
+      </a>
+    </nav>
+  </div>
+
+  <div class="tm-sidebar-section">
+    <div class="tm-sidebar-section-label">System</div>
+    <nav class="tm-nav">
+      <a class="tm-nav-link{% if '/admin/settings/' in request.path %} active{% endif %}" href="{% url 'admin:settings' %}">
+        <i class="bi bi-gear"></i> Settings
+      </a>
+    </nav>
+  </div>
+
+  <div class="tm-sidebar-footer">
+    <a href="{% url 'home' %}"><i class="bi bi-globe2"></i> View Storefront</a>
+  </div>
+</aside>
+
+<!-- ===== TOP NAVBAR ===== -->
+<header id="header">
+  <div class="tm-topbar-left">
+    <div class="tm-breadcrumb">
+      <a href="{% url 'admin:index' %}">Dashboard</a>
+    </div>
+  </div>
+  <div class="tm-topbar-right">
+    {% if has_permission %}
+    <div class="tm-topbar-user">
+      <div class="tm-topbar-avatar">
+        {{ user.username|make_list|first|upper }}
+      </div>
+      <span>{{ user.get_short_name|default:user.get_username }}</span>
+    </div>
+    <a href="{% url 'admin:logout' %}" class="tm-btn-logout" style="color: var(--vd-danger); border-color: var(--vd-danger-bg); background: var(--vd-danger-bg); display: inline-flex !important; text-decoration: none;">
+      <i class="bi bi-box-arrow-right"></i> Log out
+    </a>
+    {% endif %}
+  </div>
+</header>
 {% endblock %}
 
-{% block usertools %}
-{% if has_permission %}
-<div id="user-tools">
-  <a href="{% url 'admin:index' %}">Dashboard</a>
-  <a href="{% url 'home' %}">View Site</a>
-  <a href="{% url 'admin:logout' %}">Log out</a>
-</div>
-{% endif %}
-{% endblock %}
+{% block nav-breadcrumbs %}{% endblock %}
 
-{% block breadcrumbs %}{% endblock %}
-
-{% block nav-sidebar %}
-{% if not is_popup and is_nav_sidebar_enabled %}
-<nav class="sticky tm-curated-nav" id="nav-sidebar" aria-label="{% translate 'Sidebar' %}">
-  <div class="module">
-    <h2>Catalog</h2>
-    <table>
-      <tbody>
-        <tr{% if '/admin/app/activitycategory/' in request.path %} class="current-model"{% endif %}>
-          <th scope="row"><a href="{% url 'admin:app_activitycategory_changelist' %}">Activity Categories</a></th>
-        </tr>
-        <tr{% if '/admin/app/activity/' in request.path %} class="current-model"{% endif %}>
-          <th scope="row"><a href="{% url 'admin:app_activity_changelist' %}">Activities</a></th>
-        </tr>
-        <tr{% if '/admin/app/destination/' in request.path %} class="current-model"{% endif %}>
-          <th scope="row"><a href="{% url 'admin:app_destination_changelist' %}">Destinations</a></th>
-        </tr>
-        <tr{% if '/admin/app/package/' in request.path or '/admin/app/packageitinerary/' in request.path %} class="current-model"{% endif %}>
-          <th scope="row"><a href="{% url 'admin:app_package_changelist' %}">Packages</a></th>
-        </tr>
-        <tr{% if '/admin/app/hotsale/' in request.path %} class="current-model"{% endif %}>
-          <th scope="row"><a href="{% url 'admin:app_hotsale_changelist' %}">Hot Sales</a></th>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-
-  <div class="module">
-    <h2>Approvals</h2>
-    <table>
-      <tbody>
-        <tr{% if '/admin/pending-approvals/' in request.path %} class="current-model"{% endif %}>
-          <th scope="row"><a href="{% url 'admin:pending_approvals' %}">Pending Approvals</a></th>
-        </tr>
-        <tr{% if '/admin/live-products/' in request.path %} class="current-model"{% endif %}>
-          <th scope="row"><a href="{% url 'admin:live_products' %}">Live Products</a></th>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-
-  <div class="module">
-    <h2>Commerce</h2>
-    <table>
-      <tbody>
-        <tr{% if '/admin/app/booking/' in request.path %} class="current-model"{% endif %}>
-          <th scope="row"><a href="{% url 'admin:app_booking_changelist' %}">Bookings</a></th>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-
-  <div class="module">
-    <h2>Users</h2>
-    <table>
-      <tbody>
-        <tr{% if '/admin/app/customuser/' in request.path %} class="current-model"{% endif %}>
-          <th scope="row"><a href="{% url 'admin:app_customuser_changelist' %}">Users</a></th>
-        </tr>
-        <tr{% if '/admin/vendor/vendorprofile/' in request.path and 'verification_status__exact=PENDING' not in request.get_full_path %} class="current-model"{% endif %}>
-          <th scope="row"><a href="{% url 'admin:vendor_vendorprofile_changelist' %}">Vendors</a></th>
-        </tr>
-        <tr{% if 'verification_status__exact=PENDING' in request.get_full_path %} class="current-model"{% endif %}>
-          <th scope="row"><a href="{% url 'admin:vendor_vendorprofile_changelist' %}?verification_status__exact=PENDING">Pending Vendor Verification</a></th>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-</nav>
-{% endif %}
-{% endblock %}
+{% block nav-sidebar %}{% endblock %}
 
 {% block nav-global %}{% endblock %}
+
+{% block content_title %}{% endblock %}

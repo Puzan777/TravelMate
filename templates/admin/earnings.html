@@ -1,0 +1,156 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block title %}Earnings & Transactions | TravelMate Admin{% endblock %}
+
+{% block content_title %}
+    <h1>Earnings & Transactions</h1>
+{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+    .mockup-alert {
+        background-color: var(--vd-cream-light);
+        border: 1px solid var(--vd-line);
+        padding: 20px;
+        border-radius: var(--vd-radius-md);
+        margin-bottom: 24px;
+        display: flex;
+        align-items: flex-start;
+        gap: 16px;
+    }
+    .mockup-alert svg {
+        flex-shrink: 0;
+        width: 24px;
+        height: 24px;
+        color: var(--vd-ocean);
+        stroke-width: 2;
+    }
+    .kpi-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 24px;
+        margin-bottom: 32px;
+    }
+    .kpi-card {
+        background: white;
+        padding: 24px;
+        border-radius: var(--vd-radius-lg);
+        box-shadow: var(--vd-shadow-soft);
+        border-top: 4px solid var(--vd-ocean);
+    }
+    .kpi-card.accent {
+        border-top-color: var(--vd-accent);
+    }
+    .kpi-card h3 {
+        margin: 0 0 8px 0;
+        font-size: 14px;
+        color: var(--vd-text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .kpi-card .value {
+        margin: 0;
+        font-size: 32px;
+        font-weight: 700;
+        color: var(--vd-text);
+        font-family: 'Fraunces', serif;
+    }
+    .transaction-table {
+        width: 100%;
+        background: white;
+        border-radius: var(--vd-radius-lg);
+        overflow: hidden;
+        box-shadow: var(--vd-shadow-soft);
+        border-collapse: collapse;
+    }
+    .transaction-table th, .transaction-table td {
+        padding: 16px 24px;
+        text-align: left;
+        border-bottom: 1px solid var(--vd-line-soft);
+    }
+    .transaction-table th {
+        background-color: var(--vd-cream-light);
+        font-weight: 600;
+        color: var(--vd-ocean-dark);
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .status-pill {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+    .status-pill.success { background: #ECFDF5; color: #059669; }
+    .status-pill.pending { background: #FFFBEB; color: #D97706; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    <div class="mockup-alert">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <div>
+            <h2 style="margin-top:0; margin-bottom:8px; font-size:16px;">Platform Feature Context</h2>
+            <p style="margin:0; color:var(--vd-text-muted); line-height:1.5;">This Earnings view provides the structure for monitoring platform payouts and transaction history. Database models for active Vendor Payouts have not been enabled yet.</p>
+        </div>
+    </div>
+
+    <div class="kpi-cards">
+        <div class="kpi-card">
+            <h3>Total Processing Volume</h3>
+            <p class="value">Rs 142,500</p>
+        </div>
+        <div class="kpi-card accent">
+            <h3>Pending Payouts</h3>
+            <p class="value">Rs 34,200</p>
+        </div>
+        <div class="kpi-card">
+            <h3>Platform Fee Revenue</h3>
+            <p class="value">Rs 14,250</p>
+        </div>
+    </div>
+
+    <h2 style="margin-bottom: 16px;">Recent Transactions</h2>
+    <table class="transaction-table">
+        <thead>
+            <tr>
+                <th>Transaction ID</th>
+                <th>Date</th>
+                <th>Vendor</th>
+                <th>Amount</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>#TRX-9482</strong></td>
+                <td style="color:var(--vd-text-muted);">Today, 10:42 AM</td>
+                <td>Himalayan Treks</td>
+                <td style="font-weight:600;">Rs 12,000</td>
+                <td><span class="status-pill success">Settled</span></td>
+            </tr>
+            <tr>
+                <td><strong>#TRX-9481</strong></td>
+                <td style="color:var(--vd-text-muted);">Yesterday, 14:15 PM</td>
+                <td>Luxury Stays Nepal</td>
+                <td style="font-weight:600;">Rs 34,200</td>
+                <td><span class="status-pill pending">Pending</span></td>
+            </tr>
+            <tr>
+                <td><strong>#TRX-9480</strong></td>
+                <td style="color:var(--vd-text-muted);">Oct 12, 09:30 AM</td>
+                <td>Pokhara Adventures</td>
+                <td style="font-weight:600;">Rs 8,500</td>
+                <td><span class="status-pill success">Settled</span></td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+{% endblock %}
