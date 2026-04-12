@@ -605,21 +605,64 @@ def destination_detail(request, pk):
 
 # ----------------- Package views -----------------
 def package_list(request, category=None, hot_sales=False):
-    qs = Package.objects.filter(is_active=True, approval_status=ApprovalStatus.APPROVED).select_related('vendor')
-    title = 'Packages'
+    qs = Package.objects.filter(is_active=True, approval_status=ApprovalStatus.APPROVED).select_related('vendor', 'destination')
+    title = 'All Packages'
 
     if hot_sales:
         qs = qs.none()
         title = 'Packages'
-    elif category:
-        qs = qs.filter(category=category)
-        title = dict(Package.Category.choices).get(category, category.title())
+
+    # Search
+    search_q = request.GET.get('q', '').strip()
+    if search_q:
+        qs = qs.filter(
+            Q(title__icontains=search_q)
+            | Q(description__icontains=search_q)
+            | Q(destination__name__icontains=search_q)
+            | Q(city__icontains=search_q)
+            | Q(vendor__company_name__icontains=search_q)
+        )
+
+    # Filter by category (from dropdown or URL)
+    filter_cat = request.GET.get('cat', '').strip()
+    active_cat = filter_cat or (category or '')
+    if active_cat:
+        qs = qs.filter(category=active_cat)
+        cat_label = dict(Package.Category.choices).get(active_cat, '')
+        if cat_label:
+            title = cat_label + ' Packages'
+
+    # Filter by destination
+    filter_dest = request.GET.get('dest', '').strip()
+    if filter_dest:
+        qs = qs.filter(destination__id=filter_dest)
+
+    # Sort
+    sort_by = request.GET.get('sort', '').strip()
+    if sort_by == 'price_low':
+        qs = qs.order_by('price')
+    elif sort_by == 'price_high':
+        qs = qs.order_by('-price')
+    elif sort_by == 'rating':
+        qs = qs.order_by('-rating')
+    elif sort_by == 'newest':
+        qs = qs.order_by('-created_at')
+    else:
+        qs = qs.order_by('-rating', '-created_at')
+
+    destinations = Destination.objects.all().order_by('name')
 
     context = {
         'packages': qs,
         'category': category,
         'hot_sales': hot_sales,
         'title': title,
+        'search_q': search_q,
+        'filter_cat': active_cat,
+        'filter_dest': filter_dest,
+        'sort_by': sort_by,
+        'category_choices': Package.Category.choices,
+        'destinations': destinations,
     }
     context.update(_favorite_card_context(request))
     return render(request, 'packages_list.html', context)
@@ -1283,15 +1326,41 @@ def search_suggestions(request):
 def activity_list_view(request):
     activities = Activity.objects.filter(
         is_active=True, approval_status=ApprovalStatus.APPROVED
-    ).select_related('vendor', 'category').prefetch_related('images').order_by('-rating', '-created_at')
+    ).select_related('vendor', 'category').prefetch_related('images')
 
     selected_category = request.GET.get('category', '').strip()
     selected_difficulty = request.GET.get('difficulty', '').strip()
+    search_q = request.GET.get('q', '').strip()
+    sort_by = request.GET.get('sort', '').strip()
 
+    # Search
+    if search_q:
+        activities = activities.filter(
+            Q(name__icontains=search_q)
+            | Q(description__icontains=search_q)
+            | Q(category__name__icontains=search_q)
+            | Q(vendor__company_name__icontains=search_q)
+        )
+
+    # Filter by category
     if selected_category:
         activities = activities.filter(category__name__iexact=selected_category)
+
+    # Filter by difficulty
     if selected_difficulty:
         activities = activities.filter(difficulty_level=selected_difficulty)
+
+    # Sort
+    if sort_by == 'price_low':
+        activities = activities.order_by('price')
+    elif sort_by == 'price_high':
+        activities = activities.order_by('-price')
+    elif sort_by == 'rating':
+        activities = activities.order_by('-rating')
+    elif sort_by == 'newest':
+        activities = activities.order_by('-created_at')
+    else:
+        activities = activities.order_by('-rating', '-created_at')
 
     categories = ActivityCategory.objects.filter(is_active=True).order_by('name')
 
@@ -1301,6 +1370,8 @@ def activity_list_view(request):
         'selected_category': selected_category,
         'selected_difficulty': selected_difficulty,
         'difficulty_choices': Activity.DifficultyLevel.choices,
+        'search_q': search_q,
+        'sort_by': sort_by,
     }
     context.update(_favorite_card_context(request))
     return render(request, 'activity_list.html', context)

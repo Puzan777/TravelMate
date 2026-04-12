@@ -2,6 +2,58 @@
 
 {% block title %}{{ title }} — TravelMate{% endblock %}
 
+{% block extrastyle %}
+<style>
+  .tm-filter-bar {
+    background: var(--tm-white);
+    border-radius: var(--tm-radius-lg);
+    padding: 20px 24px;
+    box-shadow: var(--tm-shadow);
+    margin-bottom: 36px;
+  }
+  .tm-filter-row {
+    display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+  }
+  .tm-filter-input {
+    flex: 1; min-width: 200px;
+    padding: 11px 18px 11px 40px;
+    border: 1px solid var(--tm-line);
+    border-radius: 999px;
+    font-size: .9rem;
+    outline: none;
+    background: var(--tm-cream) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%236B7C8D' viewBox='0 0 16 16'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0'/%3E%3C/svg%3E") 14px center no-repeat;
+    transition: border-color var(--tm-transition);
+  }
+  .tm-filter-input:focus { border-color: var(--tm-ocean); }
+  .tm-filter-select {
+    padding: 11px 16px;
+    border: 1px solid var(--tm-line);
+    border-radius: 999px;
+    font-size: .85rem;
+    background: var(--tm-white);
+    color: var(--tm-text);
+    cursor: pointer;
+    min-width: 140px;
+    outline: none;
+    transition: border-color var(--tm-transition);
+  }
+  .tm-filter-select:focus { border-color: var(--tm-ocean); }
+  .tm-filter-btn {
+    padding: 11px 24px;
+    border: none;
+    border-radius: 999px;
+    background: var(--tm-ocean);
+    color: #fff;
+    font-weight: 700;
+    font-size: .88rem;
+    cursor: pointer;
+    transition: all var(--tm-transition);
+    white-space: nowrap;
+  }
+  .tm-filter-btn:hover { background: var(--tm-ocean-dark); }
+</style>
+{% endblock %}
+
 {% block content %}
 <div style="padding-top: 100px;"></div>
 
@@ -13,33 +65,35 @@
       <p class="tm-section-subtitle">Discover handpicked travel packages from verified vendors</p>
     </div>
 
-    <!-- Category Tabs -->
-    <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin-bottom:36px;">
-      <a href="{% url 'packages_standard' %}"
-         style="padding:8px 20px; border-radius:999px; font-size:.85rem; font-weight:700; text-decoration:none;
-         {% if category == 'STANDARD' %}background:var(--tm-ocean); color:#fff;{% else %}background:var(--tm-white); color:var(--tm-text-muted); border:1px solid var(--tm-line);{% endif %}">
-        Standard Package
-      </a>
-      <a href="{% url 'packages_luxury' %}"
-         style="padding:8px 20px; border-radius:999px; font-size:.85rem; font-weight:700; text-decoration:none;
-         {% if category == 'LUXURY' %}background:var(--tm-ocean); color:#fff;{% else %}background:var(--tm-white); color:var(--tm-text-muted); border:1px solid var(--tm-line);{% endif %}">
-        Luxury
-      </a>
-      <a href="{% url 'packages_trekking' %}"
-         style="padding:8px 20px; border-radius:999px; font-size:.85rem; font-weight:700; text-decoration:none;
-         {% if category == 'TREKKING' %}background:var(--tm-ocean); color:#fff;{% else %}background:var(--tm-white); color:var(--tm-text-muted); border:1px solid var(--tm-line);{% endif %}">
-        Trekking
-      </a>
-      <a href="{% url 'packages_heli' %}"
-         style="padding:8px 20px; border-radius:999px; font-size:.85rem; font-weight:700; text-decoration:none;
-         {% if category == 'HELI' %}background:var(--tm-ocean); color:#fff;{% else %}background:var(--tm-white); color:var(--tm-text-muted); border:1px solid var(--tm-line);{% endif %}">
-        Heli Tours
-      </a>
-      <a href="{% url 'packages_hot_sales' %}"
-         style="padding:8px 20px; border-radius:999px; font-size:.85rem; font-weight:700; text-decoration:none;
-         background:var(--tm-white); color:var(--tm-text-muted); border:1px solid var(--tm-line);">
-        🔥 Hot Sales
-      </a>
+    <!-- Search & Filter Bar -->
+    <div class="tm-filter-bar">
+      <form method="GET" action="{{ request.path }}" class="tm-filter-row">
+        <input type="text" name="q" class="tm-filter-input" placeholder="Search packages..." value="{{ search_q|default:'' }}">
+
+        <select name="cat" class="tm-filter-select">
+          <option value="">Package Type</option>
+          {% for val, label in category_choices %}
+          <option value="{{ val }}"{% if filter_cat == val %} selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+
+        <select name="dest" class="tm-filter-select">
+          <option value="">All Destinations</option>
+          {% for dest in destinations %}
+          <option value="{{ dest.id }}"{% if filter_dest == dest.id|stringformat:"d" %} selected{% endif %}>{{ dest.name }}</option>
+          {% endfor %}
+        </select>
+
+        <select name="sort" class="tm-filter-select">
+          <option value="">Sort by</option>
+          <option value="rating"{% if sort_by == 'rating' %} selected{% endif %}>Top Rated</option>
+          <option value="price_low"{% if sort_by == 'price_low' %} selected{% endif %}>Price: Low → High</option>
+          <option value="price_high"{% if sort_by == 'price_high' %} selected{% endif %}>Price: High → Low</option>
+          <option value="newest"{% if sort_by == 'newest' %} selected{% endif %}>Newest First</option>
+        </select>
+
+        <button type="submit" class="tm-filter-btn"><i class="bi bi-search"></i> Search</button>
+      </form>
     </div>
 
     {% if packages %}
@@ -89,7 +143,7 @@
       <div class="col-12" style="text-align:center; padding:60px 20px;">
         <i class="bi bi-box-seam" style="font-size:3rem; color:var(--tm-text-light); display:block; margin-bottom:16px;"></i>
         <h3 style="color:var(--tm-text);">No packages found</h3>
-        <p style="color:var(--tm-text-muted);">Check back soon for new listings.</p>
+        <p style="color:var(--tm-text-muted);">Try different search terms or <a href="{% url 'packages_luxury' %}">view all packages</a>.</p>
       </div>
       {% endfor %}
     </div>

@@ -1,5 +1,57 @@
 {% extends "base.html" %}
-{% block title %}Activities — TravelMate{% endblock %}
+{% block title %}Activities & Experiences — TravelMate{% endblock %}
+
+{% block extrastyle %}
+<style>
+  .tm-filter-bar {
+    background: var(--tm-white);
+    border-radius: var(--tm-radius-lg);
+    padding: 20px 24px;
+    box-shadow: var(--tm-shadow);
+    margin-bottom: 36px;
+  }
+  .tm-filter-row {
+    display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+  }
+  .tm-filter-input {
+    flex: 1; min-width: 200px;
+    padding: 11px 18px 11px 40px;
+    border: 1px solid var(--tm-line);
+    border-radius: 999px;
+    font-size: .9rem;
+    outline: none;
+    background: var(--tm-cream) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%236B7C8D' viewBox='0 0 16 16'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0'/%3E%3C/svg%3E") 14px center no-repeat;
+    transition: border-color var(--tm-transition);
+  }
+  .tm-filter-input:focus { border-color: var(--tm-ocean); }
+  .tm-filter-select {
+    padding: 11px 16px;
+    border: 1px solid var(--tm-line);
+    border-radius: 999px;
+    font-size: .85rem;
+    background: var(--tm-white);
+    color: var(--tm-text);
+    cursor: pointer;
+    min-width: 130px;
+    outline: none;
+    transition: border-color var(--tm-transition);
+  }
+  .tm-filter-select:focus { border-color: var(--tm-ocean); }
+  .tm-filter-btn {
+    padding: 11px 24px;
+    border: none;
+    border-radius: 999px;
+    background: var(--tm-ocean);
+    color: #fff;
+    font-weight: 700;
+    font-size: .88rem;
+    cursor: pointer;
+    transition: all var(--tm-transition);
+    white-space: nowrap;
+  }
+  .tm-filter-btn:hover { background: var(--tm-ocean-dark); }
+</style>
+{% endblock %}
 
 {% block content %}
 <div style="padding-top: 100px;"></div>
@@ -8,35 +60,39 @@
   <div class="container">
     <div class="tm-section-header">
       <div class="tm-section-label"><i class="bi bi-lightning-fill"></i> Activities</div>
-      <h2 class="tm-section-title">Explore Activities</h2>
-      <p class="tm-section-subtitle">Find thrilling adventures and unique experiences from expert operators</p>
+      <h2 class="tm-section-title">Activities & Experiences</h2>
+      <p class="tm-section-subtitle">From cultural tours to adrenaline adventures</p>
     </div>
 
-    <!-- Filter Tabs -->
-    <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin-bottom:36px;">
-      <a href="{% url 'activity_list' %}"
-         style="padding:8px 20px; border-radius:999px; font-size:.85rem; font-weight:700; text-decoration:none; transition:all .2s;
-         {% if not selected_category %}background:var(--tm-ocean); color:#fff;{% else %}background:var(--tm-white); color:var(--tm-text-muted); border:1px solid var(--tm-line);{% endif %}">
-        All
-      </a>
-      {% for cat in categories %}
-      <a href="{% url 'activity_list' %}?category={{ cat.name|urlencode }}"
-         style="padding:8px 20px; border-radius:999px; font-size:.85rem; font-weight:700; text-decoration:none; transition:all .2s;
-         {% if selected_category == cat.name %}background:var(--tm-ocean); color:#fff;{% else %}background:var(--tm-white); color:var(--tm-text-muted); border:1px solid var(--tm-line);{% endif %}">
-        {{ cat.name }}
-      </a>
-      {% endfor %}
-    </div>
+    <!-- Search & Filter Bar -->
+    <div class="tm-filter-bar">
+      <form method="GET" action="{% url 'activity_list' %}" class="tm-filter-row">
+        <input type="text" name="q" class="tm-filter-input" placeholder="Search activities..." value="{{ search_q|default:'' }}">
 
-    <!-- Difficulty Filter -->
-    <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin-bottom:36px;">
-      {% for value, label in difficulty_choices %}
-      <a href="{% url 'activity_list' %}?{% if selected_category %}category={{ selected_category|urlencode }}&{% endif %}difficulty={{ value }}"
-         style="padding:6px 16px; border-radius:999px; font-size:.78rem; font-weight:600; text-decoration:none;
-         {% if selected_difficulty == value %}background:#FFFBEB; color:#D97706; border:1px solid #FCD34D;{% else %}background:transparent; color:var(--tm-text-muted); border:1px solid var(--tm-line-soft);{% endif %}">
-        {{ label }}
-      </a>
-      {% endfor %}
+        <select name="category" class="tm-filter-select">
+          <option value="">All Categories</option>
+          {% for cat in categories %}
+          <option value="{{ cat.name }}"{% if selected_category == cat.name %} selected{% endif %}>{{ cat.name }}</option>
+          {% endfor %}
+        </select>
+
+        <select name="difficulty" class="tm-filter-select">
+          <option value="">All Levels</option>
+          {% for value, label in difficulty_choices %}
+          <option value="{{ value }}"{% if selected_difficulty == value %} selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+
+        <select name="sort" class="tm-filter-select">
+          <option value="">Sort by</option>
+          <option value="rating"{% if sort_by == 'rating' %} selected{% endif %}>Top Rated</option>
+          <option value="price_low"{% if sort_by == 'price_low' %} selected{% endif %}>Price: Low → High</option>
+          <option value="price_high"{% if sort_by == 'price_high' %} selected{% endif %}>Price: High → Low</option>
+          <option value="newest"{% if sort_by == 'newest' %} selected{% endif %}>Newest First</option>
+        </select>
+
+        <button type="submit" class="tm-filter-btn"><i class="bi bi-search"></i> Search</button>
+      </form>
     </div>
 
     <!-- Activity Grid -->
@@ -85,13 +141,13 @@
           </div>
         </div>
       </div>
+      {% empty %}
+      <div class="col-12" style="text-align:center; padding:60px 20px;">
+        <i class="bi bi-lightning" style="font-size:3rem; color:var(--tm-text-light); display:block; margin-bottom:16px;"></i>
+        <h3 style="color:var(--tm-text);">No activities found</h3>
+        <p style="color:var(--tm-text-muted);">Try different filters or <a href="{% url 'activity_list' %}">view all activities</a>.</p>
+      </div>
       {% endfor %}
-    </div>
-    {% else %}
-    <div style="text-align:center; padding:60px 20px;">
-      <i class="bi bi-lightning" style="font-size:3rem; color:var(--tm-text-light); display:block; margin-bottom:16px;"></i>
-      <h3 style="color:var(--tm-text);">No activities found</h3>
-      <p style="color:var(--tm-text-muted);">Try a different category or <a href="{% url 'activity_list' %}">view all activities</a>.</p>
     </div>
     {% endif %}
   </div>
