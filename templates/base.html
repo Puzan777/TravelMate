@@ -1,182 +1,382 @@
-
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="TravelMate — Discover tours, activities & destinations from trusted vendors across Nepal.">
 
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fraunces:wght@600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Bootstrap 5 -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
-  <title>{% block title %}Travel Mate{% endblock %}</title>
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+
+  <title>{% block title %}TravelMate — Explore Nepal{% endblock %}</title>
+
   <style>
-html, body {
-  min-height: 100%;
-}
+  /* ===== DESIGN TOKENS ===== */
+  :root {
+    --tm-ocean:        #006989;
+    --tm-ocean-dark:   #004E6A;
+    --tm-ocean-deeper: #003B50;
+    --tm-ocean-light:  #E8F4F8;
+    --tm-cream:        #F7F8FA;
+    --tm-cream-warm:   #FFF9F0;
+    --tm-white:        #FFFFFF;
+    --tm-accent:       #E8A838;
+    --tm-accent-hover: #D4952E;
+    --tm-text:         #1A2B3C;
+    --tm-text-muted:   #6B7C8D;
+    --tm-text-light:   #94A3B3;
+    --tm-line:         #E2E5E9;
+    --tm-line-soft:    #EEF0F2;
+    --tm-shadow:       0 2px 8px rgba(0,0,0,.06), 0 8px 24px rgba(0,105,137,.07);
+    --tm-shadow-lg:    0 8px 32px rgba(0,105,137,.12);
+    --tm-shadow-hover: 0 12px 40px rgba(0,105,137,.16);
+    --tm-radius:       16px;
+    --tm-radius-sm:    10px;
+    --tm-radius-lg:    24px;
+    --tm-transition:   220ms ease;
+    --tm-success:      #059669;
+    --tm-danger:       #DC2626;
+    --tm-warning:      #D97706;
+  }
 
-body {
-  background: linear-gradient(180deg, #eef5ff 0%, #f4f8fc 45%, #eef4fb 100%) !important;
-  position: relative;
-}
+  /* ===== GLOBAL RESET ===== */
+  *, *::before, *::after { box-sizing: border-box; }
 
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  background:
-    radial-gradient(circle at 10% 8%, rgba(163, 201, 240, 0.22) 0, rgba(163, 201, 240, 0) 28%),
-    radial-gradient(circle at 88% 14%, rgba(176, 220, 242, 0.2) 0, rgba(176, 220, 242, 0) 26%);
-  z-index: -1;
-}
+  html { scroll-behavior: smooth; }
 
-.hero-section {
-  height: 90vh;
-  background: url('/static/image/hero.jpg') center center / cover no-repeat;
-  position: relative;
-}
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: var(--tm-text);
+    background: var(--tm-cream);
+    margin: 0;
+    -webkit-font-smoothing: antialiased;
+  }
 
-.hero-overlay {
-  background: rgba(0, 0, 0, 0.5);
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Fraunces', Georgia, serif;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
 
-.vendor-admin-quick {
-  padding: 10px 16px 0;
-  display: flex;
-  justify-content: flex-end;
-}
+  a { color: var(--tm-ocean); text-decoration: none; transition: color var(--tm-transition); }
+  a:hover { color: var(--tm-ocean-dark); }
 
-.vendor-admin-quick a {
-  display: inline-flex;
-  align-items: center;
-  min-height: 34px;
-  padding: 0 12px;
-  border-radius: 999px;
-  border: 1px solid #97b8cf;
-  background: #eef6fc;
-  color: #0f4e72;
-  text-decoration: none;
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-</style>
-{% block extrastyle %}{% endblock %}
+  img { max-width: 100%; height: auto; }
 
+  /* ===== NAVBAR ===== */
+  .tm-navbar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 1040;
+    padding: 16px 0;
+    transition: background var(--tm-transition), box-shadow var(--tm-transition), padding var(--tm-transition);
+  }
+  .tm-navbar.scrolled {
+    background: rgba(255,255,255,.97) !important;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 1px 8px rgba(0,0,0,.08);
+    padding: 8px 0;
+  }
+  .tm-navbar .container { display: flex; align-items: center; justify-content: space-between; }
+
+  .tm-brand {
+    display: flex; align-items: center; gap: 10px;
+    text-decoration: none; color: #fff;
+    font-family: 'Fraunces', Georgia, serif;
+    font-weight: 800; font-size: 1.4rem;
+    letter-spacing: -0.02em;
+    transition: color var(--tm-transition);
+  }
+  .tm-navbar.scrolled .tm-brand { color: var(--tm-ocean-dark); }
+  .tm-brand-icon {
+    width: 38px; height: 38px; border-radius: 10px;
+    background: rgba(255,255,255,.2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem; flex-shrink: 0;
+    transition: background var(--tm-transition);
+  }
+  .tm-navbar.scrolled .tm-brand-icon {
+    background: var(--tm-ocean-light);
+    color: var(--tm-ocean);
+  }
+
+  .tm-nav-links { display: flex; align-items: center; gap: 6px; list-style: none; margin: 0; padding: 0; }
+  .tm-nav-link {
+    padding: 8px 14px; border-radius: 999px; font-size: 0.88rem;
+    font-weight: 600; color: rgba(255,255,255,.85); text-decoration: none;
+    transition: all var(--tm-transition); white-space: nowrap;
+  }
+  .tm-nav-link:hover { background: rgba(255,255,255,.15); color: #fff; }
+  .tm-nav-link.active { background: rgba(255,255,255,.2); color: #fff; }
+  .tm-navbar.scrolled .tm-nav-link { color: var(--tm-text-muted); }
+  .tm-navbar.scrolled .tm-nav-link:hover { background: var(--tm-ocean-light); color: var(--tm-ocean); }
+  .tm-navbar.scrolled .tm-nav-link.active { background: var(--tm-ocean-light); color: var(--tm-ocean); }
+
+  .tm-nav-actions { display: flex; align-items: center; gap: 10px; }
+  .tm-nav-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 20px; border-radius: 999px; font-size: 0.85rem;
+    font-weight: 700; text-decoration: none; transition: all var(--tm-transition);
+    border: 1.5px solid rgba(255,255,255,.4); color: #fff; background: transparent;
+  }
+  .tm-nav-btn:hover { background: rgba(255,255,255,.15); color: #fff; border-color: rgba(255,255,255,.6); }
+  .tm-nav-btn.primary { background: var(--tm-accent); border-color: var(--tm-accent); color: #fff; }
+  .tm-nav-btn.primary:hover { background: var(--tm-accent-hover); border-color: var(--tm-accent-hover); }
+  .tm-navbar.scrolled .tm-nav-btn { border-color: var(--tm-line); color: var(--tm-text); }
+  .tm-navbar.scrolled .tm-nav-btn:hover { background: var(--tm-ocean-light); border-color: var(--tm-ocean); color: var(--tm-ocean); }
+  .tm-navbar.scrolled .tm-nav-btn.primary { background: var(--tm-ocean); border-color: var(--tm-ocean); color: #fff; }
+  .tm-navbar.scrolled .tm-nav-btn.primary:hover { background: var(--tm-ocean-dark); }
+
+  /* Mobile toggle */
+  .tm-menu-toggle {
+    display: none; background: none; border: none; color: #fff;
+    font-size: 1.6rem; cursor: pointer; padding: 4px;
+    transition: color var(--tm-transition);
+  }
+  .tm-navbar.scrolled .tm-menu-toggle { color: var(--tm-text); }
+
+  @media (max-width: 991.98px) {
+    .tm-menu-toggle { display: block; }
+    .tm-nav-center, .tm-nav-actions {
+      display: none;
+      flex-direction: column;
+      position: absolute;
+      top: 100%; left: 0; right: 0;
+      background: #fff;
+      padding: 16px 20px;
+      box-shadow: 0 8px 24px rgba(0,0,0,.1);
+      border-radius: 0 0 var(--tm-radius) var(--tm-radius);
+    }
+    .tm-nav-center.show, .tm-nav-actions.show { display: flex; }
+    .tm-nav-links { flex-direction: column; width: 100%; }
+    .tm-nav-link { color: var(--tm-text) !important; width: 100%; padding: 12px 16px; border-radius: var(--tm-radius-sm); }
+    .tm-nav-link:hover { background: var(--tm-ocean-light) !important; color: var(--tm-ocean) !important; }
+    .tm-nav-actions { padding-top: 8px; border-top: 1px solid var(--tm-line); }
+    .tm-nav-btn { color: var(--tm-text) !important; border-color: var(--tm-line) !important; width: 100%; justify-content: center; }
+    .tm-nav-btn.primary { background: var(--tm-ocean) !important; border-color: var(--tm-ocean) !important; color: #fff !important; }
+  }
+
+  /* ===== CARD SYSTEM ===== */
+  .tm-card {
+    background: var(--tm-white);
+    border: 1px solid var(--tm-line-soft);
+    border-radius: var(--tm-radius);
+    overflow: hidden;
+    box-shadow: var(--tm-shadow);
+    transition: transform var(--tm-transition), box-shadow var(--tm-transition);
+    position: relative;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+  .tm-card:hover {
+    transform: translateY(-6px);
+    box-shadow: var(--tm-shadow-hover);
+  }
+  .tm-card-img {
+    width: 100%; height: 220px; object-fit: cover;
+    transition: transform 0.4s ease;
+  }
+  .tm-card:hover .tm-card-img { transform: scale(1.04); }
+  .tm-card-img-wrap {
+    overflow: hidden; position: relative;
+  }
+  .tm-card-body {
+    padding: 20px; display: flex; flex-direction: column; flex: 1;
+  }
+  .tm-card-category {
+    display: inline-flex; align-items: center;
+    padding: 4px 12px; border-radius: 999px;
+    font-size: 0.72rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    background: var(--tm-ocean-light); color: var(--tm-ocean);
+  }
+  .tm-card-title {
+    font-family: 'Inter', sans-serif;
+    font-size: 1.02rem; font-weight: 700; margin: 8px 0 6px;
+    line-height: 1.3; color: var(--tm-text);
+  }
+  .tm-card-vendor {
+    font-size: 0.78rem; color: var(--tm-text-muted); margin-bottom: 10px;
+  }
+  .tm-card-vendor i { color: var(--tm-ocean); margin-right: 4px; }
+  .tm-card-price {
+    font-size: 1.2rem; font-weight: 800; color: var(--tm-ocean);
+  }
+  .tm-card-price small {
+    font-size: 0.72rem; font-weight: 500; color: var(--tm-text-muted);
+  }
+  .tm-card-meta {
+    display: flex; gap: 14px; flex-wrap: wrap;
+    font-size: 0.78rem; color: var(--tm-text-muted);
+    margin-top: 10px; padding-top: 10px;
+    border-top: 1px solid var(--tm-line-soft);
+  }
+  .tm-card-meta span { display: flex; align-items: center; gap: 4px; }
+  .tm-card-btn {
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    width: 100%; padding: 10px 16px; margin-top: auto;
+    border-radius: var(--tm-radius-sm); border: none;
+    background: var(--tm-ocean); color: #fff;
+    font-weight: 700; font-size: 0.88rem;
+    text-decoration: none;
+    transition: all var(--tm-transition);
+  }
+  .tm-card-btn:hover { background: var(--tm-ocean-dark); color: #fff; transform: translateY(-1px); }
+
+  /* Rating Stars */
+  .tm-stars {
+    --rating: 0;
+    position: relative; display: inline-block;
+    font-size: 0.85rem; line-height: 1;
+    letter-spacing: 1px; color: #d1d5db;
+  }
+  .tm-stars::before { content: "★★★★★"; }
+  .tm-stars::after {
+    content: "★★★★★"; position: absolute; inset: 0;
+    width: calc((var(--rating) / 5) * 100%); overflow: hidden;
+    color: #f59e0b; white-space: nowrap;
+  }
+
+  /* Favorite Button */
+  .tm-fav-btn {
+    position: absolute; top: 14px; right: 14px; z-index: 5;
+    width: 38px; height: 38px; border-radius: 50%;
+    border: 1px solid rgba(255,255,255,.5);
+    background: rgba(255,255,255,.25);
+    backdrop-filter: blur(8px);
+    color: #fff; font-size: 1.1rem;
+    display: inline-flex; align-items: center; justify-content: center;
+    padding: 0; cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,.15);
+    transition: all var(--tm-transition);
+  }
+  .tm-fav-btn:hover { background: rgba(255,255,255,.45); transform: scale(1.08); }
+  .tm-fav-btn.is-fav { color: #e11d48; background: rgba(255,255,255,.5); }
+
+  /* ===== SECTION HEADERS ===== */
+  .tm-section { padding: 80px 0; }
+  .tm-section-header {
+    text-align: center; margin-bottom: 48px;
+  }
+  .tm-section-label {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 16px; border-radius: 999px;
+    font-size: 0.75rem; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    background: var(--tm-ocean-light); color: var(--tm-ocean);
+    margin-bottom: 12px;
+  }
+  .tm-section-title {
+    font-size: 2.2rem; margin-bottom: 10px; color: var(--tm-text);
+  }
+  .tm-section-subtitle {
+    font-size: 1rem; color: var(--tm-text-muted); max-width: 560px;
+    margin: 0 auto; line-height: 1.6;
+  }
+
+  /* ===== FOOTER ===== */
+  .tm-footer {
+    background: var(--tm-ocean-deeper);
+    color: rgba(255,255,255,.7);
+    padding: 60px 0 0;
+  }
+  .tm-footer-brand {
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: 1.4rem; font-weight: 800;
+    color: #fff; margin-bottom: 12px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .tm-footer-desc {
+    font-size: 0.88rem; line-height: 1.7; max-width: 300px;
+    color: rgba(255,255,255,.6);
+  }
+  .tm-footer h6 {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.78rem; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: rgba(255,255,255,.5); margin-bottom: 16px;
+  }
+  .tm-footer-links { list-style: none; padding: 0; margin: 0; }
+  .tm-footer-links li { margin-bottom: 8px; }
+  .tm-footer-links a {
+    color: rgba(255,255,255,.7); font-size: 0.88rem;
+    text-decoration: none; transition: color var(--tm-transition);
+  }
+  .tm-footer-links a:hover { color: #fff; }
+  .tm-footer-bottom {
+    margin-top: 40px; padding: 20px 0;
+    border-top: 1px solid rgba(255,255,255,.1);
+    font-size: 0.82rem; color: rgba(255,255,255,.4);
+    text-align: center;
+  }
+
+  /* ===== MESSAGES ===== */
+  .tm-messages { position: fixed; top: 80px; right: 20px; z-index: 1050; max-width: 400px; }
+  .tm-messages .alert { border-radius: var(--tm-radius-sm); box-shadow: var(--tm-shadow-lg); }
+
+  /* ===== UTILITIES ===== */
+  .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .line-clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  </style>
+  {% block extrastyle %}{% endblock %}
 </head>
 <body>
 
-{% if request.path|slice:':8' == '/vendor/' and user.is_authenticated and user.is_staff %}
-<div class="vendor-admin-quick">
-  <a href="{% url 'home' %}">View Site</a>
-</div>
-{% endif %}
-
-{% if request.path|slice:':8' != '/vendor/' or not user.is_authenticated %}
-<nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
+<!-- ===== NAVBAR ===== -->
+<nav class="tm-navbar" id="tmNavbar">
   <div class="container">
-
-    <!-- Brand -->
-    <a class="navbar-brand fw-bold" href="{% url 'home' %}">
-      Strange Land Tours & Travels
+    <a class="tm-brand" href="{% url 'home' %}">
+      <span class="tm-brand-icon"><i class="bi bi-compass"></i></span>
+      TravelMate
     </a>
 
-    <!-- Mobile toggle -->
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar">
-      <span class="navbar-toggler-icon"></span>
+    <button class="tm-menu-toggle" id="tmMenuToggle" aria-label="Toggle navigation">
+      <i class="bi bi-list"></i>
     </button>
 
-    <!-- Navbar content -->
-    <div class="collapse navbar-collapse" id="mainNavbar">
-
-      <!-- Left menu -->
-      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-
-        {% if user.is_authenticated and user.is_staff %}
-        <li class="nav-item">
-          <a class="nav-link" href="/admin/">Admin Dashboard</a>
-        </li>
-        {% endif %}
-
-        <li class="nav-item">
-          <a class="nav-link" href="{% url 'home' %}">Home</a>
-        </li>
-
-        {% if not user.is_authenticated or not user.is_staff %}
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'destination_list' %}">Destinations</a>
-          </li>
-
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'packages_luxury' %}">Luxury Packages</a>
-          </li>
-
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'packages_trekking' %}">Trekking</a>
-          </li>
-
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'packages_heli' %}">Heli Tours</a>
-          </li>
-
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'packages_hot_sales' %}">Hot Sales</a>
-          </li>
-        {% endif %}
-
+    <div class="tm-nav-center" id="tmNavCenter">
+      <ul class="tm-nav-links">
+        <li><a class="tm-nav-link{% if request.path == '/' %} active{% endif %}" href="{% url 'home' %}">Home</a></li>
+        <li><a class="tm-nav-link{% if '/packages/' in request.path %} active{% endif %}" href="{% url 'packages_luxury' %}">Packages</a></li>
+        <li><a class="tm-nav-link{% if request.path == '/activities/' %} active{% endif %}" href="{% url 'activity_list' %}">Activities</a></li>
+        <li><a class="tm-nav-link{% if '/destinations/' in request.path %} active{% endif %}" href="{% url 'destination_list' %}">Destinations</a></li>
+        <li><a class="tm-nav-link{% if '/packages/hot-sales/' in request.path %} active{% endif %}" href="{% url 'packages_hot_sales' %}">Hot Sales</a></li>
+        <li><a class="tm-nav-link{% if request.path == '/vendors/' %} active{% endif %}" href="{% url 'vendor_showcase' %}">Vendors</a></li>
       </ul>
+    </div>
 
-      <!-- Right menu (Auth) -->
-      <ul class="navbar-nav ms-auto">
-
-        {% if user.is_authenticated %}
-          {% if user.role == 'VENDOR' %}
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'vendor:dashboard' %}">Vendor Dashboard</a>
-          </li>
-          {% else %}
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'profile' %}">My Profile</a>
-          </li>
-          {% endif %}
-          {% if user.is_staff %}
-          <li class="nav-item">
-            <a class="nav-link" href="/admin/">Go to Admin</a>
-          </li>
-          {% endif %}
-          <li class="nav-item">
-            <a class="nav-link text-danger" href="{% url 'logout' %}">
-              Logout
-            </a>
-          </li>
+    <div class="tm-nav-actions" id="tmNavActions">
+      {% if user.is_authenticated %}
+        {% if user.role == 'VENDOR' %}
+          <a class="tm-nav-btn" href="{% url 'vendor:dashboard' %}"><i class="bi bi-speedometer2"></i> Dashboard</a>
+        {% elif user.is_staff %}
+          <a class="tm-nav-btn" href="/admin/"><i class="bi bi-gear"></i> Admin</a>
         {% else %}
-          <li class="nav-item">
-            <a class="nav-link btn btn-outline-secondary px-3 ms-2"
-               href="{% url 'vendor:register' %}">
-              Become Vendor
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link btn btn-outline-primary px-3 ms-2"
-               href="{% url 'login' %}">
-              Login
-            </a>
-          </li>
+          <a class="tm-nav-btn" href="{% url 'profile' %}"><i class="bi bi-person-circle"></i> Profile</a>
         {% endif %}
-
-      </ul>
-
+        <a class="tm-nav-btn" href="{% url 'logout' %}" style="color: #ff6b6b; border-color: rgba(255,107,107,.4);">
+          <i class="bi bi-box-arrow-right"></i> Logout
+        </a>
+      {% else %}
+        <a class="tm-nav-btn" href="{% url 'vendor:register' %}">Become Vendor</a>
+        <a class="tm-nav-btn primary" href="{% url 'login' %}"><i class="bi bi-person"></i> Login</a>
+      {% endif %}
     </div>
   </div>
 </nav>
-{% endif %}
 
+<!-- ===== MESSAGES ===== -->
 {% if messages %}
-<div class="container mt-3">
+<div class="tm-messages">
   {% for message in messages %}
   <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
     {{ message }}
@@ -186,53 +386,86 @@ body::before {
 </div>
 {% endif %}
 
+<!-- ===== MAIN CONTENT ===== -->
 {% block content %}
 {% endblock %}
 
+<!-- ===== FOOTER ===== -->
 {% block footer %}
-<!-- ================= FOOTER ================= -->
-<footer class="bg-dark text-light mt-auto pt-4 pb-3">
+<footer class="tm-footer">
   <div class="container">
-    <div class="row text-center text-md-start">
-
-      <!-- Brand -->
-      <div class="col-md-4 mb-3">
-        <h5 class="fw-bold">Travel Mate</h5>
-        <p class="small">
-          We welcome strangers in our beautiful land.
-          Discover destinations, adventures, and unforgettable journeys.
+    <div class="row g-4">
+      <div class="col-lg-4 col-md-6">
+        <div class="tm-footer-brand">
+          <i class="bi bi-compass"></i> TravelMate
+        </div>
+        <p class="tm-footer-desc">
+          Your trusted multi-vendor travel marketplace. Discover unforgettable tours, thrilling activities, and breathtaking destinations across Nepal.
         </p>
       </div>
-
-      <!-- Quick Links -->
-      <div class="col-md-4 mb-3">
-        <h6 class="fw-bold">Quick Links</h6>
-        <ul class="list-unstyled small">
-          <li><a href="{% url 'home' %}" class="text-light text-decoration-none">Home</a></li>
-          <li><a href="{% url 'destination_list' %}" class="text-light text-decoration-none">Destinations</a></li>
-          <li><a href="{% url 'login' %}" class="text-light text-decoration-none">Login</a></li>
-          <li><a href="{% url 'signup' %}" class="text-light text-decoration-none">Signup</a></li>
+      <div class="col-lg-2 col-md-6">
+        <h6>Explore</h6>
+        <ul class="tm-footer-links">
+          <li><a href="{% url 'home' %}">Home</a></li>
+          <li><a href="{% url 'destination_list' %}">Destinations</a></li>
+          <li><a href="{% url 'activity_list' %}">Activities</a></li>
+          <li><a href="{% url 'packages_hot_sales' %}">Hot Sales</a></li>
         </ul>
       </div>
-
-      <!-- Info -->
-      <div class="col-md-4 mb-3">
-        <h6 class="fw-bold">Contact</h6>
-        <p class="small mb-1">📧 info@travelmate.com</p>
-        <p class="small">📍 Pokhara, Nepal</p>
+      <div class="col-lg-3 col-md-6">
+        <h6>Categories</h6>
+        <ul class="tm-footer-links">
+          <li><a href="{% url 'packages_luxury' %}">Luxury Packages</a></li>
+          <li><a href="{% url 'packages_trekking' %}">Trekking Packages</a></li>
+          <li><a href="{% url 'packages_heli' %}">Heli Tours</a></li>
+          <li><a href="{% url 'vendor_showcase' %}">Our Vendors</a></li>
+        </ul>
       </div>
-
+      <div class="col-lg-3 col-md-6">
+        <h6>Contact</h6>
+        <ul class="tm-footer-links">
+          <li><i class="bi bi-geo-alt"></i> Pokhara, Nepal</li>
+          <li><a href="mailto:info@travelmate.com"><i class="bi bi-envelope"></i> info@travelmate.com</a></li>
+        </ul>
+        <div class="mt-3" style="display:flex; gap:10px;">
+          <a href="#" style="color:rgba(255,255,255,.5); font-size:1.2rem;"><i class="bi bi-facebook"></i></a>
+          <a href="#" style="color:rgba(255,255,255,.5); font-size:1.2rem;"><i class="bi bi-instagram"></i></a>
+          <a href="#" style="color:rgba(255,255,255,.5); font-size:1.2rem;"><i class="bi bi-twitter-x"></i></a>
+        </div>
+      </div>
     </div>
-
-    <hr class="border-secondary">
-
-    <div class="text-center small">
-      © {{ year|default:2025 }} Travel Mate. All rights reserved.
+    <div class="tm-footer-bottom">
+      © 2025 TravelMate. All rights reserved. Built with ❤ .
     </div>
   </div>
 </footer>
 {% endblock %}
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// Navbar scroll effect
+(function() {
+  const nav = document.getElementById('tmNavbar');
+  if (!nav) return;
+  function onScroll() {
+    if (window.scrollY > 60) nav.classList.add('scrolled');
+    else nav.classList.remove('scrolled');
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  // Mobile menu toggle
+  const toggle = document.getElementById('tmMenuToggle');
+  const center = document.getElementById('tmNavCenter');
+  const actions = document.getElementById('tmNavActions');
+  if (toggle && center && actions) {
+    toggle.addEventListener('click', function() {
+      center.classList.toggle('show');
+      actions.classList.toggle('show');
+    });
+  }
+})();
+</script>
+{% block extra_js %}{% endblock %}
 </body>
 </html>

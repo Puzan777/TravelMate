@@ -219,6 +219,10 @@ class VendorActivityForm(forms.ModelForm):
             'category',
             'name',
             'description',
+            'destination',
+            'region',
+            'city',
+            'best_season',
             'price',
             'max_group_size',
             'equipment_provided',
@@ -245,12 +249,23 @@ class VendorActivityForm(forms.ModelForm):
             field.widget.attrs.setdefault('class', 'form-control')
 
         self.fields['category'].queryset = ActivityCategory.objects.filter(is_active=True).order_by('name')
+        self.fields['destination'].queryset = Destination.objects.order_by('name')
+        self.fields['destination'].required = True
 
     def clean_name(self):
         return (self.cleaned_data.get('name') or '').strip()
 
     def clean_duration(self):
         return (self.cleaned_data.get('duration') or '').strip()
+
+    def clean_region(self):
+        return (self.cleaned_data.get('region') or '').strip()
+
+    def clean_city(self):
+        return (self.cleaned_data.get('city') or '').strip()
+
+    def clean_best_season(self):
+        return (self.cleaned_data.get('best_season') or '').strip()
 
     def clean(self):
         cleaned_data = super().clean()

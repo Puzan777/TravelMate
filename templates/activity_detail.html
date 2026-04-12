@@ -120,10 +120,10 @@
           </div>
           <div>
             {% if active_hot_sale %}
-              <span class="meta-pill hot">Hot Sale ${{ active_hot_sale.sale_price }}</span>
-              <span class="small text-muted text-decoration-line-through">${{ activity.price }}</span>
+              <span class="meta-pill hot">Hot Sale Rs {{ active_hot_sale.sale_price }}</span>
+              <span class="small text-muted text-decoration-line-through">Rs {{ activity.price }}</span>
             {% else %}
-              <span class="meta-pill">${{ activity.price }}</span>
+              <span class="meta-pill">Rs {{ activity.price }}</span>
             {% endif %}
             <div class="small text-muted mt-2">Rating: <strong>{{ activity.rating|floatformat:1 }}/5</strong> ({{ activity_reviews|length }} review{{ activity_reviews|length|pluralize }})</div>
           </div>

@@ -270,10 +270,10 @@
           <h1 class="h3 mb-0">{{ package.title }}</h1>
           <div class="title-meta">
             {% if active_hot_sale %}
-              <span class="price-pill">Hot Sale ${{ active_hot_sale.sale_price }}</span>
-              <span class="small text-muted text-decoration-line-through">${{ package.price }}</span>
+              <span class="price-pill">Hot Sale Rs {{ active_hot_sale.sale_price }}</span>
+              <span class="small text-muted text-decoration-line-through">Rs {{ package.price }}</span>
             {% else %}
-              <span class="price-pill">${{ package.price }}</span>
+              <span class="price-pill">Rs {{ package.price }}</span>
             {% endif %}
             <div class="rating-row text-muted small">
               <span class="rating-stars" style="--rating: {{ package.rating|floatformat:1 }};" aria-hidden="true"></span>
@@ -498,10 +498,10 @@
             <p>
               <strong>Price:</strong>
               {% if active_hot_sale %}
-                <span class="text-decoration-line-through text-muted me-1">${{ package.price }}</span>
-                <span class="text-success fw-semibold">${{ active_hot_sale.sale_price }}</span>
+                <span class="text-decoration-line-through text-muted me-1">Rs {{ package.price }}</span>
+                <span class="text-success fw-semibold">Rs {{ active_hot_sale.sale_price }}</span>
               {% else %}
-                ${{ package.price }}
+                Rs {{ package.price }}
               {% endif %}
             </p>
             <p>

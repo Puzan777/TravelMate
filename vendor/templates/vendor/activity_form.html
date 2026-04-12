@@ -101,6 +101,27 @@
               <div class="text-danger small">{{ form.description.errors }}</div>
             </div>
             <div class="col-md-6">
+              <label class="vd-form-label">Country / Destination</label>
+              {{ form.destination }}
+              <div class="form-text">Choose from the destination list managed by admin.</div>
+              <div class="text-danger small">{{ form.destination.errors }}</div>
+            </div>
+            <div class="col-md-6">
+              <label class="vd-form-label">Region</label>
+              {{ form.region }}
+              <div class="text-danger small">{{ form.region.errors }}</div>
+            </div>
+            <div class="col-md-6">
+              <label class="vd-form-label">City</label>
+              {{ form.city }}
+              <div class="text-danger small">{{ form.city.errors }}</div>
+            </div>
+            <div class="col-md-6">
+              <label class="vd-form-label">Best Season</label>
+              {{ form.best_season }}
+              <div class="text-danger small">{{ form.best_season.errors }}</div>
+            </div>
+            <div class="col-md-6">
               <label class="vd-form-label">Price</label>
               {{ form.price }}
               <div class="text-danger small">{{ form.price.errors }}</div>

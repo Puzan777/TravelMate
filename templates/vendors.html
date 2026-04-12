@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Our Vendors — TravelMate{% endblock %}
+
+{% block content %}
+<div style="padding-top: 100px;"></div>
+
+<section class="tm-section" style="padding-top:40px;">
+  <div class="container">
+    <div class="tm-section-header">
+      <div class="tm-section-label"><i class="bi bi-shop-window"></i> Marketplace</div>
+      <h2 class="tm-section-title">Our Trusted Vendors</h2>
+      <p class="tm-section-subtitle">Verified travel operators offering the best experiences across Nepal</p>
+    </div>
+
+    {% if vendors %}
+    <div class="row g-4">
+      {% for vendor in vendors %}
+      <div class="col-sm-6 col-lg-4">
+        <div class="tm-card" style="overflow:visible;">
+          <div class="tm-card-body" style="text-align:center; padding:32px 24px;">
+            <!-- Avatar -->
+            <div style="width:64px; height:64px; border-radius:50%; background:linear-gradient(135deg,var(--tm-ocean),var(--tm-ocean-dark)); color:#fff; display:flex; align-items:center; justify-content:center; font-size:1.4rem; font-weight:800; font-family:'Fraunces',serif; margin:0 auto 16px;">
+              {{ vendor.company_name|make_list|first|upper }}
+            </div>
+            <h3 style="font-family:'Inter',sans-serif; font-size:1.08rem; font-weight:700; margin-bottom:4px; color:var(--tm-text);">{{ vendor.company_name }}</h3>
+            {% if vendor.owner_full_name %}
+            <p style="font-size:.82rem; color:var(--tm-text-muted); margin-bottom:16px;">{{ vendor.owner_full_name }}</p>
+            {% endif %}
+
+            <div style="display:flex; justify-content:center; gap:24px; margin-bottom:20px;">
+              <div>
+                <div style="font-size:1.4rem; font-weight:800; color:var(--tm-ocean); font-family:'Fraunces',serif;">{{ vendor.package_count }}</div>
+                <div style="font-size:.75rem; color:var(--tm-text-muted); font-weight:600;">Packages</div>
+              </div>
+              <div style="width:1px; background:var(--tm-line-soft);"></div>
+              <div>
+                <div style="font-size:1.4rem; font-weight:800; color:var(--tm-ocean); font-family:'Fraunces',serif;">{{ vendor.activity_count }}</div>
+                <div style="font-size:.75rem; color:var(--tm-text-muted); font-weight:600;">Activities</div>
+              </div>
+            </div>
+
+            {% if vendor.address %}
+            <p style="font-size:.82rem; color:var(--tm-text-muted); margin-bottom:16px;">
+              <i class="bi bi-geo-alt" style="color:var(--tm-ocean);"></i> {{ vendor.address|truncatechars:40 }}
+            </p>
+            {% endif %}
+
+            <a href="{% url 'search' %}?q={{ vendor.company_name|urlencode }}" class="tm-card-btn" style="margin-top:0;">
+              View Offerings <i class="bi bi-arrow-right"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div style="text-align:center; padding:60px 20px;">
+      <i class="bi bi-shop" style="font-size:3rem; color:var(--tm-text-light); display:block; margin-bottom:16px;"></i>
+      <h3 style="color:var(--tm-text);">No vendors yet</h3>
+      <p style="color:var(--tm-text-muted);">Want to list your travel business? <a href="{% url 'vendor:register' %}">Become a vendor</a>.</p>
+    </div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

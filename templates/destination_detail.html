@@ -137,7 +137,7 @@
                 <small class="text-muted">{{ package.get_category_display }}</small>
               </div>
 
-              <p class="text-success fw-semibold mt-2 mb-2">${{ package.price }}</p>
+              <p class="text-success fw-semibold mt-2 mb-2">Rs {{ package.price }}</p>
               <div class="rating-row small text-muted mb-2">
                 <span class="rating-stars" style="--rating: {{ package.rating|floatformat:1 }};" aria-hidden="true"></span>
                 <span>{{ package.rating|floatformat:1 }}/5</span>

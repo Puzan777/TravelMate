@@ -328,7 +328,7 @@
                         <td>{{ booking.travel_date|date:'M d, Y' }}</td>
                         <td>{{ booking.number_of_people }}</td>
                         <td>{{ booking.created_at|date:'M d, Y' }}</td>
-                        <td>${{ booking.package.price }}</td>
+                        <td>Rs {{ booking.package.price }}</td>
                       </tr>
                     {% endfor %}
                   </tbody>
@@ -370,7 +370,7 @@
                         <td>{{ booking.travel_date|date:'M d, Y' }}</td>
                         <td>{{ booking.number_of_people }}</td>
                         <td>{{ booking.created_at|date:'M d, Y' }}</td>
-                        <td>${{ booking.total_amount }}</td>
+                        <td>Rs {{ booking.total_amount }}</td>
                       </tr>
                     {% endfor %}
                   </tbody>
@@ -447,7 +447,7 @@
                     </a>
                     <div class="small text-muted mb-2">
                       {% if package.destination %}{{ package.destination.name }}{% else %}{{ package.get_category_display }}{% endif %}
-                      | ${{ package.price }}
+                      | Rs {{ package.price }}
                     </div>
 
                     <form method="post" action="{% url 'toggle_favorite_package' package.slug %}">
@@ -464,7 +464,7 @@
                       {{ activity.name }}
                     </a>
                     <div class="small text-muted mb-2">
-                      {{ activity.category.name }} | ${{ activity.price }}
+                      {{ activity.category.name }} | Rs {{ activity.price }}
                     </div>
 
                     <form method="post" action="{% url 'toggle_favorite_activity' activity.pk %}">

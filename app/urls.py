@@ -11,23 +11,32 @@ urlpatterns = [
     path('profile/', views.profile_view, name='profile'),
     path("", views.home, name='home'),
 
+    # Search
+    path('search/', views.search_view, name='search'),
+
     # Destinations
     path('destinations/', destination_list, name='destination_list'),
     path("destinations/<int:pk>/", views.destination_detail, name="destination_detail"),
+
+    # Activities
+    path('activities/', views.activity_list_view, name='activity_list'),
+    path('activities/<int:pk>/favorite/', views.toggle_favorite_activity, name='toggle_favorite_activity'),
+    path('activities/<int:pk>/', views.activity_detail, name='activity_detail'),
+
+    # Vendors
+    path('vendors/', views.vendor_showcase, name='vendor_showcase'),
 
     # Packages
     path('packages/luxury/', views.package_list, {'category': 'LUXURY'}, name='packages_luxury'),
     path('packages/trekking/', views.package_list, {'category': 'TREKKING'}, name='packages_trekking'),
     path('packages/heli/', views.package_list, {'category': 'HELI'}, name='packages_heli'),
     path('packages/hot-sales/', views.hot_sale_list, name='packages_hot_sales'),
-    path('activities/<int:pk>/favorite/', views.toggle_favorite_activity, name='toggle_favorite_activity'),
-    path('activities/<int:pk>/', views.activity_detail, name='activity_detail'),
+
+    # Payments
     path('payments/esewa/callback/', views.esewa_callback, name='esewa_callback'),
     path('payments/esewa/failure/', views.esewa_failure, name='esewa_failure'),
 
-    # package detail must come last (after specific package pages)
+    # Package detail must come last (after specific package pages)
     path('packages/<slug:slug>/favorite/', views.toggle_favorite_package, name='toggle_favorite_package'),
     path('packages/<slug:slug>/', views.package_detail, name='package_detail'),
 ]
-
-

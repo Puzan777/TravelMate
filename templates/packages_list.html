@@ -1,130 +1,94 @@
 {% extends 'base.html' %}
 
+{% block title %}{{ title }} — TravelMate{% endblock %}
+
 {% block content %}
-<div class="container py-5">
-  <div class="d-flex align-items-center justify-content-between mb-4">
-    <h1 class="h3 mb-0">{{ title }}</h1>
-  </div>
+<div style="padding-top: 100px;"></div>
 
-  <style>
-    /* fixed image height + cover */
-    .package-img { height: 180px; width: 100%; object-fit: cover; }
-    /* clamp description to keep cards same height */
-    .line-clamp { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-    .rating-row { display: flex; align-items: center; gap: 8px; }
-    .rating-stars {
-      --rating: 0;
-      position: relative;
-      display: inline-block;
-      font-size: 0.9rem;
-      line-height: 1;
-      letter-spacing: 1px;
-      color: #d1d5db;
-    }
-    .rating-stars::before { content: "★★★★★"; }
-    .rating-stars::after {
-      content: "★★★★★";
-      position: absolute;
-      inset: 0;
-      width: calc((var(--rating) / 5) * 100%);
-      overflow: hidden;
-      color: #f59e0b;
-      white-space: nowrap;
-    }
-    .tm-card-with-fav {
-      position: relative;
-      overflow: hidden;
-    }
-    .fav-corner {
-      position: absolute;
-      top: 12px;
-      right: 12px;
-      z-index: 3;
-      margin: 0;
-    }
-    .fav-icon-btn {
-      width: 36px;
-      min-width: 36px;
-      height: 36px;
-      border-radius: 999px;
-      border: 1px solid rgba(255, 255, 255, 0.55);
-      background: rgba(255, 255, 255, 0.28);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-      color: #1f3b56;
-      font-size: 1.1rem;
-      line-height: 1;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0;
-      box-shadow: 0 6px 14px rgba(15, 23, 42, 0.22);
-      transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
-    }
-    .fav-icon-btn:hover,
-    .fav-icon-btn:focus-visible {
-      background: rgba(255, 255, 255, 0.5);
-      transform: translateY(-1px);
-      box-shadow: 0 8px 16px rgba(15, 23, 42, 0.24);
-    }
-    .fav-icon-btn.is-fav {
-      border-color: rgba(255, 255, 255, 0.72);
-      background: rgba(255, 255, 255, 0.42);
-      color: #e11d48;
-    }
-    .fav-icon-btn:disabled {
-      opacity: 0.72;
-    }
-  </style>
+<section class="tm-section" style="padding-top:40px;">
+  <div class="container">
+    <div class="tm-section-header">
+      <div class="tm-section-label"><i class="bi bi-box-seam-fill"></i> Packages</div>
+      <h2 class="tm-section-title">{{ title }}</h2>
+      <p class="tm-section-subtitle">Discover handpicked travel packages from verified vendors</p>
+    </div>
 
-  <div class="row g-4">
-    {% for package in packages %}
-      <div class="col-sm-6 col-md-4 col-lg-3">
-        <div class="card h-100 shadow-sm tm-card-with-fav">
-          {% if can_toggle_favorites %}
-            <form method="post" action="{% url 'toggle_favorite_package' package.slug %}" class="fav-corner">
+    <!-- Category Tabs -->
+    <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin-bottom:36px;">
+      <a href="{% url 'packages_luxury' %}"
+         style="padding:8px 20px; border-radius:999px; font-size:.85rem; font-weight:700; text-decoration:none;
+         {% if category == 'LUXURY' %}background:var(--tm-ocean); color:#fff;{% else %}background:var(--tm-white); color:var(--tm-text-muted); border:1px solid var(--tm-line);{% endif %}">
+        Luxury
+      </a>
+      <a href="{% url 'packages_trekking' %}"
+         style="padding:8px 20px; border-radius:999px; font-size:.85rem; font-weight:700; text-decoration:none;
+         {% if category == 'TREKKING' %}background:var(--tm-ocean); color:#fff;{% else %}background:var(--tm-white); color:var(--tm-text-muted); border:1px solid var(--tm-line);{% endif %}">
+        Trekking
+      </a>
+      <a href="{% url 'packages_heli' %}"
+         style="padding:8px 20px; border-radius:999px; font-size:.85rem; font-weight:700; text-decoration:none;
+         {% if category == 'HELI' %}background:var(--tm-ocean); color:#fff;{% else %}background:var(--tm-white); color:var(--tm-text-muted); border:1px solid var(--tm-line);{% endif %}">
+        Heli Tours
+      </a>
+      <a href="{% url 'packages_hot_sales' %}"
+         style="padding:8px 20px; border-radius:999px; font-size:.85rem; font-weight:700; text-decoration:none;
+         background:var(--tm-white); color:var(--tm-text-muted); border:1px solid var(--tm-line);">
+        🔥 Hot Sales
+      </a>
+    </div>
+
+    {% if packages %}
+    <div class="row g-4">
+      {% for package in packages %}
+      <div class="col-sm-6 col-lg-3">
+        <div class="tm-card">
+          <div class="tm-card-img-wrap">
+            {% if can_toggle_favorites %}
+            <form method="post" action="{% url 'toggle_favorite_package' package.slug %}">
               {% csrf_token %}
               <input type="hidden" name="next" value="{{ request.get_full_path }}">
-              <button type="submit" class="fav-icon-btn{% if package.id in favorite_package_ids %} is-fav{% endif %}" aria-label="Toggle favorite" title="Add to favorites">
+              <button type="submit" class="tm-fav-btn{% if package.id in favorite_package_ids %} is-fav{% endif %}" aria-label="Toggle favorite">
                 {% if package.id in favorite_package_ids %}&#10084;{% else %}&#9825;{% endif %}
               </button>
             </form>
-          {% elif user.is_authenticated %}
-            <button type="button" class="fav-icon-btn fav-corner" disabled aria-disabled="true" title="Only customers can add favorites">&#9825;</button>
-          {% else %}
-            <a href="{% url 'login' %}" class="fav-icon-btn fav-corner text-decoration-none" aria-label="Login to add favorite" title="Login to add favorites">&#9825;</a>
-          {% endif %}
-          {% if package.image %}
-            <img src="{{ package.image.url }}" class="card-img-top package-img" alt="{{ package.title }}">
-          {% else %}
-            <div class="bg-secondary package-img"></div>
-          {% endif %}
-
-          <div class="card-body d-flex flex-column">
-            <div>
-              <h5 class="card-title mb-1">{{ package.title }}</h5>
-              <small class="text-muted">{{ package.get_category_display }}</small>
+            {% elif not user.is_authenticated %}
+            <a href="{% url 'login' %}" class="tm-fav-btn" aria-label="Login to favorite">&#9825;</a>
+            {% endif %}
+            {% if package.image %}
+            <img src="{{ package.image.url }}" class="tm-card-img" alt="{{ package.title }}">
+            {% else %}
+            <div class="tm-card-img" style="background:var(--tm-ocean-light);"></div>
+            {% endif %}
+          </div>
+          <div class="tm-card-body">
+            <span class="tm-card-category">{{ package.get_category_display }}</span>
+            <h3 class="tm-card-title line-clamp-2">{{ package.title }}</h3>
+            <div class="tm-card-vendor"><i class="bi bi-shop"></i> {{ package.vendor.company_name }}</div>
+            {% if package.destination %}
+            <div style="font-size:.78rem; color:var(--tm-text-muted); margin-bottom:6px;"><i class="bi bi-geo-alt-fill" style="color:var(--tm-accent);"></i> {{ package.destination.name }}{% if package.city %}, {{ package.city }}{% endif %}</div>
+            {% endif %}
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+              <span class="tm-stars" style="--rating:{{ package.rating|floatformat:1 }};" aria-hidden="true"></span>
+              <span style="font-size:.78rem; color:var(--tm-text-muted);">{{ package.rating|floatformat:1 }}</span>
             </div>
-
-            <p class="text-success fw-semibold mt-2 mb-2">${{ package.price }}</p>
-            <div class="rating-row small text-muted mb-2">
-              <span class="rating-stars" style="--rating: {{ package.rating|floatformat:1 }};" aria-hidden="true"></span>
-              <span>{{ package.rating|floatformat:1 }}/5</span>
+            <div class="tm-card-price">Rs {{ package.price|floatformat:0 }} <small>/person</small></div>
+            <div class="tm-card-meta">
+              <span><i class="bi bi-clock"></i> {{ package.duration }}</span>
+              {% if package.max_people %}<span><i class="bi bi-people"></i> Max {{ package.max_people }}</span>{% endif %}
             </div>
-
-            <p class="card-text small line-clamp mb-3">{{ package.description }}</p>
-
-            <div class="mt-auto">
-              <a href="{{ package.get_absolute_url }}" class="btn btn-primary w-100">View Details</a>
-            </div>
+            <a href="{{ package.get_absolute_url }}" class="tm-card-btn mt-3">View Details <i class="bi bi-arrow-right"></i></a>
           </div>
         </div>
       </div>
-    {% empty %}
-      <div class="col-12">
-        <p class="text-muted">No packages found.</p>
+      {% empty %}
+      <div class="col-12" style="text-align:center; padding:60px 20px;">
+        <i class="bi bi-box-seam" style="font-size:3rem; color:var(--tm-text-light); display:block; margin-bottom:16px;"></i>
+        <h3 style="color:var(--tm-text);">No packages found</h3>
+        <p style="color:var(--tm-text-muted);">Check back soon for new listings.</p>
       </div>
-    {% endfor %}
+      {% endfor %}
+    </div>
+    {% endif %}
   </div>
-</div>
+</section>
 {% endblock %}

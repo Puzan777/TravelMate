@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block title %}{% if query %}Search: {{ query }}{% else %}Search{% endif %} — TravelMate{% endblock %}
+
+{% block content %}
+<div style="padding-top: 100px;"></div>
+
+<section class="tm-section" style="padding-top:40px;">
+  <div class="container">
+
+    <!-- Search Bar -->
+    <div style="background:var(--tm-white); border-radius:var(--tm-radius-lg); padding:28px 32px; box-shadow:var(--tm-shadow); margin-bottom:40px;">
+      <form action="{% url 'search' %}" method="GET" style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+        <input type="text" name="q" value="{{ query }}" placeholder="Search packages, activities, destinations..." 
+               style="flex:1; min-width:200px; padding:12px 20px; border:1px solid var(--tm-line); border-radius:999px; font-size:.95rem; outline:none;">
+        <select name="category" style="padding:12px 18px; border:1px solid var(--tm-line); border-radius:999px; font-size:.88rem; background:var(--tm-white); cursor:pointer;">
+          <option value="">All Categories</option>
+          <option value="LUXURY"{% if category == 'LUXURY' %} selected{% endif %}>Luxury</option>
+          <option value="TREKKING"{% if category == 'TREKKING' %} selected{% endif %}>Trekking</option>
+          <option value="HELI"{% if category == 'HELI' %} selected{% endif %}>Heli Tours</option>
+        </select>
+        <select name="type" style="padding:12px 18px; border:1px solid var(--tm-line); border-radius:999px; font-size:.88rem; background:var(--tm-white); cursor:pointer;">
+          <option value="all"{% if search_type == 'all' %} selected{% endif %}>All</option>
+          <option value="packages"{% if search_type == 'packages' %} selected{% endif %}>Packages Only</option>
+          <option value="activities"{% if search_type == 'activities' %} selected{% endif %}>Activities Only</option>
+        </select>
+        <button type="submit" style="padding:12px 28px; border:none; border-radius:999px; background:var(--tm-ocean); color:#fff; font-weight:700; font-size:.9rem; cursor:pointer;">
+          <i class="bi bi-search"></i> Search
+        </button>
+      </form>
+    </div>
+
+    {% if query or category %}
+    <p style="color:var(--tm-text-muted); margin-bottom:24px;">
+      <strong>{{ total_results }}</strong> result{{ total_results|pluralize }} found
+      {% if query %}for "<strong>{{ query }}</strong>"{% endif %}
+      {% if category %} in <strong>{{ category }}</strong>{% endif %}
+    </p>
+    {% endif %}
+
+    <!-- Package Results -->
+    {% if packages %}
+    <h3 style="font-family:'Inter',sans-serif; font-size:1.1rem; font-weight:700; margin-bottom:20px; color:var(--tm-text);">
+      <i class="bi bi-box-seam" style="color:var(--tm-ocean);"></i> Packages
+    </h3>
+    <div class="row g-4 mb-5">
+      {% for package in packages %}
+      <div class="col-sm-6 col-lg-3">
+        <div class="tm-card">
+          <div class="tm-card-img-wrap">
+            {% if package.image %}
+            <img src="{{ package.image.url }}" class="tm-card-img" alt="{{ package.title }}">
+            {% else %}
+            <div class="tm-card-img" style="background:var(--tm-ocean-light);"></div>
+            {% endif %}
+          </div>
+          <div class="tm-card-body">
+            <span class="tm-card-category">{{ package.get_category_display }}</span>
+            <h3 class="tm-card-title line-clamp-2">{{ package.title }}</h3>
+            <div class="tm-card-vendor"><i class="bi bi-shop"></i> {{ package.vendor.company_name }}</div>
+            <div class="tm-card-price">Rs {{ package.price|floatformat:0 }} <small>/person</small></div>
+            <div class="tm-card-meta">
+              <span><i class="bi bi-clock"></i> {{ package.duration }}</span>
+              <span><i class="bi bi-star-fill" style="color:#f59e0b;"></i> {{ package.rating|floatformat:1 }}</span>
+            </div>
+            <a href="{{ package.get_absolute_url }}" class="tm-card-btn mt-3">View Details <i class="bi bi-arrow-right"></i></a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Activity Results -->
+    {% if activities %}
+    <h3 style="font-family:'Inter',sans-serif; font-size:1.1rem; font-weight:700; margin-bottom:20px; color:var(--tm-text);">
+      <i class="bi bi-lightning" style="color:var(--tm-ocean);"></i> Activities
+    </h3>
+    <div class="row g-4">
+      {% for activity in activities %}
+      <div class="col-sm-6 col-lg-3">
+        <div class="tm-card">
+          <div class="tm-card-img-wrap">
+            {% with primary_img=activity.images.first %}
+            {% if primary_img %}
+            <img src="{{ primary_img.image.url }}" class="tm-card-img" alt="{{ activity.name }}">
+            {% else %}
+            <div class="tm-card-img" style="background:linear-gradient(135deg,var(--tm-ocean-light),#dbeafe);"></div>
+            {% endif %}
+            {% endwith %}
+          </div>
+          <div class="tm-card-body">
+            <div style="display:flex; gap:6px;">
+              <span class="tm-card-category">{{ activity.category.name }}</span>
+              <span class="tm-card-category" style="background:#FFFBEB; color:#D97706;">{{ activity.get_difficulty_level_display }}</span>
+            </div>
+            <h3 class="tm-card-title line-clamp-2">{{ activity.name }}</h3>
+            <div class="tm-card-vendor"><i class="bi bi-shop"></i> {{ activity.vendor.company_name }}</div>
+            <div class="tm-card-price">Rs {{ activity.price|floatformat:0 }} <small>/person</small></div>
+            <a href="{% url 'activity_detail' activity.pk %}" class="tm-card-btn mt-3">View Details <i class="bi bi-arrow-right"></i></a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if not packages and not activities %}
+    {% if query or category %}
+    <div style="text-align:center; padding:60px 20px;">
+      <i class="bi bi-search" style="font-size:3rem; color:var(--tm-text-light); display:block; margin-bottom:16px;"></i>
+      <h3 style="color:var(--tm-text); margin-bottom:8px;">No results found</h3>
+      <p style="color:var(--tm-text-muted);">Try different keywords or browse our <a href="{% url 'home' %}">homepage</a>.</p>
+    </div>
+    {% else %}
+    <div style="text-align:center; padding:60px 20px;">
+      <i class="bi bi-compass" style="font-size:3rem; color:var(--tm-ocean); display:block; margin-bottom:16px;"></i>
+      <h3 style="color:var(--tm-text); margin-bottom:8px;">Start your search</h3>
+      <p style="color:var(--tm-text-muted);">Type a destination, activity, or vendor name above to discover amazing experiences.</p>
+    </div>
+    {% endif %}
+    {% endif %}
+
+  </div>
+</section>
+{% endblock %}

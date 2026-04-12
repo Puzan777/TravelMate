@@ -543,15 +543,34 @@ def logout_view(request):
 
 
 def home(request):
-    # Show all destinations (countries)
-    destinations = Destination.objects.all()[:6]  # limit to 6
-    
-    # Show active packages (best packages)
-    packages = Package.objects.filter(is_active=True, approval_status=ApprovalStatus.APPROVED)[:6]  # limit to 6
+    from vendor.models import VendorProfile
+    from django.db.models import Count
+
+    # Destinations
+    destinations = Destination.objects.all()[:8]
+
+    # Featured packages — approved, active, ordered by rating
+    packages = Package.objects.filter(
+        is_active=True, approval_status=ApprovalStatus.APPROVED
+    ).select_related('vendor').order_by('-rating', '-created_at')[:8]
+
+    # Featured activities — approved, active
+    activities = Activity.objects.filter(
+        is_active=True, approval_status=ApprovalStatus.APPROVED
+    ).select_related('vendor', 'category').prefetch_related('images').order_by('-rating', '-created_at')[:8]
+
+    # Hero stats
+    stats = {
+        'total_packages': Package.objects.filter(is_active=True, approval_status=ApprovalStatus.APPROVED).count(),
+        'total_activities': Activity.objects.filter(is_active=True, approval_status=ApprovalStatus.APPROVED).count(),
+        'total_vendors': VendorProfile.objects.filter(verification_status='APPROVED').count(),
+    }
 
     context = {
         "featured_destinations": destinations,
         "featured_packages": packages,
+        "featured_activities": activities,
+        "stats": stats,
     }
     context.update(_favorite_card_context(request))
     return render(request, "home.html", context)
@@ -585,7 +604,7 @@ def destination_detail(request, pk):
 
 # ----------------- Package views -----------------
 def package_list(request, category=None, hot_sales=False):
-    qs = Package.objects.filter(is_active=True, approval_status=ApprovalStatus.APPROVED)
+    qs = Package.objects.filter(is_active=True, approval_status=ApprovalStatus.APPROVED).select_related('vendor')
     title = 'Packages'
 
     if hot_sales:
@@ -1128,3 +1147,98 @@ def esewa_failure(request):
     booking.save()
     messages.error(request, 'eSewa payment was cancelled or failed.')
     return redirect('package_detail', slug=booking.package.slug)
+
+
+# ─── Search View ───
+def search_view(request):
+    query = request.GET.get('q', '').strip()
+    category = request.GET.get('category', '').strip()
+    search_type = request.GET.get('type', 'all').strip()
+
+    packages = Package.objects.none()
+    activities = Activity.objects.none()
+
+    if query or category:
+        if search_type in ('all', 'packages'):
+            packages = Package.objects.filter(
+                is_active=True, approval_status=ApprovalStatus.APPROVED
+            ).select_related('vendor', 'destination')
+            if query:
+                packages = packages.filter(
+                    Q(title__icontains=query)
+                    | Q(description__icontains=query)
+                    | Q(destination__name__icontains=query)
+                    | Q(vendor__company_name__icontains=query)
+                )
+            if category:
+                packages = packages.filter(category=category)
+            packages = packages.order_by('-rating', '-created_at')[:24]
+
+        if search_type in ('all', 'activities'):
+            activities = Activity.objects.filter(
+                is_active=True, approval_status=ApprovalStatus.APPROVED
+            ).select_related('vendor', 'category').prefetch_related('images')
+            if query:
+                activities = activities.filter(
+                    Q(name__icontains=query)
+                    | Q(description__icontains=query)
+                    | Q(category__name__icontains=query)
+                    | Q(vendor__company_name__icontains=query)
+                )
+            activities = activities.order_by('-rating', '-created_at')[:24]
+
+    context = {
+        'query': query,
+        'category': category,
+        'search_type': search_type,
+        'packages': packages,
+        'activities': activities,
+        'total_results': len(packages) + len(activities),
+    }
+    context.update(_favorite_card_context(request))
+    return render(request, 'search_results.html', context)
+
+
+# ─── Activity List View ───
+def activity_list_view(request):
+    activities = Activity.objects.filter(
+        is_active=True, approval_status=ApprovalStatus.APPROVED
+    ).select_related('vendor', 'category').prefetch_related('images').order_by('-rating', '-created_at')
+
+    selected_category = request.GET.get('category', '').strip()
+    selected_difficulty = request.GET.get('difficulty', '').strip()
+
+    if selected_category:
+        activities = activities.filter(category__name__iexact=selected_category)
+    if selected_difficulty:
+        activities = activities.filter(difficulty_level=selected_difficulty)
+
+    categories = ActivityCategory.objects.filter(is_active=True).order_by('name')
+
+    context = {
+        'activities': activities,
+        'categories': categories,
+        'selected_category': selected_category,
+        'selected_difficulty': selected_difficulty,
+        'difficulty_choices': Activity.DifficultyLevel.choices,
+    }
+    context.update(_favorite_card_context(request))
+    return render(request, 'activity_list.html', context)
+
+
+# ─── Vendor Showcase View ───
+def vendor_showcase(request):
+    from vendor.models import VendorProfile
+    from django.db.models import Count
+
+    vendors = (
+        VendorProfile.objects
+        .filter(verification_status='APPROVED', account_status='ACTIVE')
+        .annotate(
+            package_count=Count('packages', filter=Q(packages__is_active=True, packages__approval_status=ApprovalStatus.APPROVED)),
+            activity_count=Count('activities', filter=Q(activities__is_active=True, activities__approval_status=ApprovalStatus.APPROVED)),
+        )
+        .order_by('-package_count', '-activity_count')
+    )
+
+    return render(request, 'vendors.html', {'vendors': vendors})

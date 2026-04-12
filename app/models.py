@@ -224,6 +224,16 @@ class Activity(models.Model):
     category = models.ForeignKey(ActivityCategory, on_delete=models.PROTECT, related_name='activities')
     name = models.CharField(max_length=150)
     description = models.TextField()
+    destination = models.ForeignKey(
+        Destination,
+        on_delete=models.PROTECT,
+        blank=True,
+        null=True,
+        related_name='activities',
+    )
+    region = models.CharField(max_length=150, blank=True)
+    city = models.CharField(max_length=120, blank=True)
+    best_season = models.CharField(max_length=120, blank=True)
     price = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)])
     rating = models.DecimalField(
         max_digits=2,
