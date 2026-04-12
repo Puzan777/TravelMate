@@ -15,6 +15,11 @@
 
     <!-- Category Tabs -->
     <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin-bottom:36px;">
+      <a href="{% url 'packages_standard' %}"
+         style="padding:8px 20px; border-radius:999px; font-size:.85rem; font-weight:700; text-decoration:none;
+         {% if category == 'STANDARD' %}background:var(--tm-ocean); color:#fff;{% else %}background:var(--tm-white); color:var(--tm-text-muted); border:1px solid var(--tm-line);{% endif %}">
+        Standard Package
+      </a>
       <a href="{% url 'packages_luxury' %}"
          style="padding:8px 20px; border-radius:999px; font-size:.85rem; font-weight:700; text-decoration:none;
          {% if category == 'LUXURY' %}background:var(--tm-ocean); color:#fff;{% else %}background:var(--tm-white); color:var(--tm-text-muted); border:1px solid var(--tm-line);{% endif %}">

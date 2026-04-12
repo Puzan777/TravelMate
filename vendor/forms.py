@@ -116,7 +116,7 @@ class VendorPackageForm(forms.ModelForm):
             'duration',
             'max_people',
             'trip_difficulty',
-            'activity',
+            'tour_type',
             'max_elevation',
             'accommodation',
             'meal',

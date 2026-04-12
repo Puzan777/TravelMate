@@ -13,6 +13,7 @@ urlpatterns = [
 
     # Search
     path('search/', views.search_view, name='search'),
+    path('search/suggestions/', views.search_suggestions, name='search_suggestions'),
 
     # Destinations
     path('destinations/', destination_list, name='destination_list'),
@@ -27,6 +28,7 @@ urlpatterns = [
     path('vendors/', views.vendor_showcase, name='vendor_showcase'),
 
     # Packages
+    path('packages/standard/', views.package_list, {'category': 'STANDARD'}, name='packages_standard'),
     path('packages/luxury/', views.package_list, {'category': 'LUXURY'}, name='packages_luxury'),
     path('packages/trekking/', views.package_list, {'category': 'TREKKING'}, name='packages_trekking'),
     path('packages/heli/', views.package_list, {'category': 'HELI'}, name='packages_heli'),

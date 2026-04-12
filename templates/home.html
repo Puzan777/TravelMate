@@ -1,5 +1,4 @@
-{% extends "base.html" %}
-{% load static %}
+{% extends "base.html" %}{% load static %}
 
 {% block title %}TravelMate — Discover Tours, Activities & Destinations{% endblock %}
 
@@ -141,6 +140,7 @@
         <input type="text" name="q" class="tm-search-input" placeholder="Where do you want to go?" autocomplete="off">
         <select name="category" class="tm-search-select">
           <option value="">All Categories</option>
+          <option value="STANDARD">Standard Package</option>
           <option value="LUXURY">Luxury</option>
           <option value="TREKKING">Trekking</option>
           <option value="HELI">Heli Tours</option>
@@ -375,7 +375,4 @@
     <div class="text-center mt-4">
       <a href="{% url 'destination_list' %}" class="tm-view-all">View All Destinations <i class="bi bi-arrow-right"></i></a>
     </div>
-  </div>
-</section>
-
 {% endblock %}

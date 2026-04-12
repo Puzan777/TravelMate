@@ -14,6 +14,7 @@ from urllib.request import Request, urlopen
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.core.mail import send_mail
+from django.http import JsonResponse
 from django.db.models import Q
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout
@@ -1197,6 +1198,85 @@ def search_view(request):
     }
     context.update(_favorite_card_context(request))
     return render(request, 'search_results.html', context)
+
+
+def search_suggestions(request):
+    query = (request.GET.get('q') or '').strip()
+    if len(query) < 2:
+        return JsonResponse({'results': []})
+
+    raw_limit = request.GET.get('limit', 8)
+    try:
+        limit = int(raw_limit)
+    except (TypeError, ValueError):
+        limit = 8
+    limit = max(1, min(limit, 20))
+
+    per_source = max(3, (limit // 2))
+
+    from vendor.models import VendorProfile
+
+    package_titles = list(
+        Package.objects.filter(
+            is_active=True,
+            approval_status=ApprovalStatus.APPROVED,
+            title__icontains=query,
+        )
+        .order_by('-rating', 'title')
+        .values_list('title', flat=True)[:per_source]
+    )
+    activity_names = list(
+        Activity.objects.filter(
+            is_active=True,
+            approval_status=ApprovalStatus.APPROVED,
+            name__icontains=query,
+        )
+        .order_by('-rating', 'name')
+        .values_list('name', flat=True)[:per_source]
+    )
+    destination_names = list(
+        Destination.objects.filter(name__icontains=query)
+        .order_by('name')
+        .values_list('name', flat=True)[:per_source]
+    )
+    vendor_names = list(
+        VendorProfile.objects.filter(
+            verification_status=VendorProfile.VerificationStatus.APPROVED,
+            account_status=VendorProfile.AccountStatus.ACTIVE,
+            company_name__icontains=query,
+        )
+        .order_by('company_name')
+        .values_list('company_name', flat=True)[:per_source]
+    )
+
+    sources = [
+        ['Package', package_titles],
+        ['Activity', activity_names],
+        ['Destination', destination_names],
+        ['Vendor', vendor_names],
+    ]
+
+    results = []
+    seen = set()
+
+    while len(results) < limit and any(items for _, items in sources):
+        for source in sources:
+            source_type, items = source
+            if not items or len(results) >= limit:
+                continue
+            value = (items.pop(0) or '').strip()
+            if not value:
+                continue
+            key = value.lower()
+            if key in seen:
+                continue
+            seen.add(key)
+            results.append({
+                'value': value,
+                'type': source_type,
+            })
+
+    return JsonResponse({'results': results})
 
 
 # ─── Activity List View ───

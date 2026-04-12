@@ -65,6 +65,7 @@ class ApprovalStatus(models.TextChoices):
 
 class Package(models.Model):
     class Category(models.TextChoices):
+        STANDARD = 'STANDARD', 'Standard Package'
         LUXURY = 'LUXURY', 'Luxury'
         TREKKING = 'TREKKING', 'Trekking'
         HELI = 'HELI', 'Heli'
@@ -100,7 +101,7 @@ class Package(models.Model):
     duration = models.CharField(max_length=100)
     max_people = models.PositiveIntegerField(blank=True, null=True)
     trip_difficulty = models.CharField(max_length=100, blank=True, null=True)
-    activity = models.CharField(max_length=100, blank=True, null=True)
+    tour_type = models.CharField(max_length=100, blank=True, null=True)
     max_elevation = models.IntegerField(blank=True, null=True)
     accommodation = models.CharField(max_length=100, blank=True, null=True)
     meal = models.CharField(max_length=100, blank=True, null=True)

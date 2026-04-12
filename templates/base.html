@@ -326,6 +326,61 @@
   /* ===== UTILITIES ===== */
   .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   .line-clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+
+  /* Search Autocomplete */
+  .tm-search-suggest-dropdown {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(100% + 8px);
+    z-index: 1060;
+    background: #fff;
+    border: 1px solid var(--tm-line-soft);
+    border-radius: 14px;
+    box-shadow: var(--tm-shadow-lg);
+    max-height: 320px;
+    overflow-y: auto;
+    display: none;
+    padding: 6px;
+  }
+
+  .tm-search-suggest-item {
+    width: 100%;
+    border: 0;
+    background: transparent;
+    border-radius: 10px;
+    text-align: left;
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    color: var(--tm-text);
+    font-size: 0.9rem;
+    cursor: pointer;
+  }
+
+  .tm-search-suggest-item:hover,
+  .tm-search-suggest-item.is-active {
+    background: var(--tm-ocean-light);
+  }
+
+  .tm-search-suggest-label {
+    font-weight: 600;
+  }
+
+  .tm-search-suggest-type {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--tm-ocean);
+    background: #eef7fb;
+    border: 1px solid #d8ebf4;
+    border-radius: 999px;
+    padding: 3px 8px;
+    flex-shrink: 0;
+  }
   </style>
   {% block extrastyle %}{% endblock %}
 </head>
@@ -415,6 +470,7 @@
       <div class="col-lg-3 col-md-6">
         <h6>Categories</h6>
         <ul class="tm-footer-links">
+          <li><a href="{% url 'packages_standard' %}">Standard Packages</a></li>
           <li><a href="{% url 'packages_luxury' %}">Luxury Packages</a></li>
           <li><a href="{% url 'packages_trekking' %}">Trekking Packages</a></li>
           <li><a href="{% url 'packages_heli' %}">Heli Tours</a></li>
@@ -464,6 +520,188 @@
       actions.classList.toggle('show');
     });
   }
+})();
+
+(function () {
+  const SEARCH_SUGGESTION_URL = "{% url 'search_suggestions' %}";
+  const forms = document.querySelectorAll('form[action*="/search/"]');
+  if (!forms.length) {
+    return;
+  }
+
+  forms.forEach(function (form) {
+    const input = form.querySelector('input[name="q"]');
+    if (!input) {
+      return;
+    }
+
+    input.setAttribute('autocomplete', 'off');
+
+    const parent = input.parentElement;
+    if (!parent) {
+      return;
+    }
+
+    const parentStyle = window.getComputedStyle(parent);
+    if (parentStyle.position === 'static') {
+      parent.style.position = 'relative';
+    }
+
+    const dropdown = document.createElement('div');
+    dropdown.className = 'tm-search-suggest-dropdown';
+    parent.appendChild(dropdown);
+
+    let suggestions = [];
+    let activeIndex = -1;
+    let debounceTimer = null;
+    let requestSerial = 0;
+
+    function hideDropdown() {
+      dropdown.style.display = 'none';
+      activeIndex = -1;
+    }
+
+    function showDropdown() {
+      if (suggestions.length) {
+        dropdown.style.display = 'block';
+      } else {
+        hideDropdown();
+      }
+    }
+
+    function applyActiveState() {
+      const items = dropdown.querySelectorAll('.tm-search-suggest-item');
+      items.forEach(function (item, index) {
+        item.classList.toggle('is-active', index === activeIndex);
+      });
+    }
+
+    function chooseSuggestion(index, shouldSubmit) {
+      if (index < 0 || index >= suggestions.length) {
+        return;
+      }
+      input.value = suggestions[index].value;
+      hideDropdown();
+      if (shouldSubmit) {
+        form.submit();
+      }
+    }
+
+    function renderSuggestions() {
+      dropdown.innerHTML = '';
+      suggestions.forEach(function (entry, index) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'tm-search-suggest-item';
+        btn.dataset.index = String(index);
+        btn.innerHTML =
+          '<span class="tm-search-suggest-label"></span>' +
+          '<span class="tm-search-suggest-type"></span>';
+
+        const label = btn.querySelector('.tm-search-suggest-label');
+        const type = btn.querySelector('.tm-search-suggest-type');
+        if (label) {
+          label.textContent = entry.value;
+        }
+        if (type) {
+          type.textContent = entry.type;
+        }
+
+        btn.addEventListener('mousedown', function (event) {
+          event.preventDefault();
+        });
+        btn.addEventListener('click', function () {
+          chooseSuggestion(index, true);
+        });
+        dropdown.appendChild(btn);
+      });
+      showDropdown();
+    }
+
+    function fetchSuggestions(term) {
+      requestSerial += 1;
+      const currentSerial = requestSerial;
+      const url = SEARCH_SUGGESTION_URL + '?q=' + encodeURIComponent(term) + '&limit=8';
+
+      fetch(url, {
+        method: 'GET',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+      })
+        .then(function (response) {
+          if (!response.ok) {
+            throw new Error('Suggestion request failed');
+          }
+          return response.json();
+        })
+        .then(function (data) {
+          if (currentSerial !== requestSerial) {
+            return;
+          }
+          suggestions = Array.isArray(data.results) ? data.results : [];
+          activeIndex = -1;
+          renderSuggestions();
+        })
+        .catch(function () {
+          if (currentSerial !== requestSerial) {
+            return;
+          }
+          suggestions = [];
+          hideDropdown();
+        });
+    }
+
+    input.addEventListener('input', function () {
+      const term = input.value.trim();
+      if (debounceTimer) {
+        window.clearTimeout(debounceTimer);
+      }
+
+      if (term.length < 2) {
+        suggestions = [];
+        hideDropdown();
+        return;
+      }
+
+      debounceTimer = window.setTimeout(function () {
+        fetchSuggestions(term);
+      }, 160);
+    });
+
+    input.addEventListener('keydown', function (event) {
+      if (!suggestions.length || dropdown.style.display !== 'block') {
+        return;
+      }
+
+      if (event.key === 'ArrowDown') {
+        event.preventDefault();
+        activeIndex = (activeIndex + 1) % suggestions.length;
+        applyActiveState();
+      } else if (event.key === 'ArrowUp') {
+        event.preventDefault();
+        activeIndex = activeIndex <= 0 ? suggestions.length - 1 : activeIndex - 1;
+        applyActiveState();
+      } else if (event.key === 'Enter' && activeIndex >= 0) {
+        event.preventDefault();
+        chooseSuggestion(activeIndex, true);
+      } else if (event.key === 'Escape') {
+        hideDropdown();
+      }
+    });
+
+    input.addEventListener('focus', function () {
+      if (suggestions.length) {
+        showDropdown();
+      }
+    });
+
+    input.addEventListener('blur', function () {
+      window.setTimeout(function () {
+        hideDropdown();
+      }, 140);
+    });
+  });
 })();
 </script>
 {% block extra_js %}{% endblock %}

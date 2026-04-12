@@ -130,7 +130,7 @@ class PackageAdmin(admin.ModelAdmin):
 
     fieldsets = (
         (None, {'fields': ('vendor', 'title', 'slug', 'category', 'image', 'price', 'rating', 'description', 'destination')}),
-        ('Trip info', {'fields': ('duration', 'max_people', 'trip_difficulty', 'activity', 'max_elevation')}),
+        ('Trip info', {'fields': ('duration', 'max_people', 'trip_difficulty', 'tour_type', 'max_elevation')}),
         ('Logistics', {'fields': ('accommodation', 'meal', 'vehicle')}),
         ('Optional', {'fields': ('major_highlights', 'itinerary')}),
         ('Status', {'fields': ('approval_status', 'is_active',)}),
