@@ -548,7 +548,7 @@ def home(request):
     from django.db.models import Count
 
     # Destinations
-    destinations = Destination.objects.all()[:8]
+    destinations = Destination.objects.prefetch_related('images').all()[:8]
 
     # Featured packages — approved, active, ordered by rating
     packages = Package.objects.filter(
@@ -579,7 +579,7 @@ def home(request):
 
 def destination_list(request):
     # Show all destinations (countries)
-    destinations = Destination.objects.all()
+    destinations = Destination.objects.prefetch_related('images').all()
     return render(request, 'destination_list.html', {
         'destinations': destinations
     })
@@ -587,7 +587,7 @@ def destination_list(request):
 
 def destination_detail(request, pk):
     # Get destination regardless of active status
-    destination = get_object_or_404(Destination, pk=pk)
+    destination = get_object_or_404(Destination.objects.prefetch_related('images'), pk=pk)
     # Get only active packages for this destination (country)
     packages = Package.objects.filter(
         destination=destination,

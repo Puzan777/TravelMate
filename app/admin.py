@@ -1,6 +1,7 @@
 from itertools import chain
 from operator import attrgetter
 
+from django import forms
 from django.contrib import admin, messages
 from django.core.paginator import Paginator
 from django.db.models import Q
@@ -10,9 +11,11 @@ from django.urls import path, reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils import timezone
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 
 from .models import (
     Activity, ActivityBooking, ActivityCategory, ActivityImage, ApprovalStatus, Booking, CustomUser, Destination,
+    DestinationImage,
     HotSale, Package, PackageImage, PackageItinerary, ActivityReview, PackageReview,
 )
 
@@ -22,8 +25,23 @@ admin.site.enable_nav_sidebar = True
 
 @admin.register(ActivityCategory)
 class ActivityCategoryAdmin(admin.ModelAdmin):
-    list_display = ('name',)
+    list_display = ('name', 'admin_actions')
     search_fields = ('name',)
+    list_display_links = None
+    actions = None
+
+    @admin.display(description='Actions')
+    def admin_actions(self, obj):
+        edit_url = reverse('admin:app_activitycategory_change', args=[obj.pk])
+        delete_url = reverse('admin:app_activitycategory_delete', args=[obj.pk])
+        return format_html(
+            '<div style="display:flex;gap:4px;">'
+            '<a class="button" href="{}" style="padding:4px 8px; font-size:11px;">Edit</a>'
+            '<a class="button" href="{}" style="padding:4px 8px; font-size:11px; background:#b91c1c; border-color:#b91c1c; color:#fff;">Delete</a>'
+            '</div>',
+            edit_url,
+            delete_url,
+        )
 
 
 
@@ -33,6 +51,27 @@ def _current_vendor_profile(user):
 
 def _is_platform_admin(user):
     return user.is_active and user.is_staff and not getattr(user, 'is_vendor', False)
+
+
+class MultiImageFileInput(forms.ClearableFileInput):
+    allow_multiple_selected = True
+
+
+class DestinationAdminForm(forms.ModelForm):
+    new_images = forms.FileField(
+        required=False,
+        widget=MultiImageFileInput(attrs={'accept': 'image/*', 'multiple': True}),
+        help_text='Choose files, preview them, and select one as cover image before saving.',
+        label='Destination Image',
+    )
+    primary_new_image_index = forms.IntegerField(required=False, widget=forms.HiddenInput())
+
+    class Meta:
+        model = Destination
+        fields = '__all__'
+
+    class Media:
+        js = ('admin/destination_multi_upload.js',)
 
 
 @admin.register(CustomUser)
@@ -61,14 +100,104 @@ class CustomUserAdmin(admin.ModelAdmin):
 
 @admin.register(Destination)
 class DestinationAdmin(admin.ModelAdmin):
-    list_display = ('name', 'best_season', 'created_at')
+    form = DestinationAdminForm
+    list_display = ('name', 'best_season', 'created_at', 'admin_actions')
     search_fields = ('name', 'short_description', 'visa_info', 'safety_note')
-    readonly_fields = ('created_at', 'updated_at')
+    readonly_fields = ('current_images_manager',)
+    list_display_links = None
+    actions = None
     fieldsets = (
-        (None, {'fields': ('name', 'hero_image', 'short_description')}),
+        ('Basic Info', {'fields': ('name', 'short_description')}),
         ('Travel Info', {'fields': ('best_season', 'visa_info', 'safety_note')}),
-        ('System', {'fields': ('created_at', 'updated_at')}),
+        ('Destination Image', {'fields': ('new_images', 'primary_new_image_index', 'current_images_manager')}),
     )
+
+    @admin.display(description='Actions')
+    def admin_actions(self, obj):
+        edit_url = reverse('admin:app_destination_change', args=[obj.pk])
+        delete_url = reverse('admin:app_destination_delete', args=[obj.pk])
+        return format_html(
+            '<div style="display:flex;gap:4px;">'
+            '<a class="button" href="{}" style="padding:4px 8px; font-size:11px;">Edit</a>'
+            '<a class="button" href="{}" style="padding:4px 8px; font-size:11px; background:#b91c1c; border-color:#b91c1c; color:#fff;">Delete</a>'
+            '</div>',
+            edit_url,
+            delete_url,
+        )
+
+    @admin.display(description='Current Images')
+    def current_images_manager(self, obj):
+        if not obj:
+            return format_html('<span style="color:#6b7280;">No current images yet.</span>')
+
+        images = obj.images.all().order_by('-is_primary', 'created_at')
+        if not images.exists():
+            return format_html('<span style="color:#6b7280;">No current images yet.</span>')
+
+        cards = []
+        for image in images:
+            checked = 'checked' if image.is_primary else ''
+            cards.append(
+                '<div style="width:150px; border:1px solid #d6dbe1; border-radius:8px; padding:8px; background:#fff;">'
+                f'<img src="{image.image.url}" alt="Destination image" style="height:90px; width:100%; object-fit:cover; border-radius:6px; border:1px solid #e5e7eb; margin-bottom:8px;">'
+                '<div style="display:flex; align-items:center; gap:6px; margin-bottom:6px;">'
+                f'<input type="radio" name="primary_image_id" value="{image.pk}" {checked}>'
+                '<label style="font-size:12px; color:#374151;">Set as cover</label>'
+                '</div>'
+                '<div style="display:flex; align-items:center; gap:6px;">'
+                f'<input type="checkbox" name="remove_image_ids" value="{image.pk}">'
+                '<label style="font-size:12px; color:#b91c1c;">Delete</label>'
+                '</div>'
+                '</div>'
+            )
+
+        return mark_safe('<div style="display:flex; flex-wrap:wrap; gap:8px;">' + ''.join(cards) + '</div>')
+
+    def save_related(self, request, form, formsets, change):
+        super().save_related(request, form, formsets, change)
+
+        remove_image_ids = request.POST.getlist('remove_image_ids')
+        if remove_image_ids:
+            form.instance.images.filter(pk__in=remove_image_ids).delete()
+
+        new_images = request.FILES.getlist('new_images')
+        created_images = []
+        for image_file in new_images:
+            created_images.append(
+                DestinationImage.objects.create(
+                    destination=form.instance,
+                    image=image_file,
+                    is_primary=False,
+                )
+            )
+
+        preferred_primary_id = None
+
+        selected_existing_primary = (request.POST.get('primary_image_id') or '').strip()
+        if selected_existing_primary.isdigit():
+            selected_existing_primary_id = int(selected_existing_primary)
+            if form.instance.images.filter(pk=selected_existing_primary_id).exists():
+                preferred_primary_id = selected_existing_primary_id
+
+        try:
+            selected_index = int((request.POST.get('primary_new_image_index') or '').strip())
+        except (TypeError, ValueError, AttributeError):
+            selected_index = 0
+
+        if preferred_primary_id is None and created_images:
+            selected_index = max(0, min(selected_index, len(created_images) - 1))
+            preferred_primary_id = created_images[selected_index].pk
+
+        images_qs = form.instance.images.all().order_by('created_at', 'pk')
+        if not images_qs.exists():
+            return
+
+        if preferred_primary_id is None:
+            existing_primary = images_qs.filter(is_primary=True).first()
+            preferred_primary_id = existing_primary.pk if existing_primary else images_qs.first().pk
+
+        images_qs.update(is_primary=False)
+        images_qs.filter(pk=preferred_primary_id).update(is_primary=True)
 
     def get_queryset(self, request):
         if _is_platform_admin(request.user):
@@ -109,10 +238,10 @@ class PackageAdmin(admin.ModelAdmin):
     inlines = [PackageImageInline]
     list_per_page = 20
     list_display = ('title', 'vendor', 'category', 'price', 'rating', 'approval_status', 'is_active', 'created_at', 'admin_actions')
-    list_filter = ('vendor', 'category', 'approval_status', 'is_active')
+    list_filter = ('vendor', 'category', 'is_active')
     search_fields = ('title', 'slug', 'destination__name', 'description')
     prepopulated_fields = {'slug': ('title',)}
-    readonly_fields = ('created_at', 'updated_at')
+    readonly_fields = ('cover_image_preview', 'created_at', 'updated_at')
     list_editable = ('is_active',)
     list_display_links = None
 
@@ -120,24 +249,42 @@ class PackageAdmin(admin.ModelAdmin):
 
     @admin.display(description='Actions')
     def admin_actions(self, obj):
-        view_url = reverse('package_detail', args=[obj.slug]) if obj.slug else '#'
+        view_url = reverse('admin:app_package_change', args=[obj.pk])
         return format_html(
             '<div style="display:flex;gap:4px;">'
-            '<a class="button" href="{}" target="_blank" style="padding:4px 8px; font-size:11px; background:var(--vd-ocean); border-color:var(--vd-ocean);">View</a>'
+            '<a class="button" href="{}" target="_blank" style="padding:4px 8px; font-size:11px; background:var(--vd-ocean); border-color:var(--vd-ocean);">View details</a>'
             '</div>',
             view_url
         )
 
     fieldsets = (
-        (None, {'fields': ('vendor', 'title', 'slug', 'category', 'image', 'price', 'rating', 'description', 'destination')}),
+        (None, {'fields': ('vendor', 'title', 'slug', 'category', 'cover_image_preview', 'image', 'price', 'rating', 'description', 'destination')}),
         ('Trip info', {'fields': ('duration', 'max_people', 'trip_difficulty', 'tour_type', 'max_elevation')}),
         ('Logistics', {'fields': ('accommodation', 'meal', 'vehicle')}),
         ('Optional', {'fields': ('major_highlights', 'itinerary')}),
         ('Status', {'fields': ('approval_status', 'is_active',)}),
     )
 
+    @admin.display(description='Current Image')
+    def cover_image_preview(self, obj):
+        if not obj:
+            return '-'
+        image_url = obj.image.url if obj.image else None
+        if not image_url:
+            primary_image = obj.package_images.filter(is_primary=True).first()
+            if not primary_image:
+                primary_image = obj.package_images.first()
+            if primary_image and primary_image.image:
+                image_url = primary_image.image.url
+        if not image_url:
+            return '-'
+        return format_html(
+            '<img src="{}" alt="Package image" style="max-height:140px; max-width:220px; border-radius:8px; border:1px solid #e5e7eb;" />',
+            image_url,
+        )
+
     def get_queryset(self, request):
-        qs = super().get_queryset(request)
+        qs = super().get_queryset(request).filter(approval_status=ApprovalStatus.APPROVED)
         if request.user.is_superuser:
             return qs
         vendor_profile = _current_vendor_profile(request.user)
@@ -191,34 +338,49 @@ class ActivityAdmin(admin.ModelAdmin):
     inlines = [ActivityImageInline]
     list_per_page = 20
     list_display = ('name', 'vendor', 'category', 'price', 'difficulty_level', 'approval_status', 'is_active', 'created_at', 'admin_actions')
-    list_filter = ('vendor', 'category', 'difficulty_level', 'approval_status', 'is_active', 'created_at')
+    list_filter = ('vendor', 'category', 'difficulty_level', 'is_active', 'created_at')
     search_fields = ('name', 'description', 'vendor__company_name', 'category__name')
-    readonly_fields = ('created_at',)
+    readonly_fields = ('cover_image_preview', 'created_at',)
     list_display_links = None
 
     actions = None
 
     @admin.display(description='Actions')
     def admin_actions(self, obj):
-        view_url = '#'
+        view_url = reverse('admin:app_activity_change', args=[obj.pk])
         return format_html(
             '<div style="display:flex;gap:4px;">'
-            '<a class="button" href="{}" target="_blank" style="padding:4px 8px; font-size:11px; background:var(--vd-ocean); border-color:var(--vd-ocean);">View</a>'
+            '<a class="button" href="{}" target="_blank" style="padding:4px 8px; font-size:11px; background:var(--vd-ocean); border-color:var(--vd-ocean);">View details</a>'
             '</div>',
             view_url
         )
 
     fieldsets = (
-        (None, {'fields': ('vendor', 'category', 'name', 'description', 'price', 'approval_status', 'is_active')}),
+        (None, {'fields': ('vendor', 'category', 'name', 'cover_image_preview', 'description', 'price', 'approval_status', 'is_active')}),
         ('Trip details', {'fields': ('duration', 'difficulty_level', 'max_group_size', 'min_age')}),
         ('Safety', {'fields': ('min_weight', 'max_weight', 'equipment_provided', 'safety_notes')}),
         ('System', {'fields': ('created_at',)}),
     )
 
+    @admin.display(description='Current Image')
+    def cover_image_preview(self, obj):
+        if not obj:
+            return '-'
+        primary_image = obj.images.filter(is_primary=True).first()
+        if not primary_image:
+            primary_image = obj.images.first()
+        if not primary_image or not primary_image.image:
+            return '-'
+        return format_html(
+            '<img src="{}" alt="Activity image" style="max-height:140px; max-width:220px; border-radius:8px; border:1px solid #e5e7eb;" />',
+            primary_image.image.url,
+        )
+
     def get_queryset(self, request):
+        qs = super().get_queryset(request).filter(approval_status=ApprovalStatus.APPROVED)
         if _is_platform_admin(request.user):
-            return super().get_queryset(request)
-        return super().get_queryset(request).none()
+            return qs
+        return qs.none()
 
     def has_add_permission(self, request):
         return False

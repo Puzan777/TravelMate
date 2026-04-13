@@ -19,8 +19,8 @@
         <a href="{% url 'destination_detail' destination.id %}" style="text-decoration:none;">
           <div class="tm-card" style="border:none;">
             <div class="tm-card-img-wrap" style="position:relative;">
-              {% if destination.hero_image %}
-              <img src="{{ destination.hero_image.url }}" class="tm-card-img" alt="{{ destination.name }}" style="height:280px;">
+              {% if destination.display_image %}
+              <img src="{{ destination.display_image.url }}" class="tm-card-img" alt="{{ destination.name }}" style="height:280px;">
               {% else %}
               <div class="tm-card-img" style="height:280px; background:linear-gradient(135deg,var(--tm-ocean),var(--tm-ocean-dark));"></div>
               {% endif %}

@@ -56,6 +56,30 @@ class Destination(models.Model):
     def __str__(self):
         return self.name
 
+    @property
+    def display_image(self):
+        prefetched = getattr(self, '_prefetched_objects_cache', {}).get('images')
+        images = list(prefetched) if prefetched is not None else list(self.images.all())
+        primary = next((img for img in images if img.is_primary), None)
+        if primary is None and images:
+            primary = images[0]
+        if primary and primary.image:
+            return primary.image
+        return self.hero_image
+
+
+class DestinationImage(models.Model):
+    destination = models.ForeignKey(Destination, on_delete=models.CASCADE, related_name='images')
+    image = models.ImageField(upload_to='destinations/')
+    is_primary = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-is_primary', 'created_at']
+
+    def __str__(self):
+        return f"{self.destination.name} image"
+
 
 class ApprovalStatus(models.TextChoices):
     PENDING = 'PENDING', 'Pending'
@@ -737,6 +761,76 @@ def _delete_file_if_unreferenced(file_name, checks):
 
     if default_storage.exists(file_name):
         default_storage.delete(file_name)
+
+
+def _sync_destination_cover_image(destination_id):
+    if not destination_id:
+        return
+
+    images = DestinationImage.objects.filter(destination_id=destination_id).order_by('created_at', 'pk')
+    primary = images.filter(is_primary=True).first() or images.first()
+    cover_name = getattr(getattr(primary, 'image', None), 'name', None)
+    Destination.objects.filter(pk=destination_id).update(hero_image=cover_name)
+
+
+@receiver(post_save, sender=DestinationImage)
+def _destination_image_post_save(sender, instance, **kwargs):
+    _normalize_single_primary(DestinationImage, 'destination', instance.destination_id)
+    _sync_destination_cover_image(instance.destination_id)
+
+
+@receiver(post_delete, sender=DestinationImage)
+def _destination_image_post_delete(sender, instance, **kwargs):
+    file_name = getattr(instance.image, 'name', None)
+    _normalize_single_primary(DestinationImage, 'destination', instance.destination_id)
+    _sync_destination_cover_image(instance.destination_id)
+    _delete_file_if_unreferenced(
+        file_name,
+        checks=[
+            lambda: DestinationImage.objects.filter(image=file_name),
+            lambda: Destination.objects.filter(hero_image=file_name),
+        ],
+    )
+
+
+@receiver(pre_save, sender=Destination)
+def _destination_pre_save(sender, instance, **kwargs):
+    if not instance.pk:
+        instance._old_hero_image_name = None
+        return
+
+    try:
+        old_destination = sender.objects.only('hero_image').get(pk=instance.pk)
+        instance._old_hero_image_name = old_destination.hero_image.name
+    except sender.DoesNotExist:
+        instance._old_hero_image_name = None
+
+
+@receiver(post_save, sender=Destination)
+def _destination_post_save(sender, instance, **kwargs):
+    old_name = getattr(instance, '_old_hero_image_name', None)
+    new_name = getattr(instance.hero_image, 'name', None)
+
+    if old_name and old_name != new_name:
+        _delete_file_if_unreferenced(
+            old_name,
+            checks=[
+                lambda: Destination.objects.filter(hero_image=old_name),
+                lambda: DestinationImage.objects.filter(image=old_name),
+            ],
+        )
+
+
+@receiver(post_delete, sender=Destination)
+def _destination_post_delete(sender, instance, **kwargs):
+    file_name = getattr(instance.hero_image, 'name', None)
+    _delete_file_if_unreferenced(
+        file_name,
+        checks=[
+            lambda: Destination.objects.filter(hero_image=file_name),
+            lambda: DestinationImage.objects.filter(image=file_name),
+        ],
+    )
 
 
 @receiver(post_save, sender=ActivityImage)
