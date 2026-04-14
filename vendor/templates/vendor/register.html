@@ -1,158 +1,522 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Become Vendor{% endblock %}
+{% block nav_class %}{% endblock %}
 
 {% block extrastyle %}
 <style>
+  body {
+    background: #0f172a;
+  }
+
   .vendor-register-wrapper {
-    min-height: 70vh;
+    background: linear-gradient(rgba(26, 30, 38, 0.75), rgba(26, 30, 38, 0.75)),
+    url('{% static "image/login.jpg" %}') center/cover no-repeat fixed;
+    min-height: 100vh;
+    padding: 60px 0;
     display: flex;
     align-items: center;
     justify-content: center;
+    position: relative;
+    color: white;
   }
+
+  .back-home-btn {
+    position: absolute;
+    top: 40px;
+    left: 50px;
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.05rem;
+    z-index: 10;
+    transition: all 0.3s;
+  }
+
+  .back-home-btn:hover {
+    color: #fff;
+    transform: translateX(-4px);
+  }
+
   .vendor-register-card {
-    border: none;
-    border-radius: 16px;
-    box-shadow: 0 4px 24px rgba(0, 105, 137, 0.10);
+    background-color: transparent;
+    border-radius: 30px;
     overflow: hidden;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+    max-width: 900px;
+    width: 100%;
+    margin: 0 auto;
+    backdrop-filter: brightness(60%) blur(12px);
+    -webkit-backdrop-filter: brightness(60%) blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
   }
-  .vendor-register-card .card-body {
-    padding: 2rem 2.5rem;
+
+  /* Stepper Header */
+  .wizard-header {
+    padding: 24px 40px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    text-align: center;
   }
-  .vendor-register-card h3 {
-    color: #006989;
+
+  .wizard-title {
+    font-size: 1.8rem;
+    font-weight: 800;
+    margin-bottom: 4px;
+    color: #0ea5e9;
+    text-shadow: 0 0 15px rgba(14, 165, 233, 0.6);
+  }
+
+  .wizard-title span {
+    /* Inherit the glow and color */
+  }
+
+  .wizard-subtitle {
+    color: #a0a5b1;
+    font-size: 0.95rem;
+    margin-bottom: 20px;
+  }
+
+  .stepper {
+    display: flex;
+    justify-content: space-between;
+    position: relative;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .stepper::before {
+    content: '';
+    position: absolute;
+    top: 15px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.1);
+    z-index: 1;
+  }
+
+  .step-indicator {
+    position: relative;
+    z-index: 2;
+    background: #0f172a;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    border: 3px solid rgba(255, 255, 255, 0.2);
+    color: #cbd5e1;
+    transition: all 0.3s;
+  }
+
+  .step-indicator.active {
+    border-color: #0ea5e9;
+    background: #0ea5e9;
+    color: white;
+    box-shadow: 0 0 10px rgba(14, 165, 233, 0.5);
+  }
+
+  .step-indicator.completed {
+    border-color: #10b981;
+    background: #10b981;
+    color: white;
+  }
+
+  .step-label {
+    position: absolute;
+    top: 45px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.75rem;
+    color: #a0a5b1;
+    white-space: nowrap;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: color 0.3s;
+  }
+
+  .step-indicator.active .step-label {
+    color: #0ea5e9;
     font-weight: 700;
   }
-  .vendor-register-card .btn-primary {
-    background: #006989;
-    border-color: #006989;
-    border-radius: 8px;
-    font-weight: 600;
-    padding: 10px;
+
+  /* Body */
+  .wizard-body {
+    padding: 24px 40px;
   }
-  .vendor-register-card .btn-primary:hover {
-    background: #004E6A;
-    border-color: #004E6A;
+
+  .step-section {
+    display: none;
+    animation: fadeIn 0.4s ease forwards;
   }
-  .vendor-register-card .form-control,
-  .vendor-register-card .form-select {
-    border-radius: 8px;
-    border: 1px solid #D5D8DC;
+
+  .step-section.active {
+    display: block;
   }
-  .vendor-register-card .form-control:focus,
-  .vendor-register-card .form-select:focus {
-    border-color: #006989;
-    box-shadow: 0 0 0 3px rgba(0, 105, 137, 0.12);
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Form Elements */
+  .auth-form-label {
+    font-size: 0.85rem;
+    color: #a0a5b1;
+    margin-bottom: 6px;
+    display: block;
+  }
+
+  .auth-input-group {
+    display: flex;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s;
+  }
+
+  .auth-input-group.error {
+    border-color: #ef4444;
+  }
+
+  .auth-input-group input,
+  .auth-input-group select {
+    background-color: transparent;
+    border: none;
+    color: white;
+    padding: 10px 16px;
+    flex: 1;
+    outline: none;
+    font-size: 0.9rem;
+  }
+
+  .auth-input-group input::file-selector-button {
+    background: #0ea5e9;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    margin-right: 12px;
+    cursor: pointer;
+  }
+
+  .auth-input-group input:focus {
+    box-shadow: inset 0 0 0 2px #0ea5e9;
+  }
+
+  .text-danger {
+    color: #ef4444 !important;
+    font-size: 0.8rem;
+    margin-top: 0px;
+    margin-bottom: 4px;
+    display: block;
+  }
+
+  /* Footer buttons */
+  .wizard-footer {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .auth-btn {
+    background-color: #0ea5e9;
+    color: white;
+    border: none;
+    border-radius: 999px;
+    padding: 10px 24px;
+    font-weight: bold;
+    font-size: 1rem;
+    transition: 0.3s;
+  }
+
+  .auth-btn:hover {
+    background-color: #0284c7;
+  }
+
+  .auth-btn-outline {
+    background-color: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+  }
+
+  .auth-btn-outline:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+
+  @media(max-width: 768px) {
+    .back-home-btn {
+      top: 20px;
+      left: 20px;
+    }
+
+    .wizard-header,
+    .wizard-body {
+      padding: 30px 20px;
+    }
+
+    .stepper {
+      display: none;
+    }
+
+    /* Hide complicated stepper on very small screens, rely on simple text if needed */
   }
 </style>
 {% endblock %}
 
+{% block navbar %}{% endblock %}
+
 {% block content %}
-<div class="container mt-5 mb-5 vendor-register-wrapper">
-  <div class="row justify-content-center w-100">
-    <div class="col-lg-7">
-      <div class="card vendor-register-card">
-        <div class="card-body p-4 p-md-5">
-          <h3 class="mb-3">Become a Vendor</h3>
-          <p class="text-muted mb-4">Complete the form below to submit your vendor registration for admin approval.</p>
+<div class="auth-page-wrapper">
+  <a href="{% url 'home' %}" class="back-home-btn"><i class="bi bi-arrow-left"></i> Back to Home</a>
 
-          {% if form.errors %}
-            <div class="alert alert-danger">Please fix the errors below.</div>
-          {% endif %}
+  <div class="container">
+    <div class="vendor-register-card">
 
-          <form method="post" enctype="multipart/form-data">
-            {% csrf_token %}
+      <div class="wizard-header">
+        <h2 class="wizard-title">Partner with <span>TravelMate</span></h2>
+        <p class="wizard-subtitle">Submit your details to start managing your packages and tours</p>
 
-            <div class="mb-3">
-              <label class="form-label">Username</label>
-              {{ form.username }}
-              <div class="text-danger small">{{ form.username.errors }}</div>
-            </div>
-
-            <div class="mb-3">
-              <label class="form-label">Email</label>
-              {{ form.email }}
-              <div class="text-danger small">{{ form.email.errors }}</div>
-            </div>
-
-            <div class="mb-3">
-              <label class="form-label">Company Name</label>
-              {{ form.company_name }}
-              <div class="text-danger small">{{ form.company_name.errors }}</div>
-            </div>
-
-            <div class="mb-3">
-              <label class="form-label">Owner or Authorized Person Full Name</label>
-              {{ form.owner_full_name }}
-              <div class="text-danger small">{{ form.owner_full_name.errors }}</div>
-            </div>
-
-            <div class="mb-3">
-              <label class="form-label">PAN or VAT Number</label>
-              {{ form.pan_vat_number }}
-              <div class="text-danger small">{{ form.pan_vat_number.errors }}</div>
-            </div>
-
-            <div class="mb-3">
-              <label class="form-label">Business Registration Number</label>
-              {{ form.business_registration_number }}
-              <div class="text-danger small">{{ form.business_registration_number.errors }}</div>
-            </div>
-
-            <div class="mb-3">
-              <label class="form-label">Business Registration Certificate</label>
-              {{ form.business_registration_certificate }}
-              <div class="text-danger small">{{ form.business_registration_certificate.errors }}</div>
-            </div>
-
-            <div class="mb-3">
-              <label class="form-label">Citizenship or National ID Number</label>
-              {{ form.owner_national_id }}
-              <div class="text-danger small">{{ form.owner_national_id.errors }}</div>
-            </div>
-
-            <div class="mb-3">
-              <label class="form-label">Account Holder Name</label>
-              {{ form.account_holder_name }}
-              <div class="text-danger small">{{ form.account_holder_name.errors }}</div>
-            </div>
-
-            <div class="mb-3">
-             <label class="form-label">eSewa Number</label>
-             {{ form.mobile_payment_number }}
-             <div class="text-danger small">{{ form.mobile_payment_number.errors }}</div>
-            </div>
-
-            <div class="mb-3">
-              <label class="form-label">Business Phone</label>
-              {{ form.contact_phone }}
-              <div class="text-danger small">{{ form.contact_phone.errors }}</div>
-            </div>
-
-            <div class="mb-3">
-              <label class="form-label">Business Address</label>
-              {{ form.address }}
-              <div class="text-danger small">{{ form.address.errors }}</div>
-            </div>
-
-            <div class="mb-3">
-              <label class="form-label">Password</label>
-              {{ form.password1 }}
-              <div class="text-danger small">{{ form.password1.errors }}</div>
-            </div>
-
-            <div class="mb-4">
-              <label class="form-label">Confirm Password</label>
-              {{ form.password2 }}
-              <div class="text-danger small">{{ form.password2.errors }}</div>
-            </div>
-
-            <button type="submit" class="btn btn-primary w-100">Submit Vendor Registration</button>
-          </form>
-            <p class="text-muted small mt-3 mb-0 text-center">You'll receive an email to verify your account after registering</p>
+        <div class="stepper">
+          <div class="step-indicator active" id="step-ind-1">1<div class="step-label">Account</div>
+          </div>
+          <div class="step-indicator" id="step-ind-2">2<div class="step-label">Business</div>
+          </div>
+          <div class="step-indicator" id="step-ind-3">3<div class="step-label">Legal</div>
+          </div>
+          <div class="step-indicator" id="step-ind-4">4<div class="step-label">Payout</div>
+          </div>
         </div>
       </div>
+
+      <div class="wizard-body">
+        {% if form.errors and not form.non_field_errors %}
+        <div
+          style="background:rgba(239,68,68,0.1); color:#ef4444; padding:10px 14px; border-radius:8px; margin-bottom:16px; font-size:0.9rem;">
+          Please fix the errors across the steps to continue.
+        </div>
+        {% endif %}
+        {% if form.non_field_errors %}
+        <div
+          style="background:rgba(239,68,68,0.1); color:#ef4444; padding:10px 14px; border-radius:8px; margin-bottom:16px; font-size:0.9rem;">
+          {{ form.non_field_errors }}
+        </div>
+        {% endif %}
+
+        <form method="POST" enctype="multipart/form-data" id="vendorWizardForm" novalidate>
+          {% csrf_token %}
+
+          <!-- STEP 1: Account -->
+          <div class="step-section active" id="step-1">
+            <h4 class="mb-3 text-white" style="font-weight:700;">Account Basics</h4>
+            <div class="row">
+              <div class="col-md-6 mb-2">
+                <label class="auth-form-label">Username *</label>
+                <div class="auth-input-group">{{ form.username }}</div>
+                <div class="text-danger">{{ form.username.errors }}</div>
+              </div>
+              <div class="col-md-6 mb-2">
+                <label class="auth-form-label">Email Address *</label>
+                <div class="auth-input-group">{{ form.email }}</div>
+                <div class="text-danger">{{ form.email.errors }}</div>
+              </div>
+              <div class="col-md-6 mb-2">
+                <label class="auth-form-label">Password *</label>
+                <div class="auth-input-group">{{ form.password1 }}</div>
+                <div class="text-danger">{{ form.password1.errors }}</div>
+              </div>
+              <div class="col-md-6 mb-2">
+                <label class="auth-form-label">Confirm Password *</label>
+                <div class="auth-input-group">{{ form.password2 }}</div>
+                <div class="text-danger">{{ form.password2.errors }}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- STEP 2: Business -->
+          <div class="step-section" id="step-2">
+            <h4 class="mb-3 text-white" style="font-weight:700;">Business Profile</h4>
+            <div class="mb-2">
+              <label class="auth-form-label">Company / Agency Name *</label>
+              <div class="auth-input-group">{{ form.company_name }}</div>
+              <div class="text-danger">{{ form.company_name.errors }}</div>
+            </div>
+            <div class="row">
+              <div class="col-md-6 mb-2">
+                <label class="auth-form-label">Business Phone *</label>
+                <div class="auth-input-group">{{ form.contact_phone }}</div>
+                <div class="text-danger">{{ form.contact_phone.errors }}</div>
+              </div>
+              <div class="col-md-12 mb-2">
+                <label class="auth-form-label">Business Address *</label>
+                <div class="auth-input-group">{{ form.address }}</div>
+                <div class="text-danger">{{ form.address.errors }}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- STEP 3: Legal -->
+          <div class="step-section" id="step-3">
+            <h4 class="mb-3 text-white" style="font-weight:700;">Legal & Verification</h4>
+            <div class="row">
+              <div class="col-md-6 mb-2">
+                <label class="auth-form-label">Owner Full Name *</label>
+                <div class="auth-input-group">{{ form.owner_full_name }}</div>
+                <div class="text-danger">{{ form.owner_full_name.errors }}</div>
+              </div>
+              <div class="col-md-6 mb-2">
+                <label class="auth-form-label">National ID / Citizenship No. *</label>
+                <div class="auth-input-group">{{ form.owner_national_id }}</div>
+                <div class="text-danger">{{ form.owner_national_id.errors }}</div>
+              </div>
+              <div class="col-md-6 mb-2">
+                <label class="auth-form-label">PAN or VAT Number *</label>
+                <div class="auth-input-group">{{ form.pan_vat_number }}</div>
+                <div class="text-danger">{{ form.pan_vat_number.errors }}</div>
+              </div>
+              <div class="col-md-6 mb-2">
+                <label class="auth-form-label">Business Registration No. *</label>
+                <div class="auth-input-group">{{ form.business_registration_number }}</div>
+                <div class="text-danger">{{ form.business_registration_number.errors }}</div>
+              </div>
+              <div class="col-md-12 mb-2">
+                <label class="auth-form-label">Registration Certificate (PDF/Image) *</label>
+                <div class="auth-input-group">{{ form.business_registration_certificate }}</div>
+                <div class="text-danger">{{ form.business_registration_certificate.errors }}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- STEP 4: Payout -->
+          <div class="step-section" id="step-4">
+            <h4 class="mb-3 text-white" style="font-weight:700;">Payout Details</h4>
+            <p class="text-muted" style="font-size:0.85rem; margin-bottom:12px;">Provide your details where earnings
+              will be transferred.</p>
+            <div class="row">
+              <div class="col-md-6 mb-2">
+                <label class="auth-form-label">Account Holder Name *</label>
+                <div class="auth-input-group">{{ form.account_holder_name }}</div>
+                <div class="text-danger">{{ form.account_holder_name.errors }}</div>
+              </div>
+              <div class="col-md-6 mb-2">
+                <label class="auth-form-label">eSewa / Mobile Payment No. *</label>
+                <div class="auth-input-group">{{ form.mobile_payment_number }}</div>
+                <div class="text-danger">{{ form.mobile_payment_number.errors }}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Prev/Next Controls -->
+          <div class="wizard-footer">
+            <button type="button" class="auth-btn auth-btn-outline" id="prevBtn" onclick="nextPrev(-1)"
+              style="display:none;"><i class="bi bi-arrow-left"></i> Previous</button>
+            <div style="flex:1;"></div>
+            <button type="button" class="auth-btn" id="nextBtn" onclick="nextPrev(1)">Next Step <i
+                class="bi bi-arrow-right"></i></button>
+          </div>
+        </form>
+
+        <p class="text-center mt-4 mb-0" style="color: #a0a5b1; font-size: 0.9rem;">
+          Already registered? <a href="{% url 'login' %}"
+            style="color: #0ea5e9; font-weight: 600; text-decoration:none;">Log in instead</a>
+        </p>
+      </div>
+
     </div>
   </div>
 </div>
 {% endblock %}
+
+{% block extra_js %}
+<script>
+  let currentTab = 0;
+  const tabs = document.getElementsByClassName("step-section");
+  const indicators = document.getElementsByClassName("step-indicator");
+
+  showTab(currentTab);
+
+  function showTab(n) {
+    for (let i = 0; i < tabs.length; i++) {
+      tabs[i].classList.remove("active");
+    }
+    tabs[n].classList.add("active");
+
+    // Buttons logic
+    if (n == 0) {
+      document.getElementById("prevBtn").style.display = "none";
+    } else {
+      document.getElementById("prevBtn").style.display = "inline-flex";
+    }
+
+    if (n == (tabs.length - 1)) {
+      document.getElementById("nextBtn").innerHTML = 'Submit Registration <i class="bi bi-check-lg"></i>';
+      document.getElementById("nextBtn").classList.add("bg-success");
+      document.getElementById("nextBtn").classList.remove("bg-primary");
+    } else {
+      document.getElementById("nextBtn").innerHTML = 'Next Step <i class="bi bi-arrow-right"></i>';
+      document.getElementById("nextBtn").classList.remove("bg-success");
+      document.getElementById("nextBtn").style.backgroundColor = "#0ea5e9";
+    }
+
+    // Step logic
+    for (let i = 0; i < indicators.length; i++) {
+      indicators[i].classList.remove("active");
+      if (i < n) {
+        indicators[i].classList.add("completed");
+        indicators[i].innerHTML = '<i class="bi bi-check" style="font-size:1.5rem;"></i><div class="step-label">' + indicators[i].querySelector('.step-label').textContent + '</div>';
+      } else {
+        indicators[i].classList.remove("completed");
+        // reset number if going backwards
+        indicators[i].innerHTML = (i + 1) + '<div class="step-label">' + indicators[i].querySelector('.step-label').textContent + '</div>';
+      }
+    }
+    indicators[n].classList.add("active");
+  }
+
+  function nextPrev(n) {
+    if (n == 1 && !validateForm()) return false;
+
+    currentTab = currentTab + n;
+
+    if (currentTab >= tabs.length) {
+      document.getElementById("vendorWizardForm").submit();
+      return false;
+    }
+    showTab(currentTab);
+  }
+
+  function validateForm() {
+    let valid = true;
+    let inputs = tabs[currentTab].querySelectorAll("input, select");
+
+    for (let i = 0; i < inputs.length; i++) {
+      // Basic HTML5 validation
+      if (!inputs[i].checkValidity() || (inputs[i].value == "" && inputs[i].required)) {
+        inputs[i].parentElement.classList.add("error");
+        valid = false;
+      } else {
+        inputs[i].parentElement.classList.remove("error");
+      }
+    }
+    return valid;
+  }
+</script>
+{% endblock %}
+{% block footer %}{% endblock %}
