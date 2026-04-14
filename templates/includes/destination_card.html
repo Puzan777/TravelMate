@@ -10,6 +10,10 @@
       {# Deep dark gradient matching reference image #}
       <div style="position:absolute; inset:0; background:linear-gradient(to top, rgba(26,30,38,0.95) 0%, rgba(26,30,38,0.6) 35%, transparent 70%);"></div>
       
+      {% if item.is_featured %}
+        <div style="position: absolute; top: 16px; left: 16px; z-index: 2; background: #f59e0b; color: #fff; font-size: 0.72rem; font-weight: 800; padding: 4px 10px; border-radius: 4px; letter-spacing: 0.05em; display:flex; align-items:center; gap:4px; box-shadow: 0 4px 12px rgba(245,158,11,0.4);"><i class="bi bi-star-fill"></i> FEATURED</div>
+      {% endif %}
+      
       <div style="position:absolute; bottom:28px; left:24px; right:24px; color:#fff; z-index:2; text-align:left;">
         <h4 style="font-size:2.2rem; margin:0 0 8px; font-family:'Inter', sans-serif; font-weight:800; letter-spacing:-0.03em; line-height:1.1;">
           <i class="bi bi-geo-alt" style="font-size: 1.6rem; vertical-align: middle; margin-right: 4px;"></i>{{ item.name }}

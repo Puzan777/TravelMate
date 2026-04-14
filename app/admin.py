@@ -97,13 +97,14 @@ class CustomUserAdmin(admin.ModelAdmin):
 @admin.register(Destination)
 class DestinationAdmin(admin.ModelAdmin):
     form = DestinationAdminForm
-    list_display = ('name', 'best_season', 'created_at', 'admin_actions')
+    list_display = ('name', 'best_season', 'is_featured', 'created_at', 'admin_actions')
     search_fields = ('name', 'short_description', 'visa_info', 'safety_note')
+    list_editable = ('is_featured',)
     readonly_fields = ('current_images_manager',)
     list_display_links = None
     actions = None
     fieldsets = (
-        ('Basic Info', {'fields': ('name', 'short_description')}),
+        ('Basic Info', {'fields': ('name', 'short_description', 'is_featured')}),
         ('Travel Info', {'fields': ('best_season', 'visa_info', 'safety_note')}),
         ('Destination Images', {
             'fields': ('current_images_manager',),
@@ -292,12 +293,12 @@ class PackageImageInline(admin.TabularInline):
 class PackageAdmin(admin.ModelAdmin):
     inlines = [PackageImageInline]
     list_per_page = 20
-    list_display = ('title', 'vendor', 'category', 'price', 'rating', 'approval_status', 'is_active', 'created_at', 'admin_actions')
-    list_filter = ('vendor', 'category', 'is_active')
+    list_display = ('title', 'vendor', 'category', 'price', 'rating', 'is_featured', 'approval_status', 'is_active', 'created_at', 'admin_actions')
+    list_filter = ('vendor', 'category', 'is_active', 'is_featured')
     search_fields = ('title', 'slug', 'destination__name', 'description')
     prepopulated_fields = {'slug': ('title',)}
     readonly_fields = ('cover_image_preview', 'created_at', 'updated_at')
-    list_editable = ('is_active',)
+    list_editable = ('is_active', 'is_featured')
     list_display_links = None
 
     actions = None
@@ -339,7 +340,12 @@ class PackageAdmin(admin.ModelAdmin):
         )
 
     def get_queryset(self, request):
-        qs = super().get_queryset(request).filter(approval_status__in=[ApprovalStatus.APPROVED, ApprovalStatus.PENDING])
+        qs = super().get_queryset(request)
+        # On the list view, show only APPROVED. On the detail view, allow PENDING so the Pending Approvals page still works.
+        if getattr(request, 'resolver_match', None) and request.resolver_match.url_name == 'app_package_changelist':
+            qs = qs.filter(approval_status=ApprovalStatus.APPROVED)
+        else:
+            qs = qs.filter(approval_status__in=[ApprovalStatus.APPROVED, ApprovalStatus.PENDING])
         if request.user.is_superuser:
             return qs
         vendor_profile = _current_vendor_profile(request.user)
@@ -363,7 +369,7 @@ class PackageAdmin(admin.ModelAdmin):
         return False
 
     def has_change_permission(self, request, obj=None):
-        return False
+        return _is_platform_admin(request.user)
 
     def has_delete_permission(self, request, obj=None):
         return False
@@ -392,11 +398,12 @@ class ActivityImageInline(admin.TabularInline):
 class ActivityAdmin(admin.ModelAdmin):
     inlines = [ActivityImageInline]
     list_per_page = 20
-    list_display = ('name', 'vendor', 'category', 'price', 'difficulty_level', 'approval_status', 'is_active', 'created_at', 'admin_actions')
-    list_filter = ('vendor', 'category', 'difficulty_level', 'is_active', 'created_at')
+    list_display = ('name', 'vendor', 'category', 'price', 'difficulty_level', 'is_featured', 'approval_status', 'is_active', 'created_at', 'admin_actions')
+    list_filter = ('vendor', 'category', 'difficulty_level', 'is_active', 'is_featured', 'created_at')
     search_fields = ('name', 'description', 'vendor__company_name', 'category__name')
     readonly_fields = ('cover_image_preview', 'created_at',)
     list_display_links = None
+    list_editable = ('is_featured',)
 
     actions = None
 
@@ -432,7 +439,11 @@ class ActivityAdmin(admin.ModelAdmin):
         )
 
     def get_queryset(self, request):
-        qs = super().get_queryset(request).filter(approval_status__in=[ApprovalStatus.APPROVED, ApprovalStatus.PENDING])
+        qs = super().get_queryset(request)
+        if getattr(request, 'resolver_match', None) and request.resolver_match.url_name == 'app_activity_changelist':
+            qs = qs.filter(approval_status=ApprovalStatus.APPROVED)
+        else:
+            qs = qs.filter(approval_status__in=[ApprovalStatus.APPROVED, ApprovalStatus.PENDING])
         if _is_platform_admin(request.user):
             return qs
         return qs.none()
@@ -843,98 +854,6 @@ def _pending_approvals_view(request):
     return TemplateResponse(request, 'admin/pending_approvals.html', context)
 
 
-def _live_products_view(request):
-    if not (request.user.is_active and request.user.is_staff):
-        from django.core.exceptions import PermissionDenied
-        raise PermissionDenied
-
-    selected_vendor = request.GET.get('vendor', 'all')
-    selected_type = request.GET.get('type', 'all')
-    sort_by = request.GET.get('sort', 'newest')
-
-    live_packages = Package.objects.filter(
-        approval_status=ApprovalStatus.APPROVED, is_active=True,
-    ).select_related('vendor', 'destination').order_by('-updated_at')
-    live_activities = Activity.objects.filter(
-        approval_status=ApprovalStatus.APPROVED, is_active=True,
-    ).select_related('vendor', 'category').order_by('-created_at')
-
-    vendor_options_map = {}
-    for vendor_id, company_name in live_packages.values_list('vendor_id', 'vendor__company_name'):
-        if vendor_id:
-            vendor_options_map[vendor_id] = company_name or f'Vendor {vendor_id}'
-    for vendor_id, company_name in live_activities.values_list('vendor_id', 'vendor__company_name'):
-        if vendor_id:
-            vendor_options_map[vendor_id] = company_name or f'Vendor {vendor_id}'
-
-    vendor_options = [
-        {'id': str(vendor_id), 'name': name}
-        for vendor_id, name in sorted(vendor_options_map.items(), key=lambda item: (item[1] or '').lower())
-    ]
-
-    if selected_vendor != 'all' and selected_vendor.isdigit():
-        selected_vendor_id = int(selected_vendor)
-        live_packages = live_packages.filter(vendor_id=selected_vendor_id)
-        live_activities = live_activities.filter(vendor_id=selected_vendor_id)
-
-    items = []
-    if selected_type in ('all', 'package'):
-        for p in live_packages:
-            items.append({
-                'name': p.title,
-                'type_label': 'Package',
-                'vendor': p.vendor.company_name if p.vendor else '-',
-                'category': p.get_category_display() if p.category else '-',
-                'price': p.price,
-                'created': p.created_at,
-                'admin_url': reverse('admin:app_package_change', args=[p.pk]),
-            })
-
-    if selected_type in ('all', 'activity'):
-        for a in live_activities:
-            items.append({
-                'name': a.name,
-                'type_label': 'Activity',
-                'vendor': a.vendor.company_name if a.vendor else '-',
-                'category': a.category.name if a.category else '-',
-                'price': a.price,
-                'created': a.created_at,
-                'admin_url': reverse('admin:app_activity_change', args=[a.pk]),
-            })
-
-    if sort_by == 'oldest':
-        items.sort(key=lambda x: x['created'])
-    elif sort_by == 'price_low':
-        items.sort(key=lambda x: (x['price'] is None, x['price'] if x['price'] is not None else 0))
-    elif sort_by == 'price_high':
-        items.sort(key=lambda x: (x['price'] is None, -(x['price'] if x['price'] is not None else 0)))
-    elif sort_by == 'name':
-        items.sort(key=lambda x: x['name'].lower())
-    else:
-        sort_by = 'newest'
-        items.sort(key=lambda x: x['created'], reverse=True)
-
-    paginator = Paginator(items, 12)
-    page_obj = paginator.get_page(request.GET.get('page'))
-    query_params = request.GET.copy()
-    query_params.pop('page', None)
-
-    context = {
-        **admin.site.each_context(request),
-        'title': 'Live Products',
-        'page_obj': page_obj,
-        'vendor_options': vendor_options,
-        'selected_vendor': selected_vendor,
-        'selected_type': selected_type,
-        'sort_by': sort_by,
-        'query_string': query_params.urlencode(),
-        'opts': Package._meta,
-    }
-    return TemplateResponse(request, 'admin/live_products.html', context)
-
-
-
-
 def _earnings_view(request):
     if not (request.user.is_active and request.user.is_staff):
         from django.core.exceptions import PermissionDenied
@@ -962,7 +881,6 @@ _original_get_urls = admin.AdminSite.get_urls
 def _custom_get_urls(self):
     custom_urls = [
         path('pending-approvals/', self.admin_view(_pending_approvals_view), name='pending_approvals'),
-        path('live-products/', self.admin_view(_live_products_view), name='live_products'),
         path('earnings/', self.admin_view(_earnings_view), name='earnings'),
         path('settings/', self.admin_view(_settings_view), name='settings'),
     ]

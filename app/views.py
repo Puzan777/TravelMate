@@ -655,17 +655,17 @@ def home(request):
     from vendor.models import VendorProfile
     from django.db.models import Count
 
-    # Destinations
-    destinations = Destination.objects.prefetch_related('images').all()[:8]
+    # Top Destinations — only featured
+    destinations = Destination.objects.prefetch_related('images').filter(is_featured=True).order_by('name')[:8]
 
-    # Featured packages — approved, active, ordered by rating
+    # Best Packages — only featured
     packages = Package.objects.filter(
-        is_active=True, approval_status=ApprovalStatus.APPROVED
+        is_active=True, approval_status=ApprovalStatus.APPROVED, is_featured=True
     ).select_related('vendor').order_by('-rating', '-created_at')[:8]
 
-    # Featured activities — approved, active
+    # Trending Activities — only featured
     activities = Activity.objects.filter(
-        is_active=True, approval_status=ApprovalStatus.APPROVED
+        is_active=True, approval_status=ApprovalStatus.APPROVED, is_featured=True
     ).select_related('vendor', 'category').prefetch_related('images').order_by('-rating', '-created_at')[:8]
 
     # Hero stats

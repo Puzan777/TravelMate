@@ -46,6 +46,7 @@ class Destination(models.Model):
     best_season = models.CharField(max_length=120, blank=True, help_text="Example: Mar-May, Sep-Nov")
     visa_info = models.CharField(max_length=255, blank=True)
     safety_note = models.TextField(blank=True)
+    is_featured = models.BooleanField(default=False, help_text='Show this destination in the Top Destinations section on the homepage.')
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -135,6 +136,7 @@ class Package(models.Model):
     itinerary = models.TextField(blank=True, null=True)
 
     is_hot_sale = models.BooleanField(default=False)
+    is_featured = models.BooleanField(default=False, help_text='Show this package in the Best Packages section on the homepage.')
     is_active = models.BooleanField(default=True)
     approval_status = models.CharField(
         max_length=20,
@@ -276,6 +278,7 @@ class Activity(models.Model):
     max_weight = models.PositiveIntegerField(blank=True, null=True)
     min_weight = models.PositiveIntegerField(blank=True, null=True)
     is_active = models.BooleanField(default=True)
+    is_featured = models.BooleanField(default=False, help_text='Show this activity in the Trending Activities section on the homepage.')
     approval_status = models.CharField(
         max_length=20,
         choices=ApprovalStatus.choices,

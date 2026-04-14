@@ -5,6 +5,10 @@
     {% if is_hot_sale_page %}
       <div style="position: absolute; top: 40px; left: 12px; z-index: 2; background: #e11d48; color: #fff; font-size: 0.72rem; font-weight: 800; padding: 4px 10px; border-radius: 999px; letter-spacing: 0.05em; display:flex; align-items:center; gap:4px;"><i class="bi bi-fire"></i> HOT SALE</div>
     {% endif %}
+    
+    {% if item.is_featured %}
+      <div style="position: absolute; top: {% if is_hot_sale_page %}68px{% else %}40px{% endif %}; left: 12px; z-index: 2; background: #f59e0b; color: #fff; font-size: 0.72rem; font-weight: 800; padding: 4px 10px; border-radius: 4px; letter-spacing: 0.05em; display:flex; align-items:center; gap:4px; box-shadow: 0 4px 12px rgba(245,158,11,0.3);"><i class="bi bi-star-fill"></i> FEATURED</div>
+    {% endif %}
 
     {% if not is_hot_sale_page %}
       {% if user.is_authenticated %}
