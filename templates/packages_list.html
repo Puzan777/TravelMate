@@ -99,45 +99,8 @@
     {% if packages %}
     <div class="row g-4">
       {% for package in packages %}
-      <div class="col-sm-6 col-lg-3">
-        <div class="tm-card">
-          <div class="tm-card-img-wrap">
-            {% if can_toggle_favorites %}
-            <form method="post" action="{% url 'toggle_favorite_package' package.slug %}">
-              {% csrf_token %}
-              <input type="hidden" name="next" value="{{ request.get_full_path }}">
-              <button type="submit" class="tm-fav-btn{% if package.id in favorite_package_ids %} is-fav{% endif %}" aria-label="Toggle favorite">
-                {% if package.id in favorite_package_ids %}&#10084;{% else %}&#9825;{% endif %}
-              </button>
-            </form>
-            {% elif not user.is_authenticated %}
-            <a href="{% url 'login' %}" class="tm-fav-btn" aria-label="Login to favorite">&#9825;</a>
-            {% endif %}
-            {% if package.image %}
-            <img src="{{ package.image.url }}" class="tm-card-img" alt="{{ package.title }}">
-            {% else %}
-            <div class="tm-card-img" style="background:var(--tm-ocean-light);"></div>
-            {% endif %}
-          </div>
-          <div class="tm-card-body">
-            <span class="tm-card-category">{{ package.get_category_display }}</span>
-            <h3 class="tm-card-title line-clamp-2">{{ package.title }}</h3>
-            <div class="tm-card-vendor"><i class="bi bi-shop"></i> {{ package.vendor.company_name }}</div>
-            {% if package.destination %}
-            <div style="font-size:.78rem; color:var(--tm-text-muted); margin-bottom:6px;"><i class="bi bi-geo-alt-fill" style="color:var(--tm-accent);"></i> {{ package.destination.name }}{% if package.city %}, {{ package.city }}{% endif %}</div>
-            {% endif %}
-            <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-              <span class="tm-stars" style="--rating:{{ package.rating|floatformat:1 }};" aria-hidden="true"></span>
-              <span style="font-size:.78rem; color:var(--tm-text-muted);">{{ package.rating|floatformat:1 }}</span>
-            </div>
-            <div class="tm-card-price">Rs {{ package.price|floatformat:0 }} <small>/person</small></div>
-            <div class="tm-card-meta">
-              <span><i class="bi bi-clock"></i> {{ package.duration }}</span>
-              {% if package.max_people %}<span><i class="bi bi-people"></i> Max {{ package.max_people }}</span>{% endif %}
-            </div>
-            <a href="{{ package.get_absolute_url }}" class="tm-card-btn mt-3">View Details <i class="bi bi-arrow-right"></i></a>
-          </div>
-        </div>
+      <div class="col-sm-6 col-lg-4">
+        {% include 'includes/package_card.html' with item=package %}
       </div>
       {% empty %}
       <div class="col-12" style="text-align:center; padding:60px 20px;">

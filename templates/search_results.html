@@ -45,27 +45,8 @@
     </h3>
     <div class="row g-4 mb-5">
       {% for package in packages %}
-      <div class="col-sm-6 col-lg-3">
-        <div class="tm-card">
-          <div class="tm-card-img-wrap">
-            {% if package.image %}
-            <img src="{{ package.image.url }}" class="tm-card-img" alt="{{ package.title }}">
-            {% else %}
-            <div class="tm-card-img" style="background:var(--tm-ocean-light);"></div>
-            {% endif %}
-          </div>
-          <div class="tm-card-body">
-            <span class="tm-card-category">{{ package.get_category_display }}</span>
-            <h3 class="tm-card-title line-clamp-2">{{ package.title }}</h3>
-            <div class="tm-card-vendor"><i class="bi bi-shop"></i> {{ package.vendor.company_name }}</div>
-            <div class="tm-card-price">Rs {{ package.price|floatformat:0 }} <small>/person</small></div>
-            <div class="tm-card-meta">
-              <span><i class="bi bi-clock"></i> {{ package.duration }}</span>
-              <span><i class="bi bi-star-fill" style="color:#f59e0b;"></i> {{ package.rating|floatformat:1 }}</span>
-            </div>
-            <a href="{{ package.get_absolute_url }}" class="tm-card-btn mt-3">View Details <i class="bi bi-arrow-right"></i></a>
-          </div>
-        </div>
+      <div class="col-sm-6 col-lg-4">
+        {% include 'includes/package_card.html' with item=package %}
       </div>
       {% endfor %}
     </div>
@@ -78,28 +59,8 @@
     </h3>
     <div class="row g-4">
       {% for activity in activities %}
-      <div class="col-sm-6 col-lg-3">
-        <div class="tm-card">
-          <div class="tm-card-img-wrap">
-            {% with primary_img=activity.images.first %}
-            {% if primary_img %}
-            <img src="{{ primary_img.image.url }}" class="tm-card-img" alt="{{ activity.name }}">
-            {% else %}
-            <div class="tm-card-img" style="background:linear-gradient(135deg,var(--tm-ocean-light),#dbeafe);"></div>
-            {% endif %}
-            {% endwith %}
-          </div>
-          <div class="tm-card-body">
-            <div style="display:flex; gap:6px;">
-              <span class="tm-card-category">{{ activity.category.name }}</span>
-              <span class="tm-card-category" style="background:#FFFBEB; color:#D97706;">{{ activity.get_difficulty_level_display }}</span>
-            </div>
-            <h3 class="tm-card-title line-clamp-2">{{ activity.name }}</h3>
-            <div class="tm-card-vendor"><i class="bi bi-shop"></i> {{ activity.vendor.company_name }}</div>
-            <div class="tm-card-price">Rs {{ activity.price|floatformat:0 }} <small>/person</small></div>
-            <a href="{% url 'activity_detail' activity.pk %}" class="tm-card-btn mt-3">View Details <i class="bi bi-arrow-right"></i></a>
-          </div>
-        </div>
+      <div class="col-sm-6 col-lg-4">
+        {% include 'includes/activity_card.html' with item=activity %}
       </div>
       {% endfor %}
     </div>

@@ -1,173 +1,248 @@
 {% extends "base.html" %}
+{% block title %}{{ destination.name }} — TravelMate{% endblock %}
+
+{% block extrastyle %}
+<style>
+/* ===== HERO CAROUSEL (Shared Logic) ===== */
+.pd-carousel { position:relative; border-radius:var(--tm-radius-lg); overflow:hidden; margin-bottom:0; }
+.pd-carousel-track { display:flex; transition:transform .45s cubic-bezier(.4,0,.2,1); }
+.pd-carousel-slide { min-width:100%; }
+.pd-carousel-slide img { width:100%; height:500px; object-fit:cover; display:block; }
+.pd-carousel-btn {
+  position:absolute; top:50%; transform:translateY(-50%); z-index:3;
+  width:44px; height:44px; border-radius:50%; border:none;
+  background:rgba(255,255,255,.85); backdrop-filter:blur(6px);
+  box-shadow:0 4px 14px rgba(0,0,0,.12); cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.1rem; color:var(--tm-text); transition:all .2s;
+}
+.pd-carousel-btn:hover { background:#fff; box-shadow:0 6px 20px rgba(0,0,0,.18); }
+.pd-carousel-btn.prev { left:16px; }
+.pd-carousel-btn.next { right:16px; }
+.pd-dots { display:flex; justify-content:center; gap:6px; margin-top:16px; margin-bottom:32px; }
+.pd-dot { width:8px; height:8px; border-radius:50%; background:var(--tm-line); border:none; cursor:pointer; transition:all .2s; padding:0; }
+.pd-dot.active { background:var(--tm-ocean); width:24px; border-radius:99px; }
+
+/* ===== DESTINATION INFO ===== */
+.dest-title { font-family:'Fraunces',Georgia,serif; font-size:2.5rem; font-weight:800; color:var(--tm-text); margin:0 0 16px; }
+.dest-badge { display:inline-flex; align-items:center; gap:6px; padding:6px 14px; border-radius:99px; font-size:.85rem; font-weight:700; background:var(--tm-cream); border:1px solid var(--tm-line); color:var(--tm-text-muted); }
+.dest-desc-wrap { margin-top:20px; font-size:1.05rem; color:#334155; line-height:1.8; }
+
+/* Read More Clamp */
+.dest-clamp { max-height:5.4em; overflow:hidden; position:relative; transition:max-height .3s ease; }
+.dest-clamp.expanded { max-height:none; }
+.dest-read-more { display:inline-flex; align-items:center; gap:4px; margin-top:10px; color:var(--tm-ocean); cursor:pointer; font-weight:700; font-size:.9rem; border:none; background:none; padding:0; }
+
+/* Additional Info Cards */
+.dest-info-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:16px; margin-top:32px; }
+.dest-info-card { background:var(--tm-white); border:1px solid var(--tm-line-soft); border-radius:var(--tm-radius); padding:20px; box-shadow:0 4px 12px rgba(15,23,42,0.03); }
+.dest-info-icon { width:48px; height:48px; border-radius:12px; background:var(--tm-ocean-light); color:var(--tm-ocean-dark); display:flex; align-items:center; justify-content:center; font-size:1.3rem; margin-bottom:12px; }
+.dest-info-label { font-size:.78rem; text-transform:uppercase; font-weight:700; letter-spacing:0.04em; color:var(--tm-text-muted); margin:0 0 4px; }
+.dest-info-value { font-size:1rem; font-weight:700; color:#0f172a; margin:0; }
+
+/* ===== TABS ===== */
+.dest-tabs { display:flex; gap:16px; border-bottom:2px solid var(--tm-line-soft); margin:60px 0 32px; }
+.dest-tab { display:inline-flex; align-items:center; gap:8px; padding:14px 20px; border:none; background:none; font-size:1.1rem; font-weight:800; color:var(--tm-text-muted); cursor:pointer; border-bottom:3px solid transparent; margin-bottom:-2px; transition:all .2s; }
+.dest-tab.active { color:var(--tm-ocean); border-bottom-color:var(--tm-ocean); }
+.dest-tab:hover:not(.active) { color:var(--tm-text); }
+.dest-tab-badge { background:var(--tm-line); color:var(--tm-text-muted); font-size:.75rem; padding:2px 8px; border-radius:99px; }
+.dest-tab.active .dest-tab-badge { background:var(--tm-ocean-light); color:var(--tm-ocean-dark); }
+.dest-panel { display:none; }
+.dest-panel.active { display:block; animation:fadeIn .3s ease forwards; }
+
+@keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container py-5">
-  <h1 class="h2 mb-4">Packages in {{ destination.name }}</h1>
+<div style="padding-top:100px;"></div>
 
-  {% if destination.display_image %}
-    <img src="{{ destination.display_image.url }}" class="img-fluid rounded mb-3" style="width:100%; height:320px; object-fit:cover;" alt="{{ destination.name }}">
-    {% if destination.images.all %}
-      <div class="d-flex flex-wrap gap-2 mb-4">
-        {% for image in destination.images.all %}
-          <img src="{{ image.image.url }}" class="rounded border" alt="{{ destination.name }} photo {{ forloop.counter }}" style="width:88px; height:66px; object-fit:cover;">
-        {% endfor %}
-      </div>
-    {% endif %}
-  {% endif %}
+<section class="tm-section" style="padding-top:20px;">
+  <div class="container">
 
-  {% if destination.short_description %}
-    <p class="text-muted mb-4">{{ destination.short_description }}</p>
-  {% endif %}
-
-  <div class="row g-3 mb-4">
-    {% if destination.best_season %}
-      <div class="col-md-4">
-        <div class="border rounded p-3 h-100">
-          <h6 class="mb-1">Best Season</h6>
-          <p class="mb-0 small">{{ destination.best_season }}</p>
-        </div>
-      </div>
-    {% endif %}
-    {% if destination.visa_info %}
-      <div class="col-md-4">
-        <div class="border rounded p-3 h-100">
-          <h6 class="mb-1">Visa Info</h6>
-          <p class="mb-0 small">{{ destination.visa_info }}</p>
-        </div>
-      </div>
-    {% endif %}
-    {% if destination.safety_note %}
-      <div class="col-md-4">
-        <div class="border rounded p-3 h-100">
-          <h6 class="mb-1">Safety Note</h6>
-          <p class="mb-0 small">{{ destination.safety_note }}</p>
-        </div>
-      </div>
-    {% endif %}
-  </div>
-
-  <style>
-    .package-img { height: 180px; width: 100%; object-fit: cover; }
-    .line-clamp { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-    .rating-row { display: flex; align-items: center; gap: 8px; }
-    .rating-stars {
-      --rating: 0;
-      position: relative;
-      display: inline-block;
-      font-size: 0.9rem;
-      line-height: 1;
-      letter-spacing: 1px;
-      color: #d1d5db;
-    }
-    .rating-stars::before { content: "★★★★★"; }
-    .rating-stars::after {
-      content: "★★★★★";
-      position: absolute;
-      inset: 0;
-      width: calc((var(--rating) / 5) * 100%);
-      overflow: hidden;
-      color: #f59e0b;
-      white-space: nowrap;
-    }
-    .tm-card-with-fav {
-      position: relative;
-      overflow: hidden;
-    }
-    .fav-corner {
-      position: absolute;
-      top: 12px;
-      right: 12px;
-      z-index: 3;
-      margin: 0;
-    }
-    .fav-icon-btn {
-      width: 36px;
-      min-width: 36px;
-      height: 36px;
-      border-radius: 999px;
-      border: 1px solid rgba(255, 255, 255, 0.55);
-      background: rgba(255, 255, 255, 0.28);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-      color: #1f3b56;
-      font-size: 1.1rem;
-      line-height: 1;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0;
-      box-shadow: 0 6px 14px rgba(15, 23, 42, 0.22);
-      transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
-    }
-    .fav-icon-btn:hover,
-    .fav-icon-btn:focus-visible {
-      background: rgba(255, 255, 255, 0.5);
-      transform: translateY(-1px);
-      box-shadow: 0 8px 16px rgba(15, 23, 42, 0.24);
-    }
-    .fav-icon-btn.is-fav {
-      border-color: rgba(255, 255, 255, 0.72);
-      background: rgba(255, 255, 255, 0.42);
-      color: #e11d48;
-    }
-    .fav-icon-btn:disabled {
-      opacity: 0.72;
-    }
-  </style>
-
-  {% if packages %}
-    <div class="row g-4">
-      {% for package in packages %}
-        <div class="col-sm-6 col-md-4 col-lg-3">
-          <div class="card h-100 shadow-sm tm-card-with-fav">
-            {% if can_toggle_favorites %}
-              <form method="post" action="{% url 'toggle_favorite_package' package.slug %}" class="fav-corner">
-                {% csrf_token %}
-                <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                <button type="submit" class="fav-icon-btn{% if package.id in favorite_package_ids %} is-fav{% endif %}" aria-label="Toggle favorite" title="Add to favorites">
-                  {% if package.id in favorite_package_ids %}&#10084;{% else %}&#9825;{% endif %}
-                </button>
-              </form>
-            {% elif user.is_authenticated %}
-              <button type="button" class="fav-icon-btn fav-corner" disabled aria-disabled="true" title="Only customers can add favorites">&#9825;</button>
-            {% else %}
-              <a href="{% url 'login' %}" class="fav-icon-btn fav-corner text-decoration-none" aria-label="Login to add favorite" title="Login to add favorites">&#9825;</a>
-            {% endif %}
-            {% if package.image %}
-              <img src="{{ package.image.url }}" class="card-img-top package-img" alt="{{ package.title }}">
-            {% else %}
-              <div class="bg-secondary package-img"></div>
-            {% endif %}
-
-            <div class="card-body d-flex flex-column">
-              <div>
-                <h5 class="card-title mb-1">{{ package.title }}</h5>
-                <small class="text-muted">{{ package.get_category_display }}</small>
-              </div>
-
-              <p class="text-success fw-semibold mt-2 mb-2">Rs {{ package.price }}</p>
-              <div class="rating-row small text-muted mb-2">
-                <span class="rating-stars" style="--rating: {{ package.rating|floatformat:1 }};" aria-hidden="true"></span>
-                <span>{{ package.rating|floatformat:1 }}/5</span>
-              </div>
-
-              <p class="card-text small line-clamp mb-3">{{ package.description }}</p>
-
-              <div class="mt-auto">
-                <a href="{{ package.get_absolute_url }}" class="btn btn-primary w-100">View Details</a>
-              </div>
+    <!-- ===== TOP: HERO CAROUSEL ===== -->
+    <div style="margin-bottom:32px;">
+      <div class="pd-carousel" id="pdCarousel">
+        <div class="pd-carousel-track" id="pdTrack">
+          {% if destination.display_image %}
+          <div class="pd-carousel-slide"><img src="{{ destination.display_image.url }}" alt="{{ destination.name }}"></div>
+          {% endif %}
+          {% for img in destination.images.all %}
+          <div class="pd-carousel-slide"><img src="{{ img.image.url }}" alt="{{ destination.name }} - {{ forloop.counter }}"></div>
+          {% endfor %}
+          {% if not destination.display_image and not destination.images.all %}
+          <div class="pd-carousel-slide">
+            <div style="height:500px; background:linear-gradient(135deg,var(--tm-ocean-light),#dbeafe); display:flex; align-items:center; justify-content:center;">
+              <i class="bi bi-geo-alt" style="font-size:4rem; color:var(--tm-ocean);"></i>
             </div>
           </div>
+          {% endif %}
         </div>
-      {% endfor %}
+        <button class="pd-carousel-btn prev" onclick="slideCarousel(-1)" aria-label="Previous"><i class="bi bi-chevron-left"></i></button>
+        <button class="pd-carousel-btn next" onclick="slideCarousel(1)" aria-label="Next"><i class="bi bi-chevron-right"></i></button>
+        
+        <!-- Inside Carousel Dots (Like Reference Image) -->
+        <div class="pd-dots" id="pdDots" style="position:absolute; bottom:20px; left:0; right:0; margin:0; z-index:3;"></div>
+      </div>
     </div>
-  {% else %}
-    <div class="alert alert-info" role="alert">
-      No packages available for {{ destination.name }} yet.
-    </div>
-  {% endif %}
 
-  <div class="mt-4">
-    <a href="{% url 'destination_list' %}" class="btn btn-outline-secondary">Back to countries</a>
+    <!-- ===== INFO ZONE ===== -->
+    <div style="max-width:960px;">
+      <h1 class="dest-title" style="font-size:3.5rem; letter-spacing:-0.02em; margin-bottom:12px;">{{ destination.name }}</h1>
+      
+      <div class="dest-desc-wrap" style="margin-top:16px;">
+        <div class="dest-clamp" id="destClamp">
+          {% if destination.short_description %}
+            {{ destination.short_description|linebreaks }}
+          {% else %}
+            <p>Discover the breathtaking beauty and rich culture of {{ destination.name }}. Explore our curated selection of packages and daily activities.</p>
+          {% endif %}
+        </div>
+        <button class="dest-read-more" onclick="toggleDestClamp('destClamp', this)">Read more <i class="bi bi-chevron-down"></i></button>
+      </div>
+
+      <!-- Essential Info -->
+      <div style="margin-top:40px;">
+        <h3 style="font-family:'Fraunces',serif; font-size:1.6rem; font-weight:800; color:var(--tm-text); margin-bottom:16px;">Essential {{ destination.name }}</h3>
+        <div class="dest-info-grid">
+          {% if destination.best_season %}
+          <div class="dest-info-card">
+            <div class="dest-info-icon"><i class="bi bi-sun"></i></div>
+            <p class="dest-info-label">Best Time To Visit</p>
+            <p class="dest-info-value">{{ destination.best_season }}</p>
+          </div>
+          {% endif %}
+          {% if destination.visa_info %}
+          <div class="dest-info-card">
+            <div class="dest-info-icon" style="background:#e0e7ff; color:#3730a3;"><i class="bi bi-passport"></i></div>
+            <p class="dest-info-label">Visa Requirements</p>
+            <p class="dest-info-value">{{ destination.visa_info }}</p>
+          </div>
+          {% endif %}
+        </div>
+
+        {% if destination.safety_note %}
+        <div class="dest-info-card" style="margin-top:16px; background:#fef2f2; border-color:#fecaca;">
+          <div class="dest-info-icon" style="background:#fee2e2; color:#b91c1c; margin-bottom:8px; width:36px; height:36px; font-size:1.1rem;"><i class="bi bi-shield-exclamation"></i></div>
+          <p class="dest-info-label" style="color:#991b1b;">Safety Note</p>
+          <p class="dest-info-value" style="font-size:.9rem; color:#7f1d1d; line-height:1.6; font-weight:500;">{{ destination.safety_note }}</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+
+    <!-- ===== TABS INTERFACE ===== -->
+    <div class="dest-tabs" id="destTabs">
+      <button class="dest-tab active" data-tab="packages">Tour Packages <span class="dest-tab-badge">{{ packages.count }}</span></button>
+      <button class="dest-tab" data-tab="activities">Day Activities <span class="dest-tab-badge">{{ activities.count }}</span></button>
+    </div>
+
+    <!-- TAB 1: PACKAGES -->
+    <div class="dest-panel active" id="tab-packages">
+      {% if packages %}
+        <div class="row g-4">
+          {% for package in packages %}
+            <div class="col-sm-6 col-lg-4">
+              {% include 'includes/package_card.html' with item=package %}
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div style="text-align:center; padding:80px 20px; background:var(--tm-cream); border-radius:24px; border:1px dashed var(--tm-line);">
+          <i class="bi bi-box-seam" style="font-size:3rem; color:var(--tm-text-light); display:block; margin-bottom:16px;"></i>
+          <h3 style="color:var(--tm-text);">No packages found</h3>
+          <p style="color:var(--tm-text-muted);">We are currently designing incredible packages for {{ destination.name }}.</p>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- TAB 2: ACTIVITIES -->
+    <div class="dest-panel" id="tab-activities">
+      {% if activities %}
+        <div class="row g-4">
+          {% for activity in activities %}
+            <div class="col-sm-6 col-lg-4">
+              {% include 'includes/activity_card.html' with item=activity %}
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div style="text-align:center; padding:80px 20px; background:var(--tm-cream); border-radius:24px; border:1px dashed var(--tm-line);">
+          <i class="bi bi-person-walking" style="font-size:3rem; color:var(--tm-text-light); display:block; margin-bottom:16px;"></i>
+          <h3 style="color:var(--tm-text);">No activities found</h3>
+          <p style="color:var(--tm-text-muted);">Stay tuned for exciting day excursions in {{ destination.name }}.</p>
+        </div>
+      {% endif %}
+    </div>
+
   </div>
-</div>
+</section>
+
+<!-- DOM Scripts -->
+<script>
+// Toggle Read More
+function toggleDestClamp(id, btn) {
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.classList.toggle('expanded');
+  if (el.classList.contains('expanded')) {
+    btn.innerHTML = 'Read Less <i class="bi bi-chevron-up"></i>';
+  } else {
+    btn.innerHTML = 'Read More <i class="bi bi-chevron-down"></i>';
+  }
+}
+
+// Carousel Logic
+let pdCurrentIndex=0;
+const pdTrack=document.getElementById('pdTrack');
+const pdSlides=document.querySelectorAll('.pd-carousel-slide');
+const pdDotsContainer=document.getElementById('pdDots');
+
+if(pdSlides.length>0){
+  pdSlides.forEach((_,i)=>{
+    const dot=document.createElement('button');
+    dot.className=`pd-dot ${i===0?'active':''}`;
+    dot.setAttribute('aria-label',`Go to slide ${i+1}`);
+    dot.onclick=()=>setCarouselSlide(i);
+    pdDotsContainer.appendChild(dot);
+  });
+}
+
+function updateCarousel(){
+  pdTrack.style.transform=`translateX(calc(-${pdCurrentIndex * 100}%))`;
+  document.querySelectorAll('.pd-dot').forEach((dot,i)=>{
+    dot.className=`pd-dot ${i===pdCurrentIndex?'active':''}`;
+  });
+}
+
+function slideCarousel(dir){
+  pdCurrentIndex=(pdCurrentIndex+dir+pdSlides.length)%pdSlides.length;
+  updateCarousel();
+}
+
+function setCarouselSlide(index){
+  pdCurrentIndex=index;
+  updateCarousel();
+}
+if(pdSlides.length>1){
+  setInterval(()=>{ slideCarousel(1); }, 6000);
+}
+
+// Tabs Logic
+const destTabs = document.querySelectorAll('.dest-tab');
+const destPanels = document.querySelectorAll('.dest-panel');
+
+destTabs.forEach(tab => {
+  tab.addEventListener('click', () => {
+    // Remove active from all
+    destTabs.forEach(t => t.classList.remove('active'));
+    destPanels.forEach(p => p.classList.remove('active'));
+    // Add active to clicked
+    tab.classList.add('active');
+    const targetId = tab.getAttribute('data-tab');
+    document.getElementById('tab-' + targetId).classList.add('active');
+  });
+});
+</script>
 {% endblock %}

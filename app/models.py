@@ -610,14 +610,14 @@ class PackageReview(models.Model):
 
     def clean(self):
         if not self.user_id:
-            raise ValidationError({'user': 'A logged-in user is required to submit a review.'})
+            raise ValidationError('A logged-in user is required to submit a review.')
 
         has_booking = Booking.objects.filter(
             user_id=self.user_id,
             package_id=self.package_id,
         ).visible_in_listings().exists()
         if not has_booking:
-            raise ValidationError({'user': 'Only users who booked this package can submit a review.'})
+            raise ValidationError('Only users who booked this package can submit a review.')
 
     def save(self, *args, **kwargs):
         self.full_clean()
@@ -652,14 +652,14 @@ class ActivityReview(models.Model):
 
     def clean(self):
         if not self.user_id:
-            raise ValidationError({'user': 'A logged-in user is required to submit a review.'})
+            raise ValidationError('A logged-in user is required to submit a review.')
 
         has_booking = ActivityBooking.objects.filter(
             user_id=self.user_id,
             activity_id=self.activity_id,
         ).visible_in_listings().exists()
         if not has_booking:
-            raise ValidationError({'user': 'Only users who booked this activity can submit a review.'})
+            raise ValidationError('Only users who booked this activity can submit a review.')
 
     def save(self, *args, **kwargs):
         self.full_clean()

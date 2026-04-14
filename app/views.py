@@ -578,10 +578,16 @@ def home(request):
 
 
 def destination_list(request):
-    # Show all destinations (countries)
-    destinations = Destination.objects.prefetch_related('images').all()
+    # Show all destinations (countries) with optional search
+    query = request.GET.get('q', '')
+    destinations = Destination.objects.prefetch_related('images')
+    
+    if query:
+        destinations = destinations.filter(name__icontains=query)
+        
     return render(request, 'destination_list.html', {
-        'destinations': destinations
+        'destinations': destinations,
+        'query': query
     })
 
 
@@ -595,9 +601,18 @@ def destination_detail(request, pk):
         approval_status=ApprovalStatus.APPROVED,
     ).order_by('-created_at')
     
+    # Get active activities for this destination
+    from .models import Activity
+    activities = Activity.objects.filter(
+        destination=destination,
+        is_active=True,
+        approval_status=ApprovalStatus.APPROVED,
+    ).order_by('-created_at')
+    
     context = {
         'destination': destination,
         'packages': packages,
+        'activities': activities,
     }
     context.update(_favorite_card_context(request))
     return render(request, 'destination_detail.html', context)
@@ -731,7 +746,8 @@ def activity_detail(request, pk):
                 messages.error(request, 'You can review this activity only after making a booking.')
                 return redirect('activity_detail', pk=activity.pk)
 
-            review_form = ActivityReviewForm(request.POST, instance=user_activity_review)
+            review_instance = user_activity_review or ActivityReview(activity=activity, user=request.user)
+            review_form = ActivityReviewForm(request.POST, instance=review_instance)
             booking_form = ActivityBookingForm(initial=booking_initial, activity=activity)
             if review_form.is_valid():
                 activity_review = review_form.save(commit=False)
@@ -784,6 +800,22 @@ def activity_detail(request, pk):
         booking_form = ActivityBookingForm(initial=booking_initial, activity=activity)
         review_form = ActivityReviewForm(initial=review_initial, instance=user_activity_review)
 
+    is_customer_user = _is_customer_user(request.user) if request.user.is_authenticated else False
+    can_book_activity = (not request.user.is_authenticated) or is_customer_user
+    is_favorite = False
+    if request.user.is_authenticated:
+        is_favorite = request.user.favorite_activities.filter(pk=activity.pk).exists()
+
+    # Related activities
+    related_activities = (
+        Activity.objects.filter(is_active=True, approval_status=ApprovalStatus.APPROVED)
+        .filter(Q(category=activity.category) | Q(vendor=activity.vendor))
+        .exclude(pk=activity.pk)
+        .select_related('vendor', 'category')
+        .prefetch_related('images')
+        .order_by('-rating')[:4]
+    )
+
     return render(request, 'activity_detail.html', {
         'activity': activity,
         'active_hot_sale': active_hot_sale,
@@ -797,18 +829,23 @@ def activity_detail(request, pk):
         'activity_reviews': activity_reviews,
         'can_review_activity': can_review_activity,
         'user_activity_review': user_activity_review,
+        'is_customer_user': is_customer_user,
+        'can_book_activity': can_book_activity,
+        'is_favorite': is_favorite,
+        'related_activities': related_activities,
     })
 
 
 def package_detail(request, slug):
     package = get_object_or_404(
-        Package.objects.prefetch_related('itinerary_entries'),
+        Package.objects.prefetch_related('itinerary_entries', 'images'),
         slug=slug,
         is_active=True,
         approval_status=ApprovalStatus.APPROVED,
     )
     is_favorite = False
     itinerary_days = list(package.itinerary_entries.all())
+    package_images = list(package.images.all())
     blocked_dates = list(package.unavailable_dates.filter(date__gte=timezone.localdate()).order_by('date'))
     blocked_dates_iso = [entry.date.isoformat() for entry in blocked_dates]
     hot_sale_context = _is_hot_sale_context(request)
@@ -916,7 +953,8 @@ def package_detail(request, slug):
 
             booking_form = BookingForm(initial=booking_initial, package=package)
             inquiry_form = InquiryForm(initial=inquiry_initial)
-            review_form = PackageReviewForm(request.POST, instance=user_package_review)
+            review_instance = user_package_review or PackageReview(package=package, user=request.user)
+            review_form = PackageReviewForm(request.POST, instance=review_instance)
             if review_form.is_valid():
                 package_review = review_form.save(commit=False)
                 package_review.package = package
@@ -936,8 +974,18 @@ def package_detail(request, slug):
         inquiry_form = InquiryForm(initial=inquiry_initial)
         review_form = PackageReviewForm(initial=review_initial, instance=user_package_review)
 
+    # Related packages (same category or destination, different vendor)
+    related_packages = (
+        Package.objects.filter(is_active=True, approval_status=ApprovalStatus.APPROVED)
+        .filter(Q(category=package.category) | Q(destination=package.destination))
+        .exclude(pk=package.pk)
+        .select_related('vendor', 'destination')
+        .order_by('-rating')[:4]
+    )
+
     return render(request, 'package_detail.html', {
         'package': package,
+        'package_images': package_images,
         'hot_sale_context': hot_sale_context,
         'booking_form': booking_form,
         'inquiry_form': inquiry_form,
@@ -955,6 +1003,7 @@ def package_detail(request, slug):
         'can_submit_inquiry': can_submit_inquiry,
         'is_customer_user': is_customer_user,
         'user_package_review': user_package_review,
+        'related_packages': related_packages,
     })
 
 
