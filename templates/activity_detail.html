@@ -1,390 +1,550 @@
 {% extends 'base.html' %}
+{% block title %}{{ activity.name }} — TravelMate{% endblock %}
+
+{% block extrastyle %}
+<style>
+/* ===== HERO CAROUSEL ===== */
+.ad-carousel { position:relative; border-radius:var(--tm-radius-lg); overflow:hidden; }
+.ad-carousel-track { display:flex; transition:transform .45s cubic-bezier(.4,0,.2,1); }
+.ad-carousel-slide { min-width:100%; }
+.ad-carousel-slide img { width:100%; height:480px; object-fit:cover; display:block; }
+.ad-carousel-btn {
+  position:absolute; top:50%; transform:translateY(-50%); z-index:3;
+  width:44px; height:44px; border-radius:50%; border:none;
+  background:rgba(255,255,255,.85); backdrop-filter:blur(6px);
+  box-shadow:0 4px 14px rgba(0,0,0,.12); cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.1rem; color:var(--tm-text); transition:all .2s;
+}
+.ad-carousel-btn:hover { background:#fff; box-shadow:0 6px 20px rgba(0,0,0,.18); }
+.ad-carousel-btn.prev { left:16px; }
+.ad-carousel-btn.next { right:16px; }
+
+/* Floating Fav Button */
+.ad-fav-float {
+  position:absolute; top:20px; right:20px; z-index:4;
+  width:44px; height:44px; border-radius:50%; border:none;
+  background:rgba(255,255,255,.9); backdrop-filter:blur(8px);
+  box-shadow:0 8px 25px rgba(0,0,0,.15);
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer; transition:all .3s cubic-bezier(0.4, 0, 0.2, 1);
+  color:#64748b; font-size:1.2rem;
+}
+.ad-fav-float:hover { transform:scale(1.1); box-shadow:0 12px 30px rgba(0,0,0,.2); }
+.ad-fav-float.active { color:#ef4444; }
+.ad-dots { display:flex; justify-content:center; gap:6px; margin-top:12px; }
+.ad-dot { width:8px; height:8px; border-radius:50%; background:var(--tm-line); border:none; cursor:pointer; transition:all .2s; padding:0; }
+.ad-dot.active { background:var(--tm-ocean); width:24px; border-radius:99px; }
+
+/* ===== TITLE ===== */
+.ad-title-area { padding:24px 0 12px; }
+.ad-title { font-family:'Fraunces',Georgia,serif; font-size:1.8rem; font-weight:800; color:var(--tm-text); margin:0 0 6px; line-height:1.25; }
+.ad-vendor { font-size:.88rem; color:var(--tm-text-muted); }
+.ad-vendor a { color:var(--tm-ocean); text-decoration:none; font-weight:600; }
+.ad-badges { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+.ad-badge { display:inline-flex; align-items:center; gap:4px; padding:5px 12px; border-radius:999px; font-size:.78rem; font-weight:700; }
+.ad-badge.cat { background:var(--tm-ocean-light); color:var(--tm-ocean-dark); }
+.ad-badge.easy { background:#dcfce7; color:#166534; }
+.ad-badge.moderate { background:#fef9c3; color:#854d0e; }
+.ad-badge.hard { background:#fee2e2; color:#991b1b; }
+.ad-price-row { display:flex; align-items:center; gap:16px; flex-wrap:wrap; margin-top:10px; }
+.ad-price { font-family:'Fraunces',Georgia,serif; font-size:1.4rem; font-weight:800; color:var(--tm-ocean-dark); }
+.ad-price .old { text-decoration:line-through; color:var(--tm-text-light); font-size:.95rem; font-weight:500; margin-right:4px; }
+.ad-price .per { font-size:.8rem; font-weight:500; color:var(--tm-text-muted); }
+.ad-rating-row { display:flex; align-items:center; gap:8px; }
+
+/* ===== AT A GLANCE ===== */
+.ad-glance { margin:28px 0; padding:24px 0; border-top:1px solid var(--tm-line-soft); border-bottom:1px solid var(--tm-line-soft); }
+.ad-glance-title { font-family:'Inter',sans-serif; font-size:1.15rem; font-weight:800; color:#0f172a; margin:0 0 20px; }
+.ad-glance-grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:22px 16px; }
+.ad-glance-item { display:flex; align-items:flex-start; gap:10px; }
+.ad-glance-icon { color:var(--tm-ocean); font-size:1.2rem; flex-shrink:0; margin-top:2px; }
+.ad-glance-label { font-size:.78rem; color:#0f172a; font-weight:700; margin:0; line-height:1.3; }
+.ad-glance-val { font-size:.85rem; color:var(--tm-text-muted); font-weight:500; margin:2px 0 0; line-height:1.4; }
+/* Difficulty color coding */
+.ad-diff-easy { color:#166534; }
+.ad-diff-moderate { color:#854d0e; }
+.ad-diff-hard { color:#991b1b; }
+
+/* ===== TABS ===== */
+.ad-tabs { display:flex; gap:0; border-bottom:2px solid var(--tm-line-soft); margin-bottom:24px; }
+.ad-tab { padding:12px 24px; border:none; background:none; font-size:.9rem; font-weight:700; color:var(--tm-text-muted); cursor:pointer; border-bottom:3px solid transparent; margin-bottom:-2px; transition:all .2s; }
+.ad-tab:hover { color:var(--tm-ocean); }
+.ad-tab.active { color:var(--tm-ocean); border-bottom-color:var(--tm-ocean); }
+.ad-panel { display:none; }
+.ad-panel.active { display:block; }
+
+/* ===== CONTENT ===== */
+.ad-card { background:var(--tm-white); border:1px solid var(--tm-line-soft); border-radius:var(--tm-radius); padding:24px; margin-bottom:20px; }
+.ad-card-title { font-family:'Inter',sans-serif; font-size:1.05rem; font-weight:700; color:#0f172a; margin:0 0 14px; }
+.ad-card-body { font-size:.92rem; color:#2b3f54; line-height:1.75; }
+.ad-card-body p:last-child { margin-bottom:0; }
+.ad-clamp { max-height:7.5em; overflow:hidden; transition:max-height .3s; }
+.ad-clamp.expanded { max-height:none; }
+.ad-read-more { display:inline-block; margin-top:8px; color:var(--tm-ocean); cursor:pointer; font-weight:700; font-size:.85rem; border:none; background:none; padding:0; }
+
+/* ===== REQUIREMENTS ===== */
+.ad-req-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; }
+.ad-req-item { display:flex; align-items:flex-start; gap:10px; padding:14px; background:var(--tm-cream); border-radius:var(--tm-radius); }
+.ad-req-icon { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1rem; flex-shrink:0; }
+.ad-req-icon.warn { background:#fef2f2; color:#dc2626; }
+.ad-req-icon.info { background:var(--tm-ocean-light); color:var(--tm-ocean); }
+.ad-req-label { font-size:.75rem; color:var(--tm-text-muted); text-transform:uppercase; font-weight:700; letter-spacing:.03em; margin:0; }
+.ad-req-value { font-size:.88rem; color:#0f172a; font-weight:700; margin:2px 0 0; }
+.ad-safety-box { background:#f0fdf4; border:1px solid #bbf7d0; border-radius:var(--tm-radius); padding:16px; margin-top:14px; }
+.ad-equip-list { list-style:none; padding:0; margin:12px 0 0; display:grid; grid-template-columns:repeat(2,1fr); gap:6px 16px; }
+.ad-equip-list li { font-size:.85rem; color:#1e293b; padding:4px 0; }
+.ad-equip-list li::before { content:'✓'; color:var(--tm-ocean); font-weight:800; margin-right:8px; }
+
+/* ===== REVIEWS ===== */
+.ad-review { padding:16px; border:1px solid var(--tm-line-soft); border-radius:var(--tm-radius); margin-bottom:10px; background:var(--tm-cream); }
+.ad-review-stars { color:#f59e0b; letter-spacing:1px; font-size:.9rem; }
+.ad-review-author { font-weight:700; font-size:.9rem; color:var(--tm-text); }
+.ad-review-date { font-size:.78rem; color:var(--tm-text-light); }
+.ad-review-comment { font-size:.88rem; color:#2b3f54; line-height:1.6; margin:6px 0 0; }
+
+/* ===== BOOKING CARD ===== */
+.ad-book-card {
+  position:sticky; top:100px;
+  background:var(--tm-white); border:1px solid var(--tm-line-soft);
+  border-radius:var(--tm-radius-lg); padding:24px;
+  box-shadow:var(--tm-shadow-lg);
+}
+.ad-book-price { font-size:1.5rem; font-weight:800; color:var(--tm-ocean-dark); font-family:'Fraunces',Georgia,serif; }
+.ad-book-price .per { font-size:.82rem; font-weight:500; color:var(--tm-text-muted); }
+.ad-book-price .old { text-decoration:line-through; color:var(--tm-text-light); font-size:.95rem; font-weight:500; margin-right:4px; }
+.ad-book-divider { border:none; border-top:1px solid var(--tm-line-soft); margin:14px 0; }
+.ad-book-stat { display:flex; align-items:center; gap:8px; margin-bottom:8px; font-size:.85rem; color:var(--tm-text-muted); }
+.ad-book-stat i { color:var(--tm-ocean); font-size:.9rem; width:18px; text-align:center; }
+.ad-book-btn { display:block; width:100%; padding:13px; border:none; border-radius:var(--tm-radius); font-weight:800; font-size:.92rem; cursor:pointer; text-align:center; text-decoration:none; transition:all .2s; margin-bottom:8px; }
+.ad-book-btn.primary { background:var(--tm-ocean); color:#fff; }
+.ad-book-btn.primary:hover { background:var(--tm-ocean-dark); }
+.ad-book-btn.outline { background:none; border:1.5px solid var(--tm-ocean); color:var(--tm-ocean); }
+.ad-book-btn.outline:hover { background:var(--tm-ocean-light); }
+.ad-book-btn.fav { background:none; border:1.5px solid var(--tm-line); color:var(--tm-text-muted); }
+.ad-book-btn.fav:hover { border-color:#ef4444; color:#ef4444; }
+.ad-form-panel { margin-top:12px; border:1px solid var(--tm-line-soft); border-radius:var(--tm-radius); padding:16px; background:var(--tm-cream); }
+.ad-form-panel .form-label { font-size:.8rem; font-weight:700; color:var(--tm-text); text-transform:uppercase; letter-spacing:.03em; }
+.ad-form-panel .form-control { border-color:var(--tm-line); border-radius:var(--tm-radius); font-size:.88rem; padding:.5rem .7rem; }
+.ad-form-panel .form-control:focus { border-color:var(--tm-ocean); box-shadow:0 0 0 .15rem rgba(0,105,137,.12); }
+.ad-trust-item { display:flex; align-items:center; gap:6px; font-size:.8rem; color:var(--tm-text-muted); margin-bottom:4px; }
+.ad-trust-item i { color:#22c55e; }
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:991.98px) { .ad-book-card { position:static; margin-top:32px; } }
+@media(max-width:767.98px) {
+  .ad-carousel-slide img { height:280px; }
+  .ad-title { font-size:1.4rem; }
+  .ad-glance-grid { grid-template-columns:repeat(2, 1fr); gap:16px 12px; }
+  .ad-tab { padding:10px 14px; font-size:.82rem; }
+  .ad-req-grid { grid-template-columns:1fr; }
+}
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container py-5">
-  <style>
-    .activity-shell {
-      background: linear-gradient(180deg, #edf4fd 0%, #f6faff 220px);
-      border: 1px solid #e4edf6;
-      border-radius: 16px;
-      padding: 18px;
-    }
-    .activity-card {
-      border: 1px solid #dce7f2;
-      border-radius: 14px;
-      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
-      overflow: hidden;
-      background: #fff;
-    }
-    .activity-image {
-      width: 100%;
-      height: 360px;
-      object-fit: cover;
-      display: block;
-    }
-    .meta-pill {
-      display: inline-flex;
-      align-items: center;
-      padding: 6px 11px;
-      border-radius: 999px;
-      border: 1px solid #d2e7dc;
-      background: #eaf8ee;
-      color: #17643f;
-      font-weight: 700;
-      font-size: 0.9rem;
-      margin-right: 8px;
-    }
-    .meta-pill.hot {
-      border-color: #f9c9a9;
-      background: #fff2e8;
-      color: #b53f05;
-    }
-    .book-card {
-      border: 1px solid #dce7f2;
-      border-radius: 12px;
-      background: #f8fbff;
-      padding: 14px;
-      margin-top: 16px;
-    }
-    .review-card {
-      border: 1px solid #dce7f2;
-      border-radius: 12px;
-      background: #ffffff;
-      padding: 14px;
-      margin-top: 16px;
-    }
-    .review-item {
-      border: 1px solid #e3edf7;
-      border-radius: 10px;
-      padding: 10px;
-      background: #f9fcff;
-    }
-    .review-stars {
-      color: #b05f00;
-      letter-spacing: 0.05em;
-      font-size: 0.9rem;
-      font-weight: 700;
-    }
-    .book-card .form-label {
-      font-size: 0.8rem;
-      font-weight: 700;
-      color: #24415d;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      margin-bottom: 4px;
-    }
-    .book-card .form-control {
-      border-radius: 10px;
-      border-color: #d8e6f2;
-      font-size: 0.9rem;
-      padding: 0.55rem 0.65rem;
-    }
-    .blocked-dates-list {
-      margin: 0 0 10px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-    }
-    .blocked-date-chip {
-      display: inline-flex;
-      align-items: center;
-      border-radius: 999px;
-      border: 1px solid #f3c2c2;
-      background: #fff2f2;
-      color: #8f2f2f;
-      font-size: 0.74rem;
-      font-weight: 600;
-      padding: 3px 8px;
-    }
-    .blocked-date-warning {
-      display: none;
-      margin-top: 6px;
-      font-size: 0.78rem;
-      color: #b42318;
-    }
-  </style>
+<div style="padding-top:100px;"></div>
+<section class="tm-section" style="padding-top:20px;">
+<div class="container">
+<div class="row g-4">
 
-  <div class="activity-shell">
-    <div class="activity-card">
-      {% if activity_primary_image %}
-        <img src="{{ activity_primary_image.image.url }}" class="activity-image" alt="{{ activity.name }}">
-      {% else %}
-        <div class="activity-image bg-secondary"></div>
+<!-- ===== LEFT COLUMN ===== -->
+<div class="col-lg-8">
+
+  <!-- HERO CAROUSEL -->
+  <div class="ad-carousel" id="adCarousel">
+    {% if not active_hot_sale and user.is_authenticated and is_customer_user %}
+    <form method="post" action="{% url 'toggle_favorite_activity' activity.pk %}" style="margin:0;">
+      {% csrf_token %}
+      <button type="submit" class="ad-fav-float {% if is_favorite %}active{% endif %}" title="{% if is_favorite %}Remove from Favorites{% else %}Add to Favorites{% endif %}">
+        <i class="bi {% if is_favorite %}bi-heart-fill{% else %}bi-heart{% endif %}"></i>
+      </button>
+    </form>
+    {% endif %}
+
+    <div class="ad-carousel-track" id="adTrack">
+      {% for img in activity.images.all %}
+      <div class="ad-carousel-slide"><img src="{{ img.image.url }}" alt="{{ activity.name }} - {{ forloop.counter }}"></div>
+      {% empty %}
+      <div class="ad-carousel-slide"><div style="height:480px; background:linear-gradient(135deg,var(--tm-ocean-light),#dbeafe); display:flex; align-items:center; justify-content:center;"><i class="bi bi-lightning" style="font-size:3rem; color:var(--tm-ocean);"></i></div></div>
+      {% endfor %}
+    </div>
+    <button class="ad-carousel-btn prev" onclick="adSlide(-1)" aria-label="Previous"><i class="bi bi-chevron-left"></i></button>
+    <button class="ad-carousel-btn next" onclick="adSlide(1)" aria-label="Next"><i class="bi bi-chevron-right"></i></button>
+  </div>
+  <div class="ad-dots" id="adDots"></div>
+
+  <!-- TITLE & BADGES -->
+  <div class="ad-title-area">
+    <h1 class="ad-title">{{ activity.name }}</h1>
+    <div class="ad-vendor">
+      <i class="bi bi-shop" style="color:var(--tm-ocean);"></i>
+      by <a href="{% url 'search' %}?q={{ activity.vendor.company_name|urlencode }}">{{ activity.vendor.company_name }}</a>
+      {% if activity.destination %}
+        <span style="margin-left:12px;"><i class="bi bi-geo-alt-fill" style="color:var(--tm-accent);"></i> {{ activity.destination.name }}{% if activity.city %}, {{ activity.city }}{% endif %}</span>
       {% endif %}
-
-      <div class="p-4">
-        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
-          <div>
-            <h1 class="h3 mb-1">{{ activity.name }}</h1>
-            <div class="text-muted small">{{ activity.category.name }}</div>
-          </div>
-          <div>
-            {% if active_hot_sale %}
-              <span class="meta-pill hot">Hot Sale Rs {{ active_hot_sale.sale_price }}</span>
-              <span class="small text-muted text-decoration-line-through">Rs {{ activity.price }}</span>
-            {% else %}
-              <span class="meta-pill">Rs {{ activity.price }}</span>
-            {% endif %}
-            <div class="small text-muted mt-2">Rating: <strong>{{ activity.rating|floatformat:1 }}/5</strong> ({{ activity_reviews|length }} review{{ activity_reviews|length|pluralize }})</div>
-          </div>
-        </div>
-
-        <div class="row g-3 mb-4">
-          <div class="col-md-4">
-            <div class="border rounded-3 p-3 h-100">
-              <div class="small text-muted text-uppercase">Duration</div>
-              <div class="fw-semibold">{{ activity.duration }}</div>
-            </div>
-          </div>
-          <div class="col-md-4">
-            <div class="border rounded-3 p-3 h-100">
-              <div class="small text-muted text-uppercase">Difficulty</div>
-              <div class="fw-semibold">{{ activity.get_difficulty_level_display }}</div>
-            </div>
-          </div>
-          <div class="col-md-4">
-            <div class="border rounded-3 p-3 h-100">
-              <div class="small text-muted text-uppercase">Max Group Size</div>
-              <div class="fw-semibold">{{ activity.max_group_size|default:'Not specified' }}</div>
-            </div>
-          </div>
-        </div>
-
-        <h2 class="h5">Activity Details</h2>
-        <p class="text-muted mb-3">{{ activity.description|linebreaksbr }}</p>
-
-        {% if activity.equipment_provided %}
-        <h3 class="h6">Equipment Provided</h3>
-        <p class="text-muted mb-3">{{ activity.equipment_provided|linebreaksbr }}</p>
-        {% endif %}
-
-        {% if activity.safety_notes %}
-        <h3 class="h6">Safety Notes</h3>
-        <p class="text-muted mb-4">{{ activity.safety_notes|linebreaksbr }}</p>
-        {% endif %}
-
-        {% if messages %}
-          {% for message in messages %}
-            <div class="alert alert-{{ message.tags|default:'info' }} py-2" role="alert">{{ message }}</div>
-          {% endfor %}
-        {% endif %}
-
-        <div class="book-card">
-          <h3 class="h5 mb-2">Book This Activity</h3>
-          <p class="small text-muted mb-3">Complete the form below to submit your booking request.</p>
-
-          <form method="post" class="d-grid gap-2">
-            {% csrf_token %}
-            <input type="hidden" name="form_type" value="booking">
-            {% if hot_sale_context %}
-              <input type="hidden" name="hot_sale" value="1">
-            {% endif %}
-
-            <label for="id_full_name" class="form-label">Full name</label>
-            {{ booking_form.full_name }}
-            {% if booking_form.full_name.errors %}<div class="text-danger small">{{ booking_form.full_name.errors|striptags }}</div>{% endif %}
-
-            <label for="id_email" class="form-label">Email</label>
-            {{ booking_form.email }}
-            {% if booking_form.email.errors %}<div class="text-danger small">{{ booking_form.email.errors|striptags }}</div>{% endif %}
-
-            <label for="id_phone" class="form-label">Phone</label>
-            {{ booking_form.phone }}
-            {% if booking_form.phone.errors %}<div class="text-danger small">{{ booking_form.phone.errors|striptags }}</div>{% endif %}
-
-            <label for="id_travel_date" class="form-label">Choose travel date</label>
-            {{ booking_form.travel_date }}
-            {% if blocked_dates %}
-              <div class="small text-muted mt-1">Unavailable dates:</div>
-              <div class="blocked-dates-list">
-                {% for blocked in blocked_dates|slice:":8" %}
-                  <span class="blocked-date-chip">{{ blocked.date|date:"M d" }}</span>
-                {% endfor %}
-                {% if blocked_dates|length > 8 %}
-                  <span class="blocked-date-chip">+{{ blocked_dates|length|add:"-8" }} more</span>
-                {% endif %}
-              </div>
-              <div id="blockedDateWarning" class="blocked-date-warning">This date is unavailable. Please choose another date.</div>
-            {% endif %}
-            {% if booking_form.travel_date.errors %}<div class="text-danger small">{{ booking_form.travel_date.errors|striptags }}</div>{% endif %}
-
-            <label for="id_number_of_people" class="form-label">Number of people</label>
-            {{ booking_form.number_of_people }}
-            {% if booking_form.number_of_people.errors %}<div class="text-danger small">{{ booking_form.number_of_people.errors|striptags }}</div>{% endif %}
-
-            <div class="small text-muted">Estimated total: $<span id="activityBookingEstimatedTotal">{{ booking_unit_price }}</span></div>
-
-            <label for="id_payment_method" class="form-label">Payment method</label>
-            {{ booking_form.payment_method }}
-            {% if booking_form.payment_method.errors %}<div class="text-danger small">{{ booking_form.payment_method.errors|striptags }}</div>{% endif %}
-
-            <div id="transactionReferenceField">
-              <label for="id_transaction_reference" class="form-label">Transaction/reference ID <span id="transactionReferenceHint" class="text-muted">(required for bank transfer)</span></label>
-              {{ booking_form.transaction_reference }}
-              {% if booking_form.transaction_reference.errors %}<div class="text-danger small">{{ booking_form.transaction_reference.errors|striptags }}</div>{% endif %}
-            </div>
-
-            <label for="id_pickup_location" class="form-label">Meet-up location <span class="text-muted">(optional)</span></label>
-            {{ booking_form.pickup_location }}
-            {% if booking_form.pickup_location.errors %}<div class="text-danger small">{{ booking_form.pickup_location.errors|striptags }}</div>{% endif %}
-
-            <label for="id_nationality" class="form-label">Nationality</label>
-            {{ booking_form.nationality }}
-            {% if booking_form.nationality.errors %}<div class="text-danger small">{{ booking_form.nationality.errors|striptags }}</div>{% endif %}
-
-            <label for="id_emergency_contact" class="form-label">Emergency contact</label>
-            {{ booking_form.emergency_contact }}
-            {% if booking_form.emergency_contact.errors %}<div class="text-danger small">{{ booking_form.emergency_contact.errors|striptags }}</div>{% endif %}
-
-            {% if user.is_authenticated %}
-              <button type="submit" class="btn btn-success w-100 mt-2">Submit Activity Booking</button>
-            {% else %}
-              <a href="{% url 'login' %}" class="btn btn-outline-primary w-100 mt-2">Login to Book</a>
-            {% endif %}
-          </form>
-        </div>
-
-        <div class="review-card">
-          <h3 class="h5 mb-2">Traveler Reviews</h3>
-          <p class="small text-muted mb-3">Share your experience after booking this activity.</p>
-
-          {% if can_review_activity %}
-            <form method="post" class="d-grid gap-2 mb-3">
-              {% csrf_token %}
-              <input type="hidden" name="form_type" value="review">
-
-              <label for="id_rating" class="form-label">Your rating</label>
-              {{ review_form.rating }}
-              {% if review_form.rating.errors %}<div class="text-danger small">{{ review_form.rating.errors|striptags }}</div>{% endif %}
-
-              <label for="id_comment" class="form-label">Your comment <span class="text-muted">(optional)</span></label>
-              {{ review_form.comment }}
-              {% if review_form.comment.errors %}<div class="text-danger small">{{ review_form.comment.errors|striptags }}</div>{% endif %}
-
-              <button type="submit" class="btn btn-outline-success w-100">
-                {% if user_activity_review %}Update Review{% else %}Submit Review{% endif %}
-              </button>
-            </form>
-          {% elif user.is_authenticated %}
-            <div class="alert alert-info py-2">You can review this activity after you complete a booking.</div>
-          {% else %}
-            <a href="{% url 'login' %}" class="btn btn-outline-primary w-100 mb-3">Login to Write a Review</a>
-          {% endif %}
-
-          {% if activity_reviews %}
-            <div class="d-grid gap-2">
-              {% for review in activity_reviews|slice:":8" %}
-                <article class="review-item">
-                  <div class="d-flex justify-content-between align-items-start gap-2">
-                    <div>
-                      <div class="fw-semibold">
-                        {% if review.user %}
-                          {{ review.user.get_full_name|default:review.user.username }}
-                        {% else %}
-                          Traveler
-                        {% endif %}
-                      </div>
-                      <div class="review-stars" aria-label="{{ review.rating }} out of 5">
-                        {% for star in "12345"|make_list %}
-                          {% if forloop.counter <= review.rating %}★{% else %}☆{% endif %}
-                        {% endfor %}
-                      </div>
-                    </div>
-                    <small class="text-muted">{{ review.created_at|date:"M d, Y" }}</small>
-                  </div>
-                  {% if review.comment %}
-                    <p class="small text-muted mb-0 mt-2">{{ review.comment|linebreaksbr }}</p>
-                  {% endif %}
-                </article>
-              {% endfor %}
-            </div>
-          {% else %}
-            <p class="small text-muted mb-0">No reviews yet. Be the first traveler to review this activity.</p>
-          {% endif %}
-        </div>
-
-        <div class="d-flex flex-wrap gap-2 mt-3">
-          <a href="{% url 'packages_hot_sales' %}" class="btn btn-outline-primary">Back to Hot Sales</a>
-        </div>
+    </div>
+    <div class="ad-badges">
+      <span class="ad-badge cat"><i class="bi bi-tag"></i> {{ activity.category.name }}</span>
+      <span class="ad-badge {{ activity.difficulty_level }}"><i class="bi bi-speedometer2"></i> {{ activity.get_difficulty_level_display }}</span>
+      {% if activity.best_season %}<span class="ad-badge cat"><i class="bi bi-sun"></i> {{ activity.best_season }}</span>{% endif %}
+    </div>
+    <div class="ad-price-row">
+      <div class="ad-price">
+        {% if active_hot_sale %}<span class="old">Rs {{ activity.price }}</span> Rs {{ active_hot_sale.sale_price }}{% else %}Rs {{ activity.price }}{% endif %}
+        <span class="per">/person</span>
+      </div>
+      <div class="ad-rating-row">
+        <span class="tm-stars" style="--rating:{{ activity.rating|floatformat:1 }};" aria-hidden="true"></span>
+        <span style="font-size:.85rem; font-weight:600; color:var(--tm-text);">{{ activity.rating|floatformat:1 }}/5</span>
+        <span style="font-size:.8rem; color:var(--tm-text-muted);">({{ activity_reviews|length }} review{{ activity_reviews|length|pluralize }})</span>
       </div>
     </div>
   </div>
+
+  <!-- AT A GLANCE -->
+  <div class="ad-glance">
+    <h3 class="ad-glance-title"><i class="bi bi-grid-3x3-gap" style="color:var(--tm-ocean); margin-right:6px;"></i> At a Glance</h3>
+    <div class="ad-glance-grid">
+      <div class="ad-glance-item"><i class="bi bi-clock ad-glance-icon"></i><div><p class="ad-glance-label">Duration</p><p class="ad-glance-val">{{ activity.duration }}</p></div></div>
+      <div class="ad-glance-item"><i class="bi bi-speedometer2 ad-glance-icon"></i><div><p class="ad-glance-label">Difficulty</p><p class="ad-glance-val ad-diff-{{ activity.difficulty_level }}">{{ activity.get_difficulty_level_display }}</p></div></div>
+      <div class="ad-glance-item"><i class="bi bi-tag ad-glance-icon"></i><div><p class="ad-glance-label">Category</p><p class="ad-glance-val">{{ activity.category.name }}</p></div></div>
+      {% if activity.min_age %}
+      <div class="ad-glance-item"><i class="bi bi-person-badge ad-glance-icon"></i><div><p class="ad-glance-label">Min Age</p><p class="ad-glance-val">{{ activity.min_age }}+ years</p></div></div>
+      {% endif %}
+      {% if activity.min_weight or activity.max_weight %}
+      <div class="ad-glance-item"><i class="bi bi-arrows-vertical ad-glance-icon"></i><div><p class="ad-glance-label">Weight Range</p><p class="ad-glance-val">{% if activity.min_weight %}{{ activity.min_weight }}kg{% endif %}{% if activity.min_weight and activity.max_weight %} – {% endif %}{% if activity.max_weight %}{{ activity.max_weight }}kg{% endif %}</p></div></div>
+      {% endif %}
+      {% if activity.max_group_size %}
+      <div class="ad-glance-item"><i class="bi bi-people ad-glance-icon"></i><div><p class="ad-glance-label">Group Size</p><p class="ad-glance-val">Max {{ activity.max_group_size }}</p></div></div>
+      {% endif %}
+      {% if activity.destination %}
+      <div class="ad-glance-item"><i class="bi bi-geo-alt ad-glance-icon"></i><div><p class="ad-glance-label">Destination</p><p class="ad-glance-val">{{ activity.destination.name }}</p></div></div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="ad-tabs" id="adTabs">
+    <button class="ad-tab active" data-tab="overview">Overview</button>
+    <button class="ad-tab" data-tab="requirements">Requirements</button>
+    <button class="ad-tab" data-tab="reviews">Reviews</button>
+    <button class="ad-tab" data-tab="operator">Operator</button>
+  </div>
+
+  <!-- TAB: OVERVIEW -->
+  <div class="ad-panel active" id="tab-overview">
+    <div class="ad-card">
+      <h4 class="ad-card-title">About This Activity</h4>
+      <div class="ad-card-body ad-clamp" id="overviewClamp">
+        {{ activity.description|linebreaks }}
+      </div>
+      <button class="ad-read-more" onclick="adToggleClamp('overviewClamp', this)">Read More <i class="bi bi-chevron-down"></i></button>
+    </div>
+    {% if activity.equipment_provided %}
+    <div class="ad-card">
+      <h4 class="ad-card-title"><i class="bi bi-backpack2" style="color:var(--tm-ocean); margin-right:6px;"></i> Equipment Provided</h4>
+      <ul class="ad-equip-list">
+        {% for item in activity.equipment_provided.splitlines %}
+        {% if item.strip %}<li>{{ item.strip }}</li>{% endif %}
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+    {% if activity.safety_notes %}
+    <div class="ad-card">
+      <h4 class="ad-card-title"><i class="bi bi-shield-check" style="color:#22c55e; margin-right:6px;"></i> Safety Information</h4>
+      <div class="ad-card-body">{{ activity.safety_notes|linebreaks }}</div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- TAB: REQUIREMENTS -->
+  <div class="ad-panel" id="tab-requirements">
+    <div class="ad-card">
+      <h4 class="ad-card-title"><i class="bi bi-exclamation-triangle" style="color:#f59e0b; margin-right:6px;"></i> Activity Requirements</h4>
+      <div class="ad-req-grid">
+        {% if activity.min_age %}
+        <div class="ad-req-item">
+          <div class="ad-req-icon warn"><i class="bi bi-person-badge"></i></div>
+          <div><p class="ad-req-label">Minimum Age</p><p class="ad-req-value">{{ activity.min_age }} years old</p></div>
+        </div>
+        {% endif %}
+        {% if activity.max_weight %}
+        <div class="ad-req-item">
+          <div class="ad-req-icon warn"><i class="bi bi-arrows-vertical"></i></div>
+          <div><p class="ad-req-label">Maximum Weight</p><p class="ad-req-value">{{ activity.max_weight }} kg</p></div>
+        </div>
+        {% endif %}
+        {% if activity.min_weight %}
+        <div class="ad-req-item">
+          <div class="ad-req-icon warn"><i class="bi bi-arrows-vertical"></i></div>
+          <div><p class="ad-req-label">Minimum Weight</p><p class="ad-req-value">{{ activity.min_weight }} kg</p></div>
+        </div>
+        {% endif %}
+        <div class="ad-req-item">
+          <div class="ad-req-icon info"><i class="bi bi-speedometer2"></i></div>
+          <div><p class="ad-req-label">Difficulty Level</p><p class="ad-req-value ad-diff-{{ activity.difficulty_level }}">{{ activity.get_difficulty_level_display }}</p></div>
+        </div>
+        <div class="ad-req-item">
+          <div class="ad-req-icon info"><i class="bi bi-clock"></i></div>
+          <div><p class="ad-req-label">Duration</p><p class="ad-req-value">{{ activity.duration }}</p></div>
+        </div>
+        {% if activity.max_group_size %}
+        <div class="ad-req-item">
+          <div class="ad-req-icon info"><i class="bi bi-people"></i></div>
+          <div><p class="ad-req-label">Max Group Size</p><p class="ad-req-value">{{ activity.max_group_size }} people</p></div>
+        </div>
+        {% endif %}
+      </div>
+      {% if activity.min_age or activity.max_weight or activity.min_weight %}
+      <div class="ad-safety-box" style="margin-top:16px;">
+        <p style="margin:0; font-size:.85rem; color:#166534;"><i class="bi bi-info-circle" style="margin-right:4px;"></i> <strong>Important:</strong>
+          {% if activity.min_age %}Participants must be at least {{ activity.min_age }} years old. {% endif %}
+          {% if activity.min_weight and activity.max_weight %}Weight must be between {{ activity.min_weight }}kg and {{ activity.max_weight }}kg.{% elif activity.max_weight %}Maximum weight is {{ activity.max_weight }}kg.{% elif activity.min_weight %}Minimum weight is {{ activity.min_weight }}kg.{% endif %}
+        </p>
+      </div>
+      {% endif %}
+    </div>
+    {% if activity.safety_notes %}
+    <div class="ad-card">
+      <h4 class="ad-card-title"><i class="bi bi-shield-check" style="color:#22c55e; margin-right:6px;"></i> Safety Notes</h4>
+      <div class="ad-card-body">{{ activity.safety_notes|linebreaks }}</div>
+    </div>
+    {% endif %}
+    {% if activity.equipment_provided %}
+    <div class="ad-card">
+      <h4 class="ad-card-title"><i class="bi bi-backpack2" style="color:var(--tm-ocean); margin-right:6px;"></i> Equipment Provided</h4>
+      <ul class="ad-equip-list">
+        {% for item in activity.equipment_provided.splitlines %}
+        {% if item.strip %}<li>{{ item.strip }}</li>{% endif %}
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- TAB: REVIEWS -->
+  <div class="ad-panel" id="tab-reviews">
+    <div class="ad-card">
+      <h4 class="ad-card-title">Traveler Reviews</h4>
+      <p style="font-size:.88rem; color:var(--tm-text-muted); margin-bottom:16px;">
+        Average rating: <strong style="color:var(--tm-text);">{{ activity.rating|floatformat:1 }}/5</strong> from {{ activity_reviews|length }} review{{ activity_reviews|length|pluralize }}.
+      </p>
+      {% if activity_reviews %}
+      {% for review in activity_reviews|slice:":10" %}
+      <div class="ad-review">
+        <div style="display:flex; justify-content:space-between; align-items:start;">
+          <div>
+            <span class="ad-review-author">
+              {% if review.user %}{{ review.user.get_full_name|default:review.user.username }}{% else %}Traveler{% endif %}
+              <span style="font-size:.75rem; color:#22c55e; margin-left:6px; font-weight:600;"><i class="bi bi-patch-check-fill"></i> Verified Customer</span>
+            </span>
+            <div class="ad-review-stars">{% for star in "12345"|make_list %}{% if forloop.counter <= review.rating %}★{% else %}☆{% endif %}{% endfor %}</div>
+          </div>
+          <span class="ad-review-date">{{ review.created_at|date:"M d, Y" }}</span>
+        </div>
+        {% if review.comment %}<p class="ad-review-comment">{{ review.comment|linebreaksbr }}</p>{% endif %}
+      </div>
+      {% endfor %}
+      {% else %}
+      <p style="color:var(--tm-text-muted); font-size:.88rem;">No reviews yet. Be the first to review this activity.</p>
+      {% endif %}
+    </div>
+    {% if can_review_activity %}
+    <div class="ad-card" style="margin-top:4px;">
+      <h5 style="font-size:.95rem; font-weight:700; margin-bottom:12px;">{% if user_activity_review %}Update Your Review{% else %}Write a Review{% endif %}</h5>
+      <form method="post" style="display:grid; gap:10px;">
+        {% csrf_token %}
+        <input type="hidden" name="form_type" value="review">
+        <div><label style="font-size:.82rem; font-weight:700; text-transform:uppercase;">Your Rating</label>{{ review_form.rating }}{% if review_form.rating.errors %}<div class="text-danger" style="font-size:.8rem;">{{ review_form.rating.errors|striptags }}</div>{% endif %}</div>
+        <div><label style="font-size:.82rem; font-weight:700; text-transform:uppercase;">Comment <span style="color:var(--tm-text-light);">(optional)</span></label>{{ review_form.comment }}{% if review_form.comment.errors %}<div class="text-danger" style="font-size:.8rem;">{{ review_form.comment.errors|striptags }}</div>{% endif %}</div>
+        <button type="submit" class="ad-book-btn primary" style="margin:0;">{% if user_activity_review %}Update Review{% else %}Submit Review{% endif %}</button>
+      </form>
+    </div>
+    {% elif user.is_authenticated %}
+    <div style="background:var(--tm-ocean-light); border-radius:var(--tm-radius); padding:14px 18px; margin-top:16px; font-size:.88rem; color:var(--tm-ocean-dark);"><i class="bi bi-info-circle"></i> You can review this activity after you complete a booking.</div>
+    {% else %}
+    <a href="{% url 'login' %}" class="ad-book-btn outline" style="margin-top:16px; display:inline-block; text-align:center;">Login to Write a Review</a>
+    {% endif %}
+  </div>
+
+  <!-- TAB: OPERATOR -->
+  <div class="ad-panel" id="tab-operator">
+    <div class="ad-card">
+      <div style="display:flex; align-items:center; gap:16px; margin-bottom:16px;">
+        <div style="width:60px; height:60px; border-radius:50%; background:var(--tm-ocean-light); display:flex; align-items:center; justify-content:center; font-size:1.5rem; color:var(--tm-ocean); flex-shrink:0;"><i class="bi bi-shop"></i></div>
+        <div>
+          <h4 style="margin:0; font-size:1.05rem; font-weight:800; color:#0f172a;">{{ activity.vendor.company_name }}</h4>
+          <p style="margin:2px 0 0; font-size:.82rem; color:var(--tm-text-muted);"><i class="bi bi-patch-check-fill" style="color:#22c55e;"></i> Verified Vendor</p>
+        </div>
+      </div>
+      <div style="display:flex; gap:20px; flex-wrap:wrap; margin-bottom:14px;">
+        <div class="ad-trust-item"><i class="bi bi-check-circle-fill"></i> Verified & Approved</div>
+        <div class="ad-trust-item"><i class="bi bi-check-circle-fill"></i> Licensed Operator</div>
+        <div class="ad-trust-item"><i class="bi bi-check-circle-fill"></i> Safety Certified</div>
+      </div>
+      {% if activity.vendor.description %}
+      <div class="ad-card-body" style="margin-bottom:12px;">{{ activity.vendor.description|linebreaks }}</div>
+      {% endif %}
+      <a href="{% url 'search' %}?q={{ activity.vendor.company_name|urlencode }}" class="ad-book-btn outline" style="width:auto; display:inline-block; padding:10px 24px;">View All Offerings <i class="bi bi-arrow-right"></i></a>
+    </div>
+  </div>
+
 </div>
 
-{{ blocked_dates_iso|json_script:"activityBlockedDatesData" }}
+<!-- ===== RIGHT COLUMN: STICKY BOOKING ===== -->
+<div class="col-lg-4">
+  <div class="ad-book-card">
+    <p style="font-weight:700; color:var(--tm-text); margin:0 0 4px; font-size:1rem;">Book This Activity</p>
+    <div class="ad-book-price">
+      {% if active_hot_sale %}<span class="old">Rs {{ activity.price }}</span> Rs {{ active_hot_sale.sale_price }}{% else %}Rs {{ activity.price }}{% endif %}
+      <span class="per">/person</span>
+    </div>
+    {% if active_hot_sale and active_hot_sale.note %}
+    <div style="background: rgba(225, 29, 72, 0.08); border-left: 3px solid #e11d48; margin-top: 12px; padding: 10px 12px; border-radius: 0 4px 4px 0;">
+      <div style="font-size: 0.75rem; font-weight: 800; color: #e11d48; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px;"><i class="bi bi-fire"></i> Hot Sale Note</div>
+      <div style="font-size: 0.85rem; color: #881337; font-weight: 500;">{{ active_hot_sale.note }}</div>
+    </div>
+    {% endif %}
+    <hr class="ad-book-divider">
+    <div class="ad-book-stat"><i class="bi bi-clock"></i> {{ activity.duration }}</div>
+    <div class="ad-book-stat"><i class="bi bi-star-fill" style="color:#f59e0b;"></i> {{ activity.rating|floatformat:1 }}/5 ({{ activity_reviews|length }} reviews)</div>
+    <div class="ad-book-stat"><i class="bi bi-speedometer2"></i> {{ activity.get_difficulty_level_display }}</div>
+    {% if activity.max_group_size %}<div class="ad-book-stat"><i class="bi bi-people"></i> Max {{ activity.max_group_size }} people</div>{% endif %}
+    {% if activity.min_age %}<div class="ad-book-stat"><i class="bi bi-person-badge" style="color:#dc2626;"></i> Min age: {{ activity.min_age }}+</div>{% endif %}
+
+    <!-- Trust signals -->
+    <div style="margin:12px 0; padding:10px 12px; background:var(--tm-cream); border-radius:var(--tm-radius);">
+      <div class="ad-trust-item"><i class="bi bi-check-circle-fill"></i> Verified Vendor</div>
+      <div class="ad-trust-item"><i class="bi bi-check-circle-fill"></i> Best Price Guarantee</div>
+      <div class="ad-trust-item"><i class="bi bi-check-circle-fill"></i> Instant Confirmation</div>
+    </div>
+
+    </div>
+    {% comment %} Moved Favorite Button to Hero Gallery {% endcomment %}
+
+    {% if messages %}{% for message in messages %}<div class="alert alert-{{ message.tags|default:'info' }} py-2" role="alert" style="font-size:.85rem; border-radius:var(--tm-radius);">{{ message }}</div>{% endfor %}{% endif %}
+
+    {% if can_book_activity %}
+    <button class="ad-book-btn primary" type="button" data-bs-toggle="collapse" data-bs-target="#adBookingBox" aria-expanded="{% if booking_form.errors %}true{% else %}false{% endif %}">
+      <i class="bi bi-calendar-check"></i> Book Now
+    </button>
+    <div id="adBookingBox" class="collapse{% if booking_form.errors %} show{% endif %}">
+      <div class="ad-form-panel">
+        <form method="post" class="d-grid gap-2">
+          {% csrf_token %}
+          <input type="hidden" name="form_type" value="booking">
+          {% if hot_sale_context %}<input type="hidden" name="hot_sale" value="1">{% endif %}
+          <div><label class="form-label mb-1">Full name</label>{{ booking_form.full_name }}{% if booking_form.full_name.errors %}<div class="text-danger small">{{ booking_form.full_name.errors|striptags }}</div>{% endif %}</div>
+          <div><label class="form-label mb-1">Email</label>{{ booking_form.email }}{% if booking_form.email.errors %}<div class="text-danger small">{{ booking_form.email.errors|striptags }}</div>{% endif %}</div>
+          <div><label class="form-label mb-1">Phone</label>{{ booking_form.phone }}{% if booking_form.phone.errors %}<div class="text-danger small">{{ booking_form.phone.errors|striptags }}</div>{% endif %}</div>
+          <div>
+            <label class="form-label mb-1">Activity date</label>{{ booking_form.travel_date }}
+            {% if blocked_dates %}
+            <div class="small text-muted mt-1">Unavailable dates:</div>
+            <div style="display:flex; flex-wrap:wrap; gap:4px; margin-top:4px;">
+              {% for blocked in blocked_dates|slice:":8" %}<span style="display:inline-block; padding:2px 8px; border-radius:999px; background:#fff2f2; border:1px solid #f3c2c2; color:#8f2f2f; font-size:.72rem; font-weight:600;">{{ blocked.date|date:"M d" }}</span>{% endfor %}
+            </div>
+            <div id="adBlockedWarn" style="display:none; margin-top:4px; font-size:.78rem; color:#b42318;">This date is unavailable.</div>
+            {% endif %}
+            {% if booking_form.travel_date.errors %}<div class="text-danger small">{{ booking_form.travel_date.errors|striptags }}</div>{% endif %}
+          </div>
+          <div><label class="form-label mb-1">Number of people</label>{{ booking_form.number_of_people }}{% if booking_form.number_of_people.errors %}<div class="text-danger small">{{ booking_form.number_of_people.errors|striptags }}</div>{% endif %}</div>
+          <div class="small text-muted">Estimated total: Rs <span id="adEstTotal">{{ booking_unit_price }}</span></div>
+          <div><label class="form-label mb-1">Payment method</label>{{ booking_form.payment_method }}{% if booking_form.payment_method.errors %}<div class="text-danger small">{{ booking_form.payment_method.errors|striptags }}</div>{% endif %}</div>
+          <div id="adTxnField"><label class="form-label mb-1">Transaction ID <span id="adTxnHint" class="text-muted">(required for bank transfer)</span></label>{{ booking_form.transaction_reference }}{% if booking_form.transaction_reference.errors %}<div class="text-danger small">{{ booking_form.transaction_reference.errors|striptags }}</div>{% endif %}</div>
+          {% if user.is_authenticated %}
+          <button type="submit" class="ad-book-btn primary" style="margin:0;">Submit Booking</button>
+          {% else %}
+          <a href="{% url 'login' %}" class="ad-book-btn outline" style="text-align:center;">Login to Book</a>
+          {% endif %}
+        </form>
+      </div>
+    </div>
+    {% elif user.is_authenticated %}
+    <button class="ad-book-btn primary" disabled style="opacity:.5; cursor:not-allowed;">Book This Activity</button>
+    <div style="background:var(--tm-ocean-light); border-radius:var(--tm-radius); padding:10px 14px; font-size:.82rem; color:var(--tm-ocean-dark); margin-top:8px;">Only customers can book activities.</div>
+    {% endif %}
+  </div>
+</div>
+
+</div><!-- /row -->
+
+<!-- ===== RELATED ACTIVITIES ===== -->
+{% if related_activities %}
+<div style="margin-top:56px;">
+  <div class="tm-section-header">
+    <div class="tm-section-label"><i class="bi bi-lightning-fill"></i> You May Also Like</div>
+    <h2 class="tm-section-title" style="font-size:1.4rem;">Related Activities</h2>
+  </div>
+  <div class="row g-4">
+    {% for ra in related_activities %}
+    <div class="col-sm-6 col-md-6 col-lg-4">
+      {% include 'includes/activity_card.html' with item=ra %}
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+</div><!-- /container -->
+</section>
+
+<!-- ===== JAVASCRIPT ===== -->
+{{ blocked_dates_iso|json_script:"adBlockedData" }}
 <script>
-  document.addEventListener('DOMContentLoaded', function () {
-    const peopleInput = document.getElementById('id_number_of_people');
-    const totalEl = document.getElementById('activityBookingEstimatedTotal');
-    const paymentMethodInput = document.getElementById('id_payment_method');
-    const transactionReferenceInput = document.getElementById('id_transaction_reference');
-    const transactionReferenceHint = document.getElementById('transactionReferenceHint');
-    const travelDateInput = document.getElementById('id_travel_date');
-    const blockedDateWarning = document.getElementById('blockedDateWarning');
-    const unitPrice = parseFloat('{{ booking_unit_price|default:"0" }}');
+document.addEventListener('DOMContentLoaded', function(){
+  // — Carousel —
+  const track = document.getElementById('adTrack');
+  const dotsWrap = document.getElementById('adDots');
+  const slides = track ? track.children : [];
+  let cur = 0;
+  const total = slides.length;
+  if(dotsWrap && total > 1){ for(let i=0;i<total;i++){ const d=document.createElement('button'); d.className='ad-dot'+(i===0?' active':''); d.onclick=()=>{cur=i;upd();}; dotsWrap.appendChild(d); } }
+  window.adSlide = function(dir){ cur=(cur+dir+total)%total; upd(); };
+  function upd(){ if(track) track.style.transform='translateX(-'+(cur*100)+'%)'; const dots=dotsWrap?dotsWrap.querySelectorAll('.ad-dot'):[]; dots.forEach((d,i)=>d.className='ad-dot'+(i===cur?' active':'')); }
 
-    let blockedDates = new Set();
-    const blockedDatesData = document.getElementById('activityBlockedDatesData');
-    if (blockedDatesData) {
-      try {
-        blockedDates = new Set(JSON.parse(blockedDatesData.textContent || '[]'));
-      } catch (error) {
-        blockedDates = new Set();
-      }
-    }
-
-    function updateEstimatedTotal() {
-      if (!peopleInput || !totalEl || Number.isNaN(unitPrice)) {
-        return;
-      }
-      const people = parseInt(peopleInput.value || '1', 10);
-      const safePeople = Number.isNaN(people) || people < 1 ? 1 : people;
-      totalEl.textContent = (unitPrice * safePeople).toFixed(2);
-    }
-
-    if (peopleInput) {
-      peopleInput.addEventListener('input', updateEstimatedTotal);
-    }
-    updateEstimatedTotal();
-
-    function syncTransactionReferenceHint() {
-      if (!paymentMethodInput || !transactionReferenceHint || !transactionReferenceInput) {
-        return;
-      }
-      if (paymentMethodInput.value === 'BANK_TRANSFER') {
-        transactionReferenceHint.textContent = '(required for bank transfer)';
-        transactionReferenceInput.required = true;
-      } else if (paymentMethodInput.value === 'ESEWA') {
-        transactionReferenceHint.textContent = '(filled automatically after eSewa callback verification)';
-        transactionReferenceInput.required = false;
-      } else {
-        transactionReferenceHint.textContent = '(optional)';
-        transactionReferenceInput.required = false;
-      }
-    }
-
-    if (paymentMethodInput) {
-      paymentMethodInput.addEventListener('change', syncTransactionReferenceHint);
-      syncTransactionReferenceHint();
-    }
-
-    function syncTravelDateAvailability() {
-      if (!travelDateInput) {
-        return;
-      }
-      const selectedDate = travelDateInput.value;
-      const isBlocked = selectedDate && blockedDates.has(selectedDate);
-      travelDateInput.setCustomValidity(isBlocked ? 'This date is unavailable. Please choose another date.' : '');
-      if (blockedDateWarning) {
-        blockedDateWarning.style.display = isBlocked ? 'block' : 'none';
-      }
-    }
-
-    if (travelDateInput) {
-      travelDateInput.addEventListener('change', syncTravelDateAvailability);
-      travelDateInput.addEventListener('input', syncTravelDateAvailability);
-      syncTravelDateAvailability();
-    }
+  // — Tabs —
+  document.querySelectorAll('.ad-tab').forEach(tab => {
+    tab.addEventListener('click', function(){
+      document.querySelectorAll('.ad-tab').forEach(t=>t.classList.remove('active'));
+      document.querySelectorAll('.ad-panel').forEach(p=>p.classList.remove('active'));
+      this.classList.add('active');
+      document.getElementById('tab-'+this.dataset.tab).classList.add('active');
+    });
   });
+
+  // — Read More —
+  window.adToggleClamp = function(id, btn){
+    const el=document.getElementById(id); if(!el) return;
+    el.classList.toggle('expanded');
+    btn.innerHTML = el.classList.contains('expanded') ? 'Read Less <i class="bi bi-chevron-up"></i>' : 'Read More <i class="bi bi-chevron-down"></i>';
+  };
+
+  // — Booking —
+  const pInput = document.getElementById('id_number_of_people');
+  const tEl = document.getElementById('adEstTotal');
+  const pmInput = document.getElementById('id_payment_method');
+  const txnInput = document.getElementById('id_transaction_reference');
+  const txnHint = document.getElementById('adTxnHint');
+  const dateInput = document.getElementById('id_travel_date');
+  const blockedWarn = document.getElementById('adBlockedWarn');
+  const unitPrice = parseFloat('{{ booking_unit_price|default:"0" }}');
+
+  let blocked = new Set();
+  const bData = document.getElementById('adBlockedData');
+  if(bData){ try{ blocked=new Set(JSON.parse(bData.textContent||'[]')); }catch(e){} }
+
+  function calcTotal(){ if(!pInput||!tEl||isNaN(unitPrice)) return; const p=parseInt(pInput.value||'1',10); tEl.textContent=(unitPrice*(isNaN(p)||p<1?1:p)).toFixed(2); }
+  if(pInput) pInput.addEventListener('input', calcTotal);
+  calcTotal();
+
+  function syncTxn(){ if(!pmInput||!txnHint||!txnInput) return; if(pmInput.value==='BANK_TRANSFER'){txnHint.textContent='(required)';txnInput.required=true;} else if(pmInput.value==='ESEWA'){txnHint.textContent='(auto-filled after eSewa)';txnInput.required=false;} else{txnHint.textContent='(optional)';txnInput.required=false;} }
+  if(pmInput){ pmInput.addEventListener('change',syncTxn); syncTxn(); }
+
+  function syncDate(){ if(!dateInput) return; const isB=dateInput.value&&blocked.has(dateInput.value); dateInput.setCustomValidity(isB?'Unavailable':''); if(blockedWarn) blockedWarn.style.display=isB?'block':'none'; }
+  if(dateInput){ dateInput.addEventListener('change',syncDate); dateInput.addEventListener('input',syncDate); syncDate(); }
+});
 </script>
 {% endblock %}

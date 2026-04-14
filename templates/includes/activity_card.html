@@ -1,0 +1,53 @@
+<div class="tm-card">
+  <div class="tm-card-img-wrap">
+    <div class="tm-card-badge-category" style="top: 12px; left: 12px;">{{ item.category.name }}</div>
+
+    {% if is_hot_sale_page %}
+      <div style="position: absolute; top: 40px; left: 12px; z-index: 2; background: #e11d48; color: #fff; font-size: 0.72rem; font-weight: 800; padding: 4px 10px; border-radius: 999px; letter-spacing: 0.05em; display:flex; align-items:center; gap:4px;"><i class="bi bi-fire"></i> HOT SALE</div>
+    {% endif %}
+    
+    {% if not is_hot_sale_page %}
+      {% if user.is_authenticated %}
+        <form method="post" action="{% url 'toggle_favorite_activity' item.pk %}" style="position: absolute; top: 12px; right: 12px; z-index: 3; margin: 0;">
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{{ request.path }}">
+          <button type="submit" class="tm-card-fav-btn {% if item in user.favorite_activities.all %}active{% endif %}" title="Toggle Favorite">
+            <i class="bi {% if item in user.favorite_activities.all %}bi-heart-fill{% else %}bi-heart{% endif %}"></i>
+          </button>
+        </form>
+      {% endif %}
+    {% endif %}
+
+    <a href="{% url 'activity_detail' item.pk %}{% if is_hot_sale_page %}?hot_sale=1{% endif %}">
+      {% with primary_img=item.images.first %}
+        {% if primary_img %}
+          <img src="{{ primary_img.image.url }}" class="tm-card-img" alt="{{ item.name }}">
+        {% else %}
+          <div class="tm-card-img" style="background:linear-gradient(135deg,var(--tm-ocean-light),#dbeafe);"></div>
+        {% endif %}
+      {% endwith %}
+    </a>
+  </div>
+  <a href="{% url 'activity_detail' item.pk %}{% if is_hot_sale_page %}?hot_sale=1{% endif %}" style="text-decoration:none; color:inherit; display:flex; flex-direction:column; flex:1;">
+    <div class="tm-card-body">
+      <div class="tm-card-meta-top">
+        {% if item.destination %}<i class="bi bi-geo-alt"></i> {{ item.destination.name }} • {% endif %}
+        <i class="bi bi-clock"></i> {{ item.duration }}
+      </div>
+      <h3 class="tm-card-title line-clamp-1">{{ item.name }}</h3>
+      <div class="tm-card-rating">
+        <i class="bi bi-star-fill" style="color:#ef4444;"></i> {{ item.rating|floatformat:1 }}
+        <span class="tm-card-reviews">({{ item.reviews.count|default:0 }})</span>
+      </div>
+      <div class="tm-card-price-row">
+        {% if is_hot_sale_page %}
+          <span class="tm-card-price-new">Rs {{ active_sale.sale_price|floatformat:0 }}</span>
+          <span style="font-size: 0.8rem; font-weight: 500; color: var(--tm-text-muted); text-decoration: line-through;">Rs {{ item.price|floatformat:0 }}</span>
+        {% else %}
+          <span class="tm-card-price-new">Rs {{ item.price|floatformat:0 }}</span>
+        {% endif %}
+        <span class="tm-card-price-unit">/ person</span>
+      </div>
+    </div>
+  </a>
+</div>
