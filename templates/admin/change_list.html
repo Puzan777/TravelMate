@@ -125,8 +125,8 @@
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
-        gap: 16px;
-        margin-bottom: 22px;
+        gap: 12px;
+        margin-bottom: 12px;
         flex-wrap: wrap;
     }
     .page-header h1 {
@@ -145,20 +145,20 @@
         padding: 0;
         list-style: none;
         display: flex;
-        gap: 10px;
+        gap: 8px;
         flex-wrap: wrap;
         justify-content: flex-end;
     }
     .object-tools li { list-style-type: none; }
     .object-tools a {
-        min-height: 44px;
-        padding: 0 22px;
+        min-height: 36px;
+        padding: 0 16px;
         border-radius: 999px;
         background: linear-gradient(135deg, var(--tm-accent) 0%, var(--tm-accent-strong) 100%);
         color: white;
         text-decoration: none;
         font-weight: 800;
-        font-size: 0.9rem;
+        font-size: 0.8rem;
         transition: transform var(--tm-transition), box-shadow var(--tm-transition), filter var(--tm-transition);
         display: inline-flex;
         align-items: center;
@@ -252,6 +252,11 @@
     {% block object-tools %}
       <ul class="object-tools">
         {% block object-tools-items %}
+          <li>
+            <a href="{{ request.get_full_path }}{% if '?' in request.get_full_path %}&{% else %}?{% endif %}export=csv" style="background:var(--vd-success); box-shadow:none;">
+              <i class="bi bi-file-earmark-spreadsheet" style="margin-right:6px;"></i> Export to CSV
+            </a>
+          </li>
           {% change_list_object_tools %}
         {% endblock %}
       </ul>

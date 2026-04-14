@@ -13,6 +13,34 @@ from django.utils import timezone
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
+import csv
+from django.http import HttpResponse
+
+def export_as_csv(modeladmin, request, queryset):
+    opts = modeladmin.model._meta
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename={opts.verbose_name_plural}.csv'
+    writer = csv.writer(response)
+    fields = [field.name for field in opts.get_fields() if not field.many_to_many and not field.one_to_many]
+    writer.writerow(fields)
+    for obj in queryset:
+        writer.writerow([getattr(obj, field) for field in fields])
+    return response
+
+_original_changelist_view = admin.ModelAdmin.changelist_view
+
+def _custom_changelist_view(self, request, extra_context=None):
+    if request.GET.get('export', '').lower() == 'csv':
+        try:
+            cl = self.get_changelist_instance(request)
+            queryset = cl.get_queryset(request)
+            return export_as_csv(self, request, queryset)
+        except Exception:
+            pass
+    return _original_changelist_view(self, request, extra_context)
+
+admin.ModelAdmin.changelist_view = _custom_changelist_view
+
 from .models import (
     Activity, ActivityBooking, ActivityCategory, ActivityImage, ApprovalStatus, Booking, CustomUser, Destination,
     DestinationImage,
@@ -28,7 +56,6 @@ class ActivityCategoryAdmin(admin.ModelAdmin):
     list_display = ('name', 'admin_actions')
     search_fields = ('name',)
     list_display_links = None
-    actions = None
 
     @admin.display(description='Actions')
     def admin_actions(self, obj):
@@ -102,7 +129,6 @@ class DestinationAdmin(admin.ModelAdmin):
     list_editable = ('is_featured',)
     readonly_fields = ('current_images_manager',)
     list_display_links = None
-    actions = None
     fieldsets = (
         ('Basic Info', {'fields': ('name', 'short_description', 'is_featured')}),
         ('Travel Info', {'fields': ('best_season', 'visa_info', 'safety_note')}),
