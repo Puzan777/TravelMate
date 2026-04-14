@@ -424,6 +424,7 @@
 <body>
 
 <!-- ===== NAVBAR ===== -->
+{% block navbar %}
 <nav class="tm-navbar {% block nav_class %}tm-navbar-solid{% endblock %}" id="tmNavbar">
   <div class="container">
     <a class="tm-brand" href="{% url 'home' %}">
@@ -438,7 +439,7 @@
     <div class="tm-nav-center" id="tmNavCenter">
       <ul class="tm-nav-links">
         <li><a class="tm-nav-link{% if request.path == '/' %} active{% endif %}" href="{% url 'home' %}">Home</a></li>
-        <li><a class="tm-nav-link{% if '/packages/' in request.path %} active{% endif %}" href="{% url 'packages_luxury' %}">Packages</a></li>
+        <li><a class="tm-nav-link{% if '/packages/' in request.path %} active{% endif %}" href="{% url 'packages_all' %}">Packages</a></li>
         <li><a class="tm-nav-link{% if request.path == '/activities/' %} active{% endif %}" href="{% url 'activity_list' %}">Activities</a></li>
         <li><a class="tm-nav-link{% if '/destinations/' in request.path %} active{% endif %}" href="{% url 'destination_list' %}">Destinations</a></li>
         <li><a class="tm-nav-link{% if '/packages/hot-sales/' in request.path %} active{% endif %}" href="{% url 'packages_hot_sales' %}">Hot Sales</a></li>
@@ -465,6 +466,7 @@
     </div>
   </div>
 </nav>
+{% endblock %}
 
 <!-- ===== MESSAGES ===== -->
 {% if messages %}

@@ -58,20 +58,16 @@ class MultiImageFileInput(forms.ClearableFileInput):
 
 
 class DestinationAdminForm(forms.ModelForm):
-    new_images = forms.FileField(
-        required=False,
-        widget=MultiImageFileInput(attrs={'accept': 'image/*', 'multiple': True}),
-        help_text='Choose files, preview them, and select one as cover image before saving.',
-        label='Destination Image',
-    )
-    primary_new_image_index = forms.IntegerField(required=False, widget=forms.HiddenInput())
-
     class Meta:
         model = Destination
         fields = '__all__'
 
     class Media:
         js = ('admin/destination_multi_upload.js',)
+
+    def is_multipart(self):
+        # Force multipart/form-data since we render a file input manually
+        return True
 
 
 @admin.register(CustomUser)
@@ -109,7 +105,9 @@ class DestinationAdmin(admin.ModelAdmin):
     fieldsets = (
         ('Basic Info', {'fields': ('name', 'short_description')}),
         ('Travel Info', {'fields': ('best_season', 'visa_info', 'safety_note')}),
-        ('Destination Image', {'fields': ('new_images', 'primary_new_image_index', 'current_images_manager')}),
+        ('Destination Images', {
+            'fields': ('current_images_manager',),
+        }),
     )
 
     @admin.display(description='Actions')
@@ -127,45 +125,104 @@ class DestinationAdmin(admin.ModelAdmin):
 
     @admin.display(description='Current Images')
     def current_images_manager(self, obj):
-        if not obj:
-            return format_html('<span style="color:#6b7280;">No current images yet.</span>')
+        html_parts = []
 
-        images = obj.images.all().order_by('-is_primary', 'created_at')
-        if not images.exists():
-            return format_html('<span style="color:#6b7280;">No current images yet.</span>')
+        # --- Existing images ---
+        if obj and obj.pk:
+            images = obj.images.all().order_by('-is_primary', 'created_at')
+            has_gallery_images = images.exists()
 
-        cards = []
-        for image in images:
-            checked = 'checked' if image.is_primary else ''
-            cards.append(
-                '<div style="width:150px; border:1px solid #d6dbe1; border-radius:8px; padding:8px; background:#fff;">'
-                f'<img src="{image.image.url}" alt="Destination image" style="height:90px; width:100%; object-fit:cover; border-radius:6px; border:1px solid #e5e7eb; margin-bottom:8px;">'
-                '<div style="display:flex; align-items:center; gap:6px; margin-bottom:6px;">'
-                f'<input type="radio" name="primary_image_id" value="{image.pk}" {checked}>'
-                '<label style="font-size:12px; color:#374151;">Set as cover</label>'
-                '</div>'
-                '<div style="display:flex; align-items:center; gap:6px;">'
-                f'<input type="checkbox" name="remove_image_ids" value="{image.pk}">'
-                '<label style="font-size:12px; color:#b91c1c;">Delete</label>'
-                '</div>'
-                '</div>'
-            )
+            # Show legacy hero_image if it exists and no gallery images
+            if not has_gallery_images and obj.hero_image:
+                html_parts.append(
+                    '<div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px;">'
+                    '<div style="width:150px; border:2px solid #f59e0b; border-radius:8px; padding:8px; background:#fff; position:relative;">'
+                    '<div style="position:absolute;top:4px;left:4px;background:#f59e0b;color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;">LEGACY</div>'
+                    f'<img src="{obj.hero_image.url}" alt="Legacy hero image" style="height:90px; width:100%; object-fit:cover; border-radius:6px; border:1px solid #e5e7eb; margin-bottom:8px;">'
+                    '<div style="display:flex; align-items:center; gap:6px;">'
+                    '<input type="checkbox" name="remove_legacy_hero" value="1">'
+                    '<label style="font-size:12px; color:#b91c1c;">Delete</label>'
+                    '</div>'
+                    '</div>'
+                    '</div>'
+                    '<p style="font-size:12px; color:#6b7280; margin-bottom:12px;">'
+                    '<strong>Note:</strong> This is a legacy image. Click <strong>Save</strong> to automatically migrate it into the new gallery system, or add new images below.</p>'
+                )
+            elif has_gallery_images:
+                cards = []
+                for image in images:
+                    checked = 'checked' if image.is_primary else ''
+                    border_color = '#0ea5e9' if image.is_primary else '#d6dbe1'
+                    badge = ''
+                    if image.is_primary:
+                        badge = '<div style="position:absolute;top:4px;left:4px;background:#0ea5e9;color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;">COVER</div>'
+                    cards.append(
+                        f'<div style="width:150px; border:2px solid {border_color}; border-radius:8px; padding:8px; background:#fff; position:relative;">'
+                        f'{badge}'
+                        f'<img src="{image.image.url}" alt="Destination image" style="height:90px; width:100%; object-fit:cover; border-radius:6px; border:1px solid #e5e7eb; margin-bottom:8px;">'
+                        '<div style="display:flex; align-items:center; gap:6px; margin-bottom:6px;">'
+                        f'<input type="radio" name="primary_image_id" value="{image.pk}" {checked}>'
+                        '<label style="font-size:12px; color:#374151;">Set as cover</label>'
+                        '</div>'
+                        '<div style="display:flex; align-items:center; gap:6px;">'
+                        f'<input type="checkbox" name="remove_image_ids" value="{image.pk}">'
+                        '<label style="font-size:12px; color:#b91c1c;">Delete</label>'
+                        '</div>'
+                        '</div>'
+                    )
+                html_parts.append('<div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px;">' + ''.join(cards) + '</div>')
+            else:
+                html_parts.append('<p style="color:#6b7280; margin-bottom:12px;">No images uploaded yet.</p>')
+        else:
+            html_parts.append('<p style="color:#6b7280; margin-bottom:12px;">Save the destination first, then add images.</p>')
 
-        return mark_safe('<div style="display:flex; flex-wrap:wrap; gap:8px;">' + ''.join(cards) + '</div>')
+        # --- Add Images button + hidden file input + staged preview ---
+        html_parts.append(
+            '<div>'
+            '<button type="button" id="dest-add-images-btn" style="'
+            'display:inline-flex; align-items:center; gap:6px; '
+            'padding:8px 16px; border-radius:8px; border:1px solid #0ea5e9; '
+            'background:#e0f2fe; color:#0369a1; font-weight:700; font-size:13px; '
+            'cursor:pointer; transition:all 0.2s;">'
+            '<i class="bi bi-plus-circle" style="font-size:16px;"></i> Add Images'
+            '</button>'
+            '<input type="file" name="new_images" id="id_new_images" accept="image/*" multiple '
+            'style="display:none;">'
+            '</div>'
+            '<div id="dest-staged-preview" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:12px;"></div>'
+        )
+
+        return mark_safe('\n'.join(html_parts))
 
     def save_related(self, request, form, formsets, change):
         super().save_related(request, form, formsets, change)
 
+        dest = form.instance
+
+        # --- Auto-migrate legacy hero_image into DestinationImage ---
+        if dest.hero_image and not dest.images.exists():
+            DestinationImage.objects.create(
+                destination=dest,
+                image=dest.hero_image,
+                is_primary=True,
+            )
+            # Clear the legacy field after migration
+            Destination.objects.filter(pk=dest.pk).update(hero_image='')
+
+        # Handle removal of legacy hero image
+        if request.POST.get('remove_legacy_hero') == '1':
+            Destination.objects.filter(pk=dest.pk).update(hero_image='')
+
         remove_image_ids = request.POST.getlist('remove_image_ids')
         if remove_image_ids:
-            form.instance.images.filter(pk__in=remove_image_ids).delete()
+            dest.images.filter(pk__in=remove_image_ids).delete()
 
         new_images = request.FILES.getlist('new_images')
         created_images = []
         for image_file in new_images:
             created_images.append(
                 DestinationImage.objects.create(
-                    destination=form.instance,
+                    destination=dest,
                     image=image_file,
                     is_primary=False,
                 )
@@ -173,31 +230,29 @@ class DestinationAdmin(admin.ModelAdmin):
 
         preferred_primary_id = None
 
+        # Only change cover if user explicitly selected from existing images
         selected_existing_primary = (request.POST.get('primary_image_id') or '').strip()
         if selected_existing_primary.isdigit():
             selected_existing_primary_id = int(selected_existing_primary)
-            if form.instance.images.filter(pk=selected_existing_primary_id).exists():
+            if dest.images.filter(pk=selected_existing_primary_id).exists():
                 preferred_primary_id = selected_existing_primary_id
 
-        try:
-            selected_index = int((request.POST.get('primary_new_image_index') or '').strip())
-        except (TypeError, ValueError, AttributeError):
-            selected_index = 0
-
-        if preferred_primary_id is None and created_images:
-            selected_index = max(0, min(selected_index, len(created_images) - 1))
-            preferred_primary_id = created_images[selected_index].pk
-
-        images_qs = form.instance.images.all().order_by('created_at', 'pk')
+        images_qs = dest.images.all().order_by('created_at', 'pk')
         if not images_qs.exists():
             return
 
-        if preferred_primary_id is None:
-            existing_primary = images_qs.filter(is_primary=True).first()
-            preferred_primary_id = existing_primary.pk if existing_primary else images_qs.first().pk
-
-        images_qs.update(is_primary=False)
-        images_qs.filter(pk=preferred_primary_id).update(is_primary=True)
+        if preferred_primary_id is not None:
+            # User explicitly chose a cover — apply it
+            images_qs.update(is_primary=False)
+            images_qs.filter(pk=preferred_primary_id).update(is_primary=True)
+        else:
+            # Make sure at least one image is marked as primary
+            if not images_qs.filter(is_primary=True).exists():
+                images_qs.update(is_primary=False)
+                first = images_qs.first()
+                if first:
+                    first.is_primary = True
+                    first.save(update_fields=['is_primary'])
 
     def get_queryset(self, request):
         if _is_platform_admin(request.user):
@@ -284,7 +339,7 @@ class PackageAdmin(admin.ModelAdmin):
         )
 
     def get_queryset(self, request):
-        qs = super().get_queryset(request).filter(approval_status=ApprovalStatus.APPROVED)
+        qs = super().get_queryset(request).filter(approval_status__in=[ApprovalStatus.APPROVED, ApprovalStatus.PENDING])
         if request.user.is_superuser:
             return qs
         vendor_profile = _current_vendor_profile(request.user)
@@ -377,7 +432,7 @@ class ActivityAdmin(admin.ModelAdmin):
         )
 
     def get_queryset(self, request):
-        qs = super().get_queryset(request).filter(approval_status=ApprovalStatus.APPROVED)
+        qs = super().get_queryset(request).filter(approval_status__in=[ApprovalStatus.APPROVED, ApprovalStatus.PENDING])
         if _is_platform_admin(request.user):
             return qs
         return qs.none()

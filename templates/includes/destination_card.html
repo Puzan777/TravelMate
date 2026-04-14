@@ -1,25 +1,22 @@
 <a href="{% url 'destination_detail' item.id %}" style="text-decoration:none; display:block; height:100%;">
-  <div class="tm-dest-card" style="border:none; height:100%; min-height:400px;">
-    <div class="tm-dest-img-wrap" style="position:relative; height:400px;">
+  <div class="tm-dest-card" style="border:none; height:100%; min-height:400px; border-radius:24px; overflow:hidden;">
+    <div class="tm-dest-img-wrap" style="position:relative; height:400px; border-radius:24px; overflow:hidden;">
       {% if item.display_image %}
       <img src="{{ item.display_image.url }}" class="tm-dest-img" alt="{{ item.name }}" style="height:100%; width:100%; object-fit:cover;">
       {% else %}
       <div class="tm-dest-img" style="height:100%; background:linear-gradient(135deg,var(--tm-ocean),var(--tm-ocean-dark));"></div>
       {% endif %}
       
-      {# Refined Gradient for Premium Magazine Aesthetic #}
-      <div style="position:absolute; inset:0; background:linear-gradient(to top, rgba(15,23,42,0.9) 0%, rgba(15,23,42,0.4) 40%, transparent 70%); border-radius:16px;"></div>
+      {# Deep dark gradient matching reference image #}
+      <div style="position:absolute; inset:0; background:linear-gradient(to top, rgba(26,30,38,0.95) 0%, rgba(26,30,38,0.6) 35%, transparent 70%);"></div>
       
-      <div style="position:absolute; bottom:24px; left:24px; right:24px; color:#fff; z-index:2;">
-        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-          <span style="background:rgba(255,255,255,0.2); backdrop-filter:blur(4px); padding:4px 10px; border-radius:99px; font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; border:1px solid rgba(255,255,255,0.2);">
-            {{ item.packages.count }} Package{{ item.packages.count|pluralize }}
-          </span>
+      <div style="position:absolute; bottom:28px; left:24px; right:24px; color:#fff; z-index:2; text-align:left;">
+        <h4 style="font-size:2.2rem; margin:0 0 8px; font-family:'Inter', sans-serif; font-weight:800; letter-spacing:-0.03em; line-height:1.1;">
+          <i class="bi bi-geo-alt" style="font-size: 1.6rem; vertical-align: middle; margin-right: 4px;"></i>{{ item.name }}
+        </h4>
+        <div style="font-size:0.95rem; opacity:0.85; font-weight:500;">
+          {{ item.packages.count }} packages &bull; {{ item.activities.count }} activities
         </div>
-        <h4 style="font-size:1.6rem; margin:0 0 4px; font-family:'Fraunces',serif; font-weight:800; letter-spacing:-0.01em; line-height:1.1;">{{ item.name }}</h4>
-        {% if item.short_description %}
-        <p style="font-size:0.88rem; opacity:0.85; margin:0; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; font-weight:400; line-height:1.5;">{{ item.short_description }}</p>
-        {% endif %}
       </div>
     </div>
   </div>

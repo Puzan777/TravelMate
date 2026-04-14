@@ -31,6 +31,7 @@ urlpatterns = [
     path('vendors/', views.vendor_showcase, name='vendor_showcase'),
 
     # Packages
+    path('packages/', views.package_list, name='packages_all'),
     path('packages/standard/', views.package_list, {'category': 'STANDARD'}, name='packages_standard'),
     path('packages/luxury/', views.package_list, {'category': 'LUXURY'}, name='packages_luxury'),
     path('packages/trekking/', views.package_list, {'category': 'TREKKING'}, name='packages_trekking'),
