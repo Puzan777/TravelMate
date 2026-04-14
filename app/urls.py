@@ -1,13 +1,16 @@
 from . import views
 from django.urls import path
 from django.views.generic.base import RedirectView
-from .views import signup_view, login_view, logout_view, destination_list
+from .views import signup_view, login_view, logout_view, destination_list, forgot_password, verify_reset_otp, reset_password
 
 urlpatterns = [
     # path("", RedirectView.as_view(pattern_name='login', permanent=False), name='root'),
     path("signup/", signup_view, name="signup"),
     path("login/", login_view, name="login"),
     path("logout/", logout_view, name="logout"),
+    path("forgot-password/", forgot_password, name="forgot_password"),
+    path("verify-reset-otp/", verify_reset_otp, name="verify_reset_otp"),
+    path("reset-password/", reset_password, name="reset_password"),
     path('profile/', views.profile_view, name='profile'),
     path("", views.home, name='home'),
 

@@ -542,6 +542,114 @@ def logout_view(request):
     return redirect("login")
 
 
+def forgot_password(request):
+    if request.method == 'POST':
+        email = request.POST.get('email', '').strip()
+        if not email:
+            messages.error(request, 'Please enter your email address.')
+            return render(request, 'forgot_password.html')
+
+        try:
+            user = CustomUser.objects.get(email=email)
+        except CustomUser.DoesNotExist:
+            messages.error(request, 'No account found with that email address.')
+            return render(request, 'forgot_password.html', {'email_value': email})
+
+        import random
+        otp = str(random.randint(100000, 999999))
+
+        # Store OTP and email in session
+        request.session['reset_otp'] = otp
+        request.session['reset_email'] = email
+        request.session['reset_otp_created'] = timezone.now().isoformat()
+
+        try:
+            send_mail(
+                subject='TravelMate — Password Reset Code',
+                message=f'Your password reset verification code is: {otp}\n\nThis code will expire in 10 minutes.\n\nIf you did not request this, please ignore this email.',
+                from_email=settings.EMAIL_HOST_USER,
+                recipient_list=[email],
+                fail_silently=False,
+            )
+            messages.success(request, 'A 6-digit verification code has been sent to your email.')
+            return redirect('verify_reset_otp')
+        except Exception:
+            messages.error(request, 'Failed to send email. Please try again later.')
+            return render(request, 'forgot_password.html', {'email_value': email})
+
+    return render(request, 'forgot_password.html')
+
+
+def verify_reset_otp(request):
+    reset_email = request.session.get('reset_email')
+    if not reset_email:
+        messages.error(request, 'Please start the password reset process first.')
+        return redirect('forgot_password')
+
+    if request.method == 'POST':
+        entered_otp = request.POST.get('otp', '').strip()
+        stored_otp = request.session.get('reset_otp')
+        created_str = request.session.get('reset_otp_created')
+
+        if not stored_otp or not created_str:
+            messages.error(request, 'Session expired. Please request a new code.')
+            return redirect('forgot_password')
+
+        from datetime import datetime, timedelta
+        from django.utils.dateparse import parse_datetime
+        created_at = parse_datetime(created_str)
+        if created_at and timezone.now() - created_at > timedelta(minutes=10):
+            for key in ('reset_otp', 'reset_email', 'reset_otp_created'):
+                request.session.pop(key, None)
+            messages.error(request, 'Verification code has expired. Please request a new one.')
+            return redirect('forgot_password')
+
+        if entered_otp == stored_otp:
+            request.session['otp_verified'] = True
+            return redirect('reset_password')
+        else:
+            messages.error(request, 'Invalid verification code. Please try again.')
+
+    masked_email = reset_email[:3] + '***' + reset_email[reset_email.index('@'):]
+    return render(request, 'verify_reset_otp.html', {'masked_email': masked_email})
+
+
+def reset_password(request):
+    if not request.session.get('otp_verified'):
+        messages.error(request, 'Please verify your code first.')
+        return redirect('forgot_password')
+
+    reset_email = request.session.get('reset_email')
+    if not reset_email:
+        return redirect('forgot_password')
+
+    if request.method == 'POST':
+        password1 = request.POST.get('password1', '')
+        password2 = request.POST.get('password2', '')
+
+        if not password1 or not password2:
+            messages.error(request, 'Please fill in both password fields.')
+        elif password1 != password2:
+            messages.error(request, 'Passwords do not match.')
+        elif len(password1) < 8:
+            messages.error(request, 'Password must be at least 8 characters long.')
+        else:
+            try:
+                user = CustomUser.objects.get(email=reset_email)
+                user.set_password(password1)
+                user.save()
+                # Clean up session
+                for key in ('reset_otp', 'reset_email', 'reset_otp_created', 'otp_verified'):
+                    request.session.pop(key, None)
+                messages.success(request, 'Password reset successfully! You can now log in with your new password.')
+                return redirect('login')
+            except CustomUser.DoesNotExist:
+                messages.error(request, 'Account not found. Please try again.')
+                return redirect('forgot_password')
+
+    return render(request, 'reset_password.html')
+
+
 
 def home(request):
     from vendor.models import VendorProfile
