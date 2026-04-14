@@ -1,6 +1,7 @@
 {% extends "base.html" %}{% load static %}
 
 {% block title %}TravelMate — Discover Tours, Activities & Destinations{% endblock %}
+{% block nav_class %}{% endblock %}
 
 {% block extrastyle %}
 <style>
@@ -182,45 +183,8 @@
     {% if featured_packages %}
     <div class="row g-4">
       {% for package in featured_packages %}
-      <div class="col-sm-6 col-lg-3">
-        <div class="tm-card">
-          <div class="tm-card-img-wrap">
-            {% if can_toggle_favorites %}
-            <form method="post" action="{% url 'toggle_favorite_package' package.slug %}">
-              {% csrf_token %}
-              <input type="hidden" name="next" value="{{ request.get_full_path }}">
-              <button type="submit" class="tm-fav-btn{% if package.id in favorite_package_ids %} is-fav{% endif %}" aria-label="Toggle favorite">
-                {% if package.id in favorite_package_ids %}&#10084;{% else %}&#9825;{% endif %}
-              </button>
-            </form>
-            {% elif not user.is_authenticated %}
-            <a href="{% url 'login' %}" class="tm-fav-btn" aria-label="Login to favorite">&#9825;</a>
-            {% endif %}
-            {% if package.image %}
-            <img src="{{ package.image.url }}" class="tm-card-img" alt="{{ package.title }}">
-            {% else %}
-            <div class="tm-card-img" style="background: var(--tm-ocean-light);"></div>
-            {% endif %}
-          </div>
-          <div class="tm-card-body">
-            <span class="tm-card-category">{{ package.get_category_display }}</span>
-            <h3 class="tm-card-title line-clamp-2">{{ package.title }}</h3>
-            <div class="tm-card-vendor"><i class="bi bi-shop"></i> {{ package.vendor.company_name }}</div>
-            {% if package.destination %}
-            <div style="font-size:.78rem; color:var(--tm-text-muted); margin-bottom:6px;"><i class="bi bi-geo-alt-fill" style="color:var(--tm-accent);"></i> {{ package.destination.name }}{% if package.city %}, {{ package.city }}{% endif %}</div>
-            {% endif %}
-            <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-              <span class="tm-stars" style="--rating: {{ package.rating|floatformat:1 }};" aria-hidden="true"></span>
-              <span style="font-size:.78rem; color:var(--tm-text-muted);">{{ package.rating|floatformat:1 }}</span>
-            </div>
-            <div class="tm-card-price">Rs {{ package.price|floatformat:0 }} <small>/person</small></div>
-            <div class="tm-card-meta">
-              <span><i class="bi bi-clock"></i> {{ package.duration }}</span>
-              {% if package.max_people %}<span><i class="bi bi-people"></i> Max {{ package.max_people }}</span>{% endif %}
-            </div>
-            <a href="{{ package.get_absolute_url }}" class="tm-card-btn mt-3">View Details <i class="bi bi-arrow-right"></i></a>
-          </div>
-        </div>
+      <div class="col-sm-6 col-md-6 col-lg-4">
+        {% include 'includes/package_card.html' with item=package %}
       </div>
       {% endfor %}
     </div>
@@ -286,47 +250,8 @@
     {% if featured_activities %}
     <div class="row g-4">
       {% for activity in featured_activities %}
-      <div class="col-sm-6 col-lg-3">
-        <div class="tm-card">
-          <div class="tm-card-img-wrap">
-            {% if can_toggle_favorites %}
-            <form method="post" action="{% url 'toggle_favorite_activity' activity.pk %}">
-              {% csrf_token %}
-              <input type="hidden" name="next" value="{{ request.get_full_path }}">
-              <button type="submit" class="tm-fav-btn{% if activity.id in favorite_activity_ids %} is-fav{% endif %}" aria-label="Toggle favorite">
-                {% if activity.id in favorite_activity_ids %}&#10084;{% else %}&#9825;{% endif %}
-              </button>
-            </form>
-            {% elif not user.is_authenticated %}
-            <a href="{% url 'login' %}" class="tm-fav-btn" aria-label="Login to favorite">&#9825;</a>
-            {% endif %}
-            {% with primary_img=activity.images.first %}
-            {% if primary_img %}
-            <img src="{{ primary_img.image.url }}" class="tm-card-img" alt="{{ activity.name }}">
-            {% else %}
-            <div class="tm-card-img" style="background: linear-gradient(135deg, var(--tm-ocean-light), #dbeafe);"></div>
-            {% endif %}
-            {% endwith %}
-          </div>
-          <div class="tm-card-body">
-            <div style="display:flex; gap:6px; flex-wrap:wrap;">
-              <span class="tm-card-category">{{ activity.category.name }}</span>
-              <span class="tm-card-category" style="background:#FFFBEB; color:#D97706;">{{ activity.get_difficulty_level_display }}</span>
-            </div>
-            <h3 class="tm-card-title line-clamp-2">{{ activity.name }}</h3>
-            <div class="tm-card-vendor"><i class="bi bi-shop"></i> {{ activity.vendor.company_name }}</div>
-            <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-              <span class="tm-stars" style="--rating: {{ activity.rating|floatformat:1 }};" aria-hidden="true"></span>
-              <span style="font-size:.78rem; color:var(--tm-text-muted);">{{ activity.rating|floatformat:1 }}</span>
-            </div>
-            <div class="tm-card-price">Rs {{ activity.price|floatformat:0 }} <small>/person</small></div>
-            <div class="tm-card-meta">
-              <span><i class="bi bi-clock"></i> {{ activity.duration }}</span>
-              {% if activity.max_group_size %}<span><i class="bi bi-people"></i> Max {{ activity.max_group_size }}</span>{% endif %}
-            </div>
-            <a href="{% url 'activity_detail' activity.pk %}" class="tm-card-btn mt-3">View Details <i class="bi bi-arrow-right"></i></a>
-          </div>
-        </div>
+      <div class="col-sm-6 col-md-6 col-lg-4">
+        {% include 'includes/activity_card.html' with item=activity %}
       </div>
       {% endfor %}
     </div>
@@ -351,22 +276,7 @@
     <div class="row g-4">
       {% for destination in featured_destinations %}
       <div class="col-sm-6 col-lg-3">
-        <a href="{% url 'destination_detail' destination.id %}" style="text-decoration:none;">
-          <div class="tm-card" style="border:none;">
-            <div class="tm-card-img-wrap" style="position:relative;">
-              {% if destination.display_image %}
-              <img src="{{ destination.display_image.url }}" class="tm-card-img" alt="{{ destination.name }}" style="height:260px;">
-              {% else %}
-              <div class="tm-card-img" style="height:260px; background: linear-gradient(135deg, var(--tm-ocean), var(--tm-ocean-dark));"></div>
-              {% endif %}
-              <div style="position:absolute; inset:0; background: linear-gradient(0deg, rgba(0,0,0,.6) 0%, transparent 60%); border-radius: 0 0 var(--tm-radius) var(--tm-radius);"></div>
-              <div style="position:absolute; bottom:16px; left:20px; right:20px; color:#fff; z-index:2;">
-                <h4 style="font-size:1.2rem; margin:0 0 4px; font-family:'Fraunces',serif;">{{ destination.name }}</h4>
-                <span style="font-size:.82rem; opacity:.8;">{{ destination.packages.count }} package{{ destination.packages.count|pluralize }}</span>
-              </div>
-            </div>
-          </div>
-        </a>
+        {% include 'includes/destination_card.html' with item=destination %}
       </div>
       {% empty %}
       <p class="text-center col-12" style="color:var(--tm-text-muted);">No destinations available yet.</p>

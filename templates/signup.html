@@ -1,57 +1,182 @@
-{% extends "base.html" %}
+{% extends "base.html" %}{% load static %}
 {% block title %}Signup{% endblock %}
+{% block nav_class %}{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-  <div class="row justify-content-center">
-    <div class="col-md-5">
-      <div class="card shadow">
-        <div class="card-body p-4">
-          <h3 class="text-center mb-4">Create Account</h3>
+<style>
+/* Background wrapper */
+body { background: #0f172a; } /* fallback */
+.auth-page-wrapper {
+  background: linear-gradient(rgba(26, 30, 38, 0.7), rgba(26, 30, 38, 0.7)), url('{% static "image/login.jpg" %}') center/cover no-repeat fixed;
+  min-height: 100vh;
+  padding-top: 100px; /* Accounts for navbar */
+  padding-bottom: 60px;
+  display: flex;
+  align-items: center;
+  color: white;
+}
 
-          {% if form.errors %}
-            <div class="alert alert-danger">
-              Please fix the errors below.
-            </div>
-          {% endif %}
+.main-card {
+  background-color: transparent;
+  border-radius: 30px;
+  overflow: hidden;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+  max-width: 960px;
+  margin: 0 auto;
+}
 
-          <form method="POST">
-            {% csrf_token %}
+.hero-section {
+  padding: 60px 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  /* subtle darkening for readability */
+  background: rgba(0,0,0,0.15);
+}
 
-            <div class="mb-3">
-              <label class="form-label">Username</label>
+.hero-title {
+  font-weight: 800;
+  font-size: 2.5rem;
+  line-height: 1.2;
+}
+.hero-title span { color: #0ea5e9; }
+
+.form-section {
+  padding: 40px 50px;
+  backdrop-filter: brightness(60%) blur(8px);
+  -webkit-backdrop-filter: brightness(60%) blur(8px);
+}
+
+.form-right-title { font-size: 2rem; font-weight: 700; margin-bottom: 30px; line-height:1.2; }
+.form-right-title span { color: #0ea5e9; }
+
+.auth-form-label { font-size: 0.85rem; color: #a0a5b1; margin-bottom: 6px; display:block; }
+.auth-input-group {
+  display: flex;
+  background-color: #2c3440;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+.auth-input-group input {
+  background-color: transparent;
+  border: none;
+  color: white;
+  padding: 12px 18px;
+  flex: 1;
+  outline: none;
+  font-size: 0.95rem;
+}
+.auth-input-group input:focus { box-shadow: inset 0 0 0 2px #0ea5e9; }
+.auth-input-group .input-icon {
+  background-color: transparent;
+  color: #a0a5b1;
+  padding: 12px 18px;
+  display: flex;
+  align-items: center;
+}
+
+.auth-btn {
+  background-color: #0ea5e9;
+  color: white;
+  border: none;
+  border-radius: 999px;
+  padding: 14px;
+  font-weight: bold;
+  font-size: 1.05rem;
+  width: 100%;
+  transition: 0.3s;
+  margin-top: 10px;
+}
+.auth-btn:hover { background-color: #0284c7; }
+
+.auth-footer { text-align: right; font-size: 0.9rem; margin-top: 24px; color: #a0a5b1; }
+.auth-footer a { color: #0ea5e9; text-decoration: none; font-weight:600; }
+.auth-footer a:hover { text-decoration: underline; }
+</style>
+
+<div class="auth-page-wrapper">
+  <div class="container">
+    <div class="row main-card align-items-stretch">
+      <div class="col-lg-6 hero-section d-none d-lg-flex">
+        <p class="mb-2 text-uppercase fw-bold" style="letter-spacing: 2px; color: #cbd5e1; font-size:0.85rem;">Join For Free</p>
+        <h1 class="hero-title mb-4">
+          Unleash the traveler <br>
+          <span>inside YOU</span>,<br> Enjoy your Dream Vacation
+        </h1>
+        <p class="mb-0" style="font-size: 1.05rem; max-width: 450px; color: #94a3b8; line-height:1.6;">
+          Get started with the easiest and most secure platform to book travel experiences across Nepal.
+        </p>
+      </div>
+
+      <div class="col-lg-6 form-section">
+        <h2 class="form-right-title">
+          Create <br />
+          new account<span>.</span>
+        </h2>
+
+        {% if form.errors and not form.non_field_errors %}
+          <div style="background:rgba(239,68,68,0.1); color:#ef4444; padding:10px 14px; border-radius:8px; margin-bottom:16px; font-size:0.9rem;">
+            Please fix the errors below to continue.
+          </div>
+        {% endif %}
+
+        {% if form.non_field_errors %}
+          <div style="background:rgba(239,68,68,0.1); color:#ef4444; padding:10px 14px; border-radius:8px; margin-bottom:16px; font-size:0.9rem;">
+            {{ form.non_field_errors }}
+          </div>
+        {% endif %}
+
+        <form method="POST" novalidate>
+          {% csrf_token %}
+          
+          <div class="mb-3">
+            <label class="auth-form-label">Username</label>
+            <div class="auth-input-group">
               {{ form.username }}
-              <div class="text-danger small">{{ form.username.errors }}</div>
+              <span class="input-icon"><i class="bi bi-person"></i></span>
             </div>
+            <div class="text-danger small" style="color:#ef4444 !important;">{{ form.username.errors }}</div>
+          </div>
 
-            <div class="mb-3">
-              <label class="form-label">Email</label>
+          <div class="mb-3">
+            <label class="auth-form-label">Email Address</label>
+            <div class="auth-input-group">
               {{ form.email }}
-              <div class="text-danger small">{{ form.email.errors }}</div>
+              <span class="input-icon"><i class="bi bi-envelope"></i></span>
+            </div>
+            <div class="text-danger small" style="color:#ef4444 !important;">{{ form.email.errors }}</div>
+          </div>
+
+          <div class="row">
+            <div class="col-sm-6 mb-3">
+              <label class="auth-form-label">Password</label>
+              <div class="auth-input-group">
+                {{ form.password1 }}
+                <span class="input-icon"><i class="bi bi-eye"></i></span>
+              </div>
+              <div class="text-danger small" style="color:#ef4444 !important;">{{ form.password1.errors }}</div>
             </div>
 
-            <div class="mb-3">
-              <label class="form-label">Password</label>
-              {{ form.password1 }}
-              <div class="text-danger small">{{ form.password1.errors }}</div>
+            <div class="col-sm-6 mb-3">
+              <label class="auth-form-label">Confirm Password</label>
+              <div class="auth-input-group">
+                {{ form.password2 }}
+                <span class="input-icon"><i class="bi bi-check2-circle"></i></span>
+              </div>
+              <div class="text-danger small" style="color:#ef4444 !important;">{{ form.password2.errors }}</div>
             </div>
+          </div>
 
-            <div class="mb-3">
-              <label class="form-label">Confirm Password</label>
-              {{ form.password2 }}
-              <div class="text-danger small">{{ form.password2.errors }}</div>
-            </div>
+          <button class="auth-btn" type="submit">Create Account</button>
+        </form>
 
-            <button class="btn btn-primary w-100" type="submit">Sign Up</button>
-          </form>
-
-          <p class="text-center mt-3">
-            Already have an account? <a href="{% url 'login' %}">Login</a>
-          </p>
+        <div class="auth-footer">
+          Already A Member? <a href="{% url 'login' %}">Log in</a>
         </div>
       </div>
     </div>
   </div>
 </div>
-
 {% endblock %}
+{% block footer %}{% endblock %}
