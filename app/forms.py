@@ -74,7 +74,6 @@ class BookingForm(forms.ModelForm):
             "travel_date",
             "number_of_people",
             "payment_method",
-            "transaction_reference",
             "pickup_location",
             "nationality",
             "emergency_contact",
@@ -86,7 +85,6 @@ class BookingForm(forms.ModelForm):
             "travel_date": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
             "number_of_people": forms.NumberInput(attrs={"class": "form-control", "min": "1", "placeholder": "Number of travelers"}),
             "payment_method": forms.Select(attrs={"class": "form-control"}),
-            "transaction_reference": forms.TextInput(attrs={"class": "form-control", "placeholder": "Transaction/reference ID (required for bank transfer)"}),
             "pickup_location": forms.TextInput(attrs={"class": "form-control", "placeholder": "Pickup location or departure city"}),
             "nationality": forms.TextInput(attrs={"class": "form-control", "placeholder": "Nationality"}),
             "emergency_contact": forms.TextInput(attrs={"class": "form-control", "placeholder": "Emergency contact"}),
@@ -108,16 +106,6 @@ class BookingForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
-        payment_method = cleaned_data.get("payment_method")
-        transaction_reference = (cleaned_data.get("transaction_reference") or "").strip()
-
-        if payment_method == Booking.PaymentMethod.BANK_TRANSFER and not transaction_reference:
-            self.add_error("transaction_reference", "Transaction/reference ID is required for bank transfer payments.")
-
-        if payment_method == Booking.PaymentMethod.CASH:
-            transaction_reference = ""
-
-        cleaned_data["transaction_reference"] = transaction_reference
         return cleaned_data
 
 
@@ -147,7 +135,6 @@ class ActivityBookingForm(forms.ModelForm):
             'travel_date',
             'number_of_people',
             'payment_method',
-            'transaction_reference',
             'pickup_location',
             'nationality',
             'emergency_contact',
@@ -159,7 +146,6 @@ class ActivityBookingForm(forms.ModelForm):
             'travel_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'number_of_people': forms.NumberInput(attrs={'class': 'form-control', 'min': '1', 'placeholder': 'Number of travelers'}),
             'payment_method': forms.Select(attrs={'class': 'form-control'}),
-            'transaction_reference': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Transaction/reference ID (required for bank transfer)'}),
             'pickup_location': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Meet-up location or pickup point'}),
             'nationality': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nationality'}),
             'emergency_contact': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Emergency contact'}),
@@ -185,16 +171,6 @@ class ActivityBookingForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
-        payment_method = cleaned_data.get('payment_method')
-        transaction_reference = (cleaned_data.get('transaction_reference') or '').strip()
-
-        if payment_method == ActivityBooking.PaymentMethod.BANK_TRANSFER and not transaction_reference:
-            self.add_error('transaction_reference', 'Transaction/reference ID is required for bank transfer payments.')
-
-        if payment_method in {ActivityBooking.PaymentMethod.CASH, ActivityBooking.PaymentMethod.ESEWA}:
-            transaction_reference = ''
-
-        cleaned_data['transaction_reference'] = transaction_reference
         return cleaned_data
 
 

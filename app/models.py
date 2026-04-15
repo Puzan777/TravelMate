@@ -471,7 +471,6 @@ class Booking(models.Model):
     class PaymentMethod(models.TextChoices):
         CASH = 'CASH', 'Cash on arrival'
         ESEWA = 'ESEWA', 'eSewa'
-        BANK_TRANSFER = 'BANK_TRANSFER', 'Bank transfer'
 
     class PaymentStatus(models.TextChoices):
         PENDING = 'PENDING', 'Pending'
@@ -541,7 +540,6 @@ class ActivityBooking(models.Model):
     class PaymentMethod(models.TextChoices):
         CASH = 'CASH', 'Cash on arrival'
         ESEWA = 'ESEWA', 'eSewa'
-        BANK_TRANSFER = 'BANK_TRANSFER', 'Bank transfer'
 
     class PaymentStatus(models.TextChoices):
         PENDING = 'PENDING', 'Pending'

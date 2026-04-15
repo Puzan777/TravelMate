@@ -421,53 +421,20 @@
       <div class="ad-trust-item"><i class="bi bi-check-circle-fill"></i> Instant Confirmation</div>
     </div>
 
-    </div>
     {% comment %} Moved Favorite Button to Hero Gallery {% endcomment %}
 
     {% if messages %}{% for message in messages %}<div class="alert alert-{{ message.tags|default:'info' }} py-2" role="alert" style="font-size:.85rem; border-radius:var(--tm-radius);">{{ message }}</div>{% endfor %}{% endif %}
 
     {% if can_book_activity %}
-    <button class="ad-book-btn primary" type="button" data-bs-toggle="collapse" data-bs-target="#adBookingBox" aria-expanded="{% if booking_form.errors %}true{% else %}false{% endif %}">
+    <button class="ad-book-btn primary" type="button" data-bs-toggle="modal" data-bs-target="#bookingModal">
       <i class="bi bi-calendar-check"></i> Book Now
     </button>
-    <div id="adBookingBox" class="collapse{% if booking_form.errors %} show{% endif %}">
-      <div class="ad-form-panel">
-        <form method="post" class="d-grid gap-2">
-          {% csrf_token %}
-          <input type="hidden" name="form_type" value="booking">
-          {% if hot_sale_context %}<input type="hidden" name="hot_sale" value="1">{% endif %}
-          <div><label class="form-label mb-1">Full name</label>{{ booking_form.full_name }}{% if booking_form.full_name.errors %}<div class="text-danger small">{{ booking_form.full_name.errors|striptags }}</div>{% endif %}</div>
-          <div><label class="form-label mb-1">Email</label>{{ booking_form.email }}{% if booking_form.email.errors %}<div class="text-danger small">{{ booking_form.email.errors|striptags }}</div>{% endif %}</div>
-          <div><label class="form-label mb-1">Phone</label>{{ booking_form.phone }}{% if booking_form.phone.errors %}<div class="text-danger small">{{ booking_form.phone.errors|striptags }}</div>{% endif %}</div>
-          <div>
-            <label class="form-label mb-1">Activity date</label>{{ booking_form.travel_date }}
-            {% if blocked_dates %}
-            <div class="small text-muted mt-1">Unavailable dates:</div>
-            <div style="display:flex; flex-wrap:wrap; gap:4px; margin-top:4px;">
-              {% for blocked in blocked_dates|slice:":8" %}<span style="display:inline-block; padding:2px 8px; border-radius:999px; background:#fff2f2; border:1px solid #f3c2c2; color:#8f2f2f; font-size:.72rem; font-weight:600;">{{ blocked.date|date:"M d" }}</span>{% endfor %}
-            </div>
-            <div id="adBlockedWarn" style="display:none; margin-top:4px; font-size:.78rem; color:#b42318;">This date is unavailable.</div>
-            {% endif %}
-            {% if booking_form.travel_date.errors %}<div class="text-danger small">{{ booking_form.travel_date.errors|striptags }}</div>{% endif %}
-          </div>
-          <div><label class="form-label mb-1">Number of people</label>{{ booking_form.number_of_people }}{% if booking_form.number_of_people.errors %}<div class="text-danger small">{{ booking_form.number_of_people.errors|striptags }}</div>{% endif %}</div>
-          <div class="small text-muted">Estimated total: Rs <span id="adEstTotal">{{ booking_unit_price }}</span></div>
-          <div><label class="form-label mb-1">Payment method</label>{{ booking_form.payment_method }}{% if booking_form.payment_method.errors %}<div class="text-danger small">{{ booking_form.payment_method.errors|striptags }}</div>{% endif %}</div>
-          <div id="adTxnField"><label class="form-label mb-1">Transaction ID <span id="adTxnHint" class="text-muted">(required for bank transfer)</span></label>{{ booking_form.transaction_reference }}{% if booking_form.transaction_reference.errors %}<div class="text-danger small">{{ booking_form.transaction_reference.errors|striptags }}</div>{% endif %}</div>
-          {% if user.is_authenticated %}
-          <button type="submit" class="ad-book-btn primary" style="margin:0;">Submit Booking</button>
-          {% else %}
-          <a href="{% url 'login' %}" class="ad-book-btn outline" style="text-align:center;">Login to Book</a>
-          {% endif %}
-        </form>
-      </div>
-    </div>
     {% elif user.is_authenticated %}
     <button class="ad-book-btn primary" disabled style="opacity:.5; cursor:not-allowed;">Book This Activity</button>
     <div style="background:var(--tm-ocean-light); border-radius:var(--tm-radius); padding:10px 14px; font-size:.82rem; color:var(--tm-ocean-dark); margin-top:8px;">Only customers can book activities.</div>
     {% endif %}
-  </div>
-</div>
+  </div> <!-- /ad-book-card -->
+</div> <!-- /col-lg-4 -->
 
 </div><!-- /row -->
 
@@ -490,6 +457,106 @@
 
 </div><!-- /container -->
 </section>
+
+<!-- ===== BOOKING MODAL ===== -->
+{% if can_book_activity %}
+<div class="modal fade" id="bookingModal" tabindex="-1" aria-labelledby="bookingModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content" style="border-radius:16px; border:none; box-shadow:0 20px 40px rgba(0,0,0,.15);">
+      <div class="modal-header" style="background:var(--tm-ocean); color:#fff; border-radius:16px 16px 0 0; padding:20px 24px; border-bottom:none;">
+        <h5 class="modal-title" id="bookingModalLabel" style="font-weight:700; display:flex; align-items:center; gap:10px;"><i class="bi bi-calendar2-check-fill"></i> Book This Activity</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" style="padding:28px 24px;">
+        <p class="text-muted mb-4" style="font-size:0.95rem;">You are requesting to book <strong>{{ activity.name }}</strong>. Please fill in your travel details below.</p>
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="form_type" value="booking">
+          {% if hot_sale_context %}<input type="hidden" name="hot_sale" value="1">{% endif %}
+
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label mb-1" style="font-size:0.85rem; font-weight:600; color:var(--tm-text);"><i class="bi bi-person" style="color:var(--tm-ocean); margin-right:4px;"></i> Full name</label>
+              {{ booking_form.full_name }}
+              {% if booking_form.full_name.errors %}<div class="text-danger small mt-1">{{ booking_form.full_name.errors|striptags }}</div>{% endif %}
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label mb-1" style="font-size:0.85rem; font-weight:600; color:var(--tm-text);"><i class="bi bi-envelope" style="color:var(--tm-ocean); margin-right:4px;"></i> Email address</label>
+              {{ booking_form.email }}
+              {% if booking_form.email.errors %}<div class="text-danger small mt-1">{{ booking_form.email.errors|striptags }}</div>{% endif %}
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label mb-1" style="font-size:0.85rem; font-weight:600; color:var(--tm-text);"><i class="bi bi-telephone" style="color:var(--tm-ocean); margin-right:4px;"></i> Phone number</label>
+              {{ booking_form.phone }}
+              {% if booking_form.phone.errors %}<div class="text-danger small mt-1">{{ booking_form.phone.errors|striptags }}</div>{% endif %}
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label mb-1" style="font-size:0.85rem; font-weight:600; color:var(--tm-text);"><i class="bi bi-calendar-check" style="color:var(--tm-ocean); margin-right:4px;"></i> Choose activity date</label>
+              {{ booking_form.travel_date }}
+              {% if blocked_dates %}
+              <div class="small text-muted mt-2">Unavailable dates:</div>
+              <div style="display:flex; flex-wrap:wrap; gap:4px; margin-top:4px;">
+                {% for blocked in blocked_dates|slice:":8" %}<span style="display:inline-block; padding:2px 8px; border-radius:999px; background:#fff2f2; border:1px solid #f3c2c2; color:#8f2f2f; font-size:.72rem; font-weight:600;">{{ blocked.date|date:"M d" }}</span>{% endfor %}
+              </div>
+              <div id="adBlockedWarn" style="display:none; margin-top:4px; font-size:.78rem; color:#b42318;">This date is unavailable.</div>
+              {% endif %}
+              {% if booking_form.travel_date.errors %}<div class="text-danger small mt-1">{{ booking_form.travel_date.errors|striptags }}</div>{% endif %}
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label mb-1" style="font-size:0.85rem; font-weight:600; color:var(--tm-text);"><i class="bi bi-people" style="color:var(--tm-ocean); margin-right:4px;"></i> Number of people</label>
+              {{ booking_form.number_of_people }}
+              {% if booking_form.number_of_people.errors %}<div class="text-danger small mt-1">{{ booking_form.number_of_people.errors|striptags }}</div>{% endif %}
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label mb-1" style="font-size:0.85rem; font-weight:600; color:var(--tm-text);"><i class="bi bi-credit-card" style="color:var(--tm-ocean); margin-right:4px;"></i> Payment method</label>
+              {{ booking_form.payment_method }}
+              {% if booking_form.payment_method.errors %}<div class="text-danger small mt-1">{{ booking_form.payment_method.errors|striptags }}</div>{% endif %}
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label mb-1" style="font-size:0.85rem; font-weight:600; color:var(--tm-text);"><i class="bi bi-geo-alt" style="color:var(--tm-ocean); margin-right:4px;"></i> Pickup location <span class="text-muted" style="font-weight:400; font-size:0.75rem;">(optional)</span></label>
+              {{ booking_form.pickup_location }}
+              {% if booking_form.pickup_location.errors %}<div class="text-danger small mt-1">{{ booking_form.pickup_location.errors|striptags }}</div>{% endif %}
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label mb-1" style="font-size:0.85rem; font-weight:600; color:var(--tm-text);">Nationality</label>
+              {{ booking_form.nationality }}
+              {% if booking_form.nationality.errors %}<div class="text-danger small mt-1">{{ booking_form.nationality.errors|striptags }}</div>{% endif %}
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label mb-1" style="font-size:0.85rem; font-weight:600; color:var(--tm-text);">Emergency contact</label>
+              {{ booking_form.emergency_contact }}
+              {% if booking_form.emergency_contact.errors %}<div class="text-danger small mt-1">{{ booking_form.emergency_contact.errors|striptags }}</div>{% endif %}
+            </div>
+
+            <div class="col-12 mt-4">
+              <div class="p-4 text-center" style="background:#f8fafc; border-radius:12px; border:1px dashed #cbd5e1; margin-bottom: 24px;">
+                <span class="text-muted d-block mb-1" style="font-size:0.9rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em;">Estimated Total</span>
+                <span style="font-size:1.8rem; font-weight:800; color:var(--tm-ocean-dark);">Rs <span id="adEstTotal">{{ booking_unit_price }}</span></span>
+              </div>
+            </div>
+
+            <div class="col-12 mt-0">
+              {% if user.is_authenticated %}
+              <button type="submit" class="ad-book-btn primary" style="margin:0; width:100%; padding: 14px; font-size:1.05rem;">Confirm & Submit Booking</button>
+              {% else %}
+              <a href="{% url 'login' %}" class="ad-book-btn outline" style="text-align:center; width:100%;">Login to Book</a>
+              {% endif %}
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
 
 <!-- ===== JAVASCRIPT ===== -->
 {{ blocked_dates_iso|json_script:"adBlockedData" }}
@@ -525,9 +592,6 @@ document.addEventListener('DOMContentLoaded', function(){
   // — Booking —
   const pInput = document.getElementById('id_number_of_people');
   const tEl = document.getElementById('adEstTotal');
-  const pmInput = document.getElementById('id_payment_method');
-  const txnInput = document.getElementById('id_transaction_reference');
-  const txnHint = document.getElementById('adTxnHint');
   const dateInput = document.getElementById('id_travel_date');
   const blockedWarn = document.getElementById('adBlockedWarn');
   const unitPrice = parseFloat('{{ booking_unit_price|default:"0" }}');
@@ -540,11 +604,17 @@ document.addEventListener('DOMContentLoaded', function(){
   if(pInput) pInput.addEventListener('input', calcTotal);
   calcTotal();
 
-  function syncTxn(){ if(!pmInput||!txnHint||!txnInput) return; if(pmInput.value==='BANK_TRANSFER'){txnHint.textContent='(required)';txnInput.required=true;} else if(pmInput.value==='ESEWA'){txnHint.textContent='(auto-filled after eSewa)';txnInput.required=false;} else{txnHint.textContent='(optional)';txnInput.required=false;} }
-  if(pmInput){ pmInput.addEventListener('change',syncTxn); syncTxn(); }
-
   function syncDate(){ if(!dateInput) return; const isB=dateInput.value&&blocked.has(dateInput.value); dateInput.setCustomValidity(isB?'Unavailable':''); if(blockedWarn) blockedWarn.style.display=isB?'block':'none'; }
   if(dateInput){ dateInput.addEventListener('change',syncDate); dateInput.addEventListener('input',syncDate); syncDate(); }
+
+  // Auto-open modal if there are booking form errors
+  {% if booking_form.errors %}
+  const bookingModalEl = document.getElementById('bookingModal');
+  if (bookingModalEl) {
+    const bookingModal = new bootstrap.Modal(bookingModalEl);
+    bookingModal.show();
+  }
+  {% endif %}
 });
 </script>
 {% endblock %}
