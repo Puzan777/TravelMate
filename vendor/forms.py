@@ -27,6 +27,10 @@ class VendorRegistrationForm(UserCreationForm):
     address = forms.CharField(required=False, max_length=255)
     account_holder_name = forms.CharField(required=True, max_length=150)
     mobile_payment_number = forms.CharField(required=True, max_length=20)
+    terms_accepted = forms.BooleanField(
+        required=True,
+        error_messages={'required': 'You must agree to the Terms & Conditions.'}
+    )
 
     class Meta:
         model = CustomUser
@@ -59,8 +63,11 @@ class VendorRegistrationForm(UserCreationForm):
         self.fields['account_holder_name'].widget.attrs.update({'placeholder': 'Account holder name'})
         self.fields['mobile_payment_number'].widget.attrs.update({'placeholder': 'eSewa number'})
 
-        for field in self.fields.values():
-            field.widget.attrs['class'] = 'form-control'
+        for field_name, field in self.fields.items():
+            if field_name == 'terms_accepted':
+                field.widget.attrs['class'] = 'form-check-input'
+            else:
+                field.widget.attrs['class'] = 'form-control'
 
     def clean_email(self):
         email = (self.cleaned_data.get('email') or '').strip().lower()

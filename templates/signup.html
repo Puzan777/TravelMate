@@ -239,13 +239,57 @@
               <div class="text-danger small" style="color:#ef4444 !important;">{{ form.password2.errors }}</div>
             </div>
           </div>
+          <div class="mb-3 form-check" style="text-align: left; margin-top: 10px;">
+            {{ form.terms_accepted }}
+            <label class="form-check-label" for="{{ form.terms_accepted.id_for_label }}" style="font-size: 0.85rem; color: #475569;">
+              I agree to the <a href="#" data-bs-toggle="modal" data-bs-target="#userTermsModal" style="color:var(--tm-ocean); font-weight:600; text-decoration:none;">Terms &amp; Conditions</a>
+            </label>
+            <div class="text-danger small" style="color:#ef4444 !important;">{{ form.terms_accepted.errors }}</div>
+          </div>
 
-          <button class="auth-btn" type="submit">Create Account</button>
+          <button class="auth-btn" type="submit" style="margin-top: 10px;">Create Account</button>
         </form>
 
         <div class="auth-footer">
           Already A Member? <a href="{% url 'login' %}">Log in</a>
         </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- USER TERMS MODAL -->
+<div class="modal fade" id="userTermsModal" tabindex="-1" aria-labelledby="userTermsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg">
+    <div class="modal-content" style="border-radius:12px; border:none;">
+      <div class="modal-header" style="background:#f8fafc; border-bottom:1px solid #e2e8f0; border-radius:12px 12px 0 0;">
+        <h5 class="modal-title fw-bold" id="userTermsModalLabel" style="color:var(--tm-text);">User Terms &amp; Conditions</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" style="padding:24px; color:#475569; font-size:0.95rem; line-height:1.6;">
+        <h6 class="fw-bold" style="color:var(--tm-text);">Account Responsibility</h6>
+        <p>Users are responsible for maintaining the confidentiality of their login credentials. TravelMate is not liable for unauthorized access to your account.</p>
+        
+        <h6 class="fw-bold mt-4" style="color:var(--tm-text);">Booking &amp; Cancellation</h6>
+        <p>All bookings are subject to vendor availability. Cancellations must be made according to the vendor's cancellation policy. Refunds are processed within 5-7 business days.</p>
+        
+        <h6 class="fw-bold mt-4" style="color:var(--tm-text);">Payment Terms</h6>
+        <p>Payments are processed in USD or local currency. TravelMate charges a service fee on all bookings. No refunds for cancellations made less than 24 hours before the trip.</p>
+        
+        <h6 class="fw-bold mt-4" style="color:var(--tm-text);">User Conduct</h6>
+        <p>Users agree not to harass vendors, post fake reviews, or engage in fraudulent activities. Violation may result in account suspension.</p>
+        
+        <h6 class="fw-bold mt-4" style="color:var(--tm-text);">Liability</h6>
+        <p>TravelMate is not responsible for accidents, injuries, or losses during trips. Vendors are solely responsible for guest safety. Users participate at their own risk.</p>
+        
+        <h6 class="fw-bold mt-4" style="color:var(--tm-text);">Data Privacy</h6>
+        <p>We collect and store personal data for booking purposes only. Your data will not be shared with third parties without consent.</p>
+        
+        <h6 class="fw-bold mt-4" style="color:var(--tm-text);">Dispute Resolution</h6>
+        <p>For disputes, contact support. TravelMate will mediate between users and vendors.</p>
+      </div>
+      <div class="modal-footer" style="border-top:1px solid #e2e8f0;">
+        <button type="button" class="btn btn-primary" data-bs-dismiss="modal" style="background:var(--tm-ocean); border:none; padding:8px 24px; border-radius:999px;">I Understand</button>
       </div>
     </div>
   </div>

@@ -12,6 +12,10 @@ from .models import (
 
 class SignUpForm(UserCreationForm):
     email = forms.EmailField(required=True)
+    terms_accepted = forms.BooleanField(
+        required=True,
+        error_messages={'required': 'You must agree to the Terms & Conditions.'}
+    )
 
     class Meta:
         model = CustomUser
@@ -24,8 +28,11 @@ class SignUpForm(UserCreationForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        for f in self.fields.values():
-            f.widget.attrs["class"] = "form-control"
+        for field_name, f in self.fields.items():
+            if field_name == 'terms_accepted':
+                f.widget.attrs['class'] = 'form-check-input'
+            else:
+                f.widget.attrs['class'] = 'form-control'
 
     def clean_email(self):
         email = (self.cleaned_data.get('email') or '').strip().lower()
