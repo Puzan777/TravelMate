@@ -1,0 +1,90 @@
+{% extends "base.html" %}{% load static %}
+{% block title %}Verify Sign Up{% endblock %}
+{% block navbar %}{% endblock %}
+{% block nav_class %}{% endblock %}
+
+{% block content %}
+<style>
+body { background: #0f172a; }
+.auth-page-wrapper {
+  background: linear-gradient(rgba(26, 30, 38, 0.7), rgba(26, 30, 38, 0.7)), url('{% static "image/login.jpg" %}') center/cover no-repeat fixed;
+  min-height: 100vh;
+  padding: 60px 0;
+  display: flex;
+  align-items: center;
+  color: white;
+  position: relative;
+}
+.back-home-btn {
+  position: absolute; top: 40px; left: 50px;
+  color: rgba(255,255,255,0.8); text-decoration: none; font-weight: 600;
+  display: flex; align-items: center; gap: 8px; font-size: 1.05rem;
+  z-index: 10; transition: all 0.3s;
+}
+.back-home-btn:hover { color: #fff; transform: translateX(-4px); }
+.reset-card {
+  background-color: transparent; border-radius: 30px; overflow: hidden;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.3); max-width: 480px; margin: 0 auto;
+  backdrop-filter: brightness(60%) blur(8px);
+  -webkit-backdrop-filter: brightness(60%) blur(8px);
+  padding: 44px 40px;
+}
+.reset-icon { font-size: 3rem; color: #0ea5e9; margin-bottom: 16px; }
+.reset-title { font-size: 1.8rem; font-weight: 800; margin-bottom: 8px; }
+.reset-subtitle { color: #a0a5b1; font-size: 0.95rem; margin-bottom: 28px; line-height: 1.5; }
+.auth-form-label { font-size: 0.85rem; color: #a0a5b1; margin-bottom: 6px; display:block; }
+.otp-input {
+  background-color: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px; color: white; padding: 14px 16px; font-size: 1.8rem;
+  text-align: center; letter-spacing: 12px; width: 100%; outline: none;
+  font-weight: 700;
+}
+.otp-input:focus { box-shadow: inset 0 0 0 2px #0ea5e9; }
+.auth-btn {
+  background-color: #0ea5e9; color: white; border: none;
+  border-radius: 999px; padding: 12px; font-weight: bold;
+  font-size: 1.05rem; width: 100%; transition: 0.3s; margin-top: 8px;
+}
+.auth-btn:hover { background-color: #0284c7; }
+.auth-footer { text-align: center; font-size: 0.9rem; margin-top: 24px; color: #a0a5b1; }
+.auth-footer a { color: #0ea5e9; text-decoration: none; font-weight: 600; }
+.msg-error { background: rgba(239,68,68,0.1); color: #ef4444; padding: 10px 14px; border-radius: 8px; margin-bottom: 16px; font-size: 0.9rem; }
+.msg-success { background: rgba(16,185,129,0.1); color: #10b981; padding: 10px 14px; border-radius: 8px; margin-bottom: 16px; font-size: 0.9rem; }
+@media(max-width: 768px) {
+  .back-home-btn { top: 20px; left: 20px; }
+  .reset-card { padding: 30px 24px; margin: 0 16px; }
+}
+</style>
+
+<div class="auth-page-wrapper">
+  <a href="{% url 'signup' %}" class="back-home-btn"><i class="bi bi-arrow-left"></i> Change Email</a>
+
+  <div class="container">
+    <div class="reset-card">
+      <div style="text-align:center;">
+        <div class="reset-icon"><i class="bi bi-person-check"></i></div>
+        <h2 class="reset-title">Verify Your Account Creation</h2>
+        <p class="reset-subtitle">We sent a 6-digit code to <strong style="color:white;">{{ masked_email }}</strong>. Enter it below to finish creating your account.</p>
+      </div>
+
+      {% for msg in messages %}
+        <div class="{% if msg.tags == 'error' %}msg-error{% else %}msg-success{% endif %}">{{ msg }}</div>
+      {% endfor %}
+
+      <form method="POST" novalidate>
+        {% csrf_token %}
+        <div class="mb-3" style="text-align:center;">
+          <label class="auth-form-label" style="text-align:center;">Verification Code</label>
+          <input type="text" name="otp" class="otp-input" maxlength="6" placeholder="------" required autocomplete="off">
+        </div>
+        <button class="auth-btn" type="submit">Verify and Create Account</button>
+      </form>
+
+      <div class="auth-footer">
+        Didn't receive it? <a href="{% url 'signup' %}">Resend code</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block footer %}{% endblock %}

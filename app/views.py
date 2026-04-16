@@ -4,22 +4,27 @@ import binascii
 import hashlib
 import hmac
 import json
+import random
 import re
 from functools import wraps
+from datetime import timedelta
 from decimal import Decimal, InvalidOperation
 from urllib.error import URLError
 from urllib.parse import quote, urlencode, urlparse
 from urllib.request import Request, urlopen
 
 from django.conf import settings
+from django.core import signing
 from django.core.exceptions import PermissionDenied
 from django.core.mail import send_mail
+from django.core.signing import BadSignature, SignatureExpired
 from django.http import JsonResponse
 from django.db.models import Q
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout
 from django.contrib import messages
 from django.utils import timezone
+from django.utils.dateparse import parse_datetime
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse
@@ -517,16 +522,139 @@ def _ensure_platform_admin(user):
         raise PermissionDenied
 
 
+SIGNUP_OTP_EXPIRY_MINUTES = 10
+SIGNUP_SESSION_DATA_KEY = 'signup_form_payload'
+SIGNUP_SESSION_OTP_KEY = 'signup_otp'
+SIGNUP_SESSION_OTP_CREATED_KEY = 'signup_otp_created'
+SIGNUP_SESSION_EMAIL_KEY = 'signup_email'
+SIGNUP_SESSION_SIGNING_SALT = 'travelmate.signup.otp'
+
+
+def _clear_signup_otp_session(request):
+    for key in (
+        SIGNUP_SESSION_DATA_KEY,
+        SIGNUP_SESSION_OTP_KEY,
+        SIGNUP_SESSION_OTP_CREATED_KEY,
+        SIGNUP_SESSION_EMAIL_KEY,
+    ):
+        request.session.pop(key, None)
+
+
+def _mask_email_address(email):
+    email = (email or '').strip()
+    if not email or '@' not in email:
+        return email
+    local_part, domain = email.split('@', 1)
+    if len(local_part) <= 3:
+        return f"{local_part}***@{domain}"
+    return f"{local_part[:3]}***@{domain}"
+
+
 def signup_view(request):
     if request.method == "POST":
         form = SignUpForm(request.POST)
         if form.is_valid():
-            user = form.save()      #  password hashed automatically
-            login(request, user)    #  auto login after signup
-            return _redirect_after_login(request, user)
+            signup_payload = {
+                'username': (request.POST.get('username') or '').strip(),
+                'email': form.cleaned_data['email'],
+                'password1': request.POST.get('password1') or '',
+                'password2': request.POST.get('password2') or '',
+                'terms_accepted': request.POST.get('terms_accepted') or 'on',
+            }
+            otp = str(random.randint(100000, 999999))
+
+            request.session[SIGNUP_SESSION_DATA_KEY] = signing.dumps(
+                signup_payload,
+                salt=SIGNUP_SESSION_SIGNING_SALT,
+            )
+            request.session[SIGNUP_SESSION_OTP_KEY] = otp
+            request.session[SIGNUP_SESSION_OTP_CREATED_KEY] = timezone.now().isoformat()
+            request.session[SIGNUP_SESSION_EMAIL_KEY] = form.cleaned_data['email']
+
+            from_email = (
+                getattr(settings, 'DEFAULT_FROM_EMAIL', None)
+                or getattr(settings, 'EMAIL_HOST_USER', None)
+                or 'no-reply@travelmate.local'
+            )
+
+            try:
+                send_mail(
+                    subject='TravelMate - Sign Up Verification Code',
+                    message=(
+                        f'Your account verification code is: {otp}\n\n'
+                        f'This code will expire in {SIGNUP_OTP_EXPIRY_MINUTES} minutes.\n\n'
+                        'If you did not start this signup, please ignore this email.'
+                    ),
+                    from_email=from_email,
+                    recipient_list=[form.cleaned_data['email']],
+                    fail_silently=False,
+                )
+            except Exception:
+                _clear_signup_otp_session(request)
+                messages.error(request, 'Failed to send verification code. Please try again.')
+                return render(request, 'signup.html', {'form': form})
+
+            messages.success(request, 'A 6-digit verification code has been sent to your email.')
+            return redirect('verify_signup_otp')
     else:
         form = SignUpForm()
     return render(request, "signup.html", {"form": form})
+
+
+def verify_signup_otp(request):
+    signup_email = request.session.get(SIGNUP_SESSION_EMAIL_KEY)
+    if not signup_email:
+        messages.error(request, 'Please complete the signup form first.')
+        return redirect('signup')
+
+    if request.method == 'POST':
+        entered_otp = request.POST.get('otp', '').strip()
+        stored_otp = request.session.get(SIGNUP_SESSION_OTP_KEY)
+        created_str = request.session.get(SIGNUP_SESSION_OTP_CREATED_KEY)
+        signed_payload = request.session.get(SIGNUP_SESSION_DATA_KEY)
+
+        if not stored_otp or not created_str or not signed_payload:
+            _clear_signup_otp_session(request)
+            messages.error(request, 'Session expired. Please sign up again.')
+            return redirect('signup')
+
+        created_at = parse_datetime(created_str)
+        if created_at and timezone.now() - created_at > timedelta(minutes=SIGNUP_OTP_EXPIRY_MINUTES):
+            _clear_signup_otp_session(request)
+            messages.error(request, 'Verification code has expired. Please sign up again.')
+            return redirect('signup')
+
+        if entered_otp != stored_otp:
+            messages.error(request, 'Invalid verification code. Please try again.')
+        else:
+            try:
+                signup_payload = signing.loads(
+                    signed_payload,
+                    salt=SIGNUP_SESSION_SIGNING_SALT,
+                    max_age=SIGNUP_OTP_EXPIRY_MINUTES * 60,
+                )
+            except SignatureExpired:
+                _clear_signup_otp_session(request)
+                messages.error(request, 'Verification session expired. Please sign up again.')
+                return redirect('signup')
+            except BadSignature:
+                _clear_signup_otp_session(request)
+                messages.error(request, 'Invalid signup session. Please sign up again.')
+                return redirect('signup')
+
+            form = SignUpForm(signup_payload)
+            if not form.is_valid():
+                _clear_signup_otp_session(request)
+                messages.error(request, 'Signup details became invalid. Please fill the form again.')
+                return redirect('signup')
+
+            user = form.save()
+            login(request, user)
+            _clear_signup_otp_session(request)
+            messages.success(request, 'Your account has been verified and created successfully.')
+            return _redirect_after_login(request, user)
+
+    return render(request, 'verify_signup_otp.html', {'masked_email': _mask_email_address(signup_email)})
 
 
 def login_view(request):
@@ -563,7 +691,6 @@ def forgot_password(request):
             messages.error(request, 'No account found with that email address.')
             return render(request, 'forgot_password.html', {'email_value': email})
 
-        import random
         otp = str(random.randint(100000, 999999))
 
         # Store OTP and email in session
@@ -603,8 +730,6 @@ def verify_reset_otp(request):
             messages.error(request, 'Session expired. Please request a new code.')
             return redirect('forgot_password')
 
-        from datetime import datetime, timedelta
-        from django.utils.dateparse import parse_datetime
         created_at = parse_datetime(created_str)
         if created_at and timezone.now() - created_at > timedelta(minutes=10):
             for key in ('reset_otp', 'reset_email', 'reset_otp_created'):
