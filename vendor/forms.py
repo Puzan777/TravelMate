@@ -9,7 +9,6 @@ from app.models import (
     CustomUser,
     Destination,
     HotSale,
-    Inquiry,
     Package,
     PackageItinerary,
 )
@@ -279,18 +278,14 @@ class VendorActivityForm(forms.ModelForm):
         return cleaned_data
 
 
-class VendorInquiryReplyForm(forms.ModelForm):
-    class Meta:
-        model = Inquiry
-        fields = ('admin_reply',)
-        widgets = {
-            'admin_reply': forms.Textarea(attrs={'rows': 5}),
-        }
+class VendorInquiryReplyForm(forms.Form):
+    message = forms.CharField(
+        label='Reply to customer',
+        widget=forms.Textarea(attrs={'rows': 4, 'class': 'form-control', 'placeholder': 'Type your reply...'}),
+    )
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['admin_reply'].widget.attrs['class'] = 'form-control'
-        self.fields['admin_reply'].label = 'Reply to customer'
+    def clean_message(self):
+        return (self.cleaned_data.get('message') or '').strip()
 
 
 class _UnavailableDateRangeForm(forms.Form):

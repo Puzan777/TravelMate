@@ -697,7 +697,8 @@ def _sync_activity_average_rating(activity_id):
 
 
 class Inquiry(models.Model):
-    package = models.ForeignKey(Package, on_delete=models.CASCADE, related_name='inquiries')
+    package = models.ForeignKey(Package, on_delete=models.CASCADE, related_name='inquiries', null=True, blank=True)
+    activity = models.ForeignKey(Activity, on_delete=models.CASCADE, related_name='inquiries', null=True, blank=True)
     user = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='inquiries')
     full_name = models.CharField(max_length=120)
     email = models.EmailField()
@@ -709,10 +710,21 @@ class Inquiry(models.Model):
 
     class Meta:
         ordering = ['-created_at']
+        constraints = [
+            models.CheckConstraint(
+                check=(
+                    (models.Q(package__isnull=False) & models.Q(activity__isnull=True))
+                    | (models.Q(package__isnull=True) & models.Q(activity__isnull=False))
+                ),
+                name='inquiry_exactly_one_target',
+            ),
+        ]
 
     def clean(self):
         if self.user_id and not _is_customer_account(self.user):
             raise ValidationError({'user': 'Only customers can send inquiries.'})
+        if bool(self.package_id) == bool(self.activity_id):
+            raise ValidationError('Inquiry must reference either a package or an activity.')
 
     def save(self, *args, **kwargs):
         from django.utils import timezone
@@ -727,7 +739,76 @@ class Inquiry(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"Inquiry: {self.package.title} ({self.full_name})"
+        return f"Inquiry: {self.target_name} ({self.customer_name})"
+
+    @property
+    def target_name(self):
+        if self.package_id and self.package:
+            return self.package.title
+        if self.activity_id and self.activity:
+            return self.activity.name
+        return 'Unknown item'
+
+    @property
+    def target_type(self):
+        if self.package_id:
+            return 'Package'
+        if self.activity_id:
+            return 'Activity'
+        return 'Item'
+
+    @property
+    def target_absolute_url(self):
+        if self.package_id and self.package:
+            return self.package.get_absolute_url()
+        if self.activity_id:
+            return reverse('activity_detail', kwargs={'pk': self.activity_id})
+        return '#'
+
+    @property
+    def customer_name(self):
+        if self.user_id and self.user:
+            return self.user.get_full_name() or self.user.username
+        return (self.full_name or '').strip() or 'Customer'
+
+    @property
+    def customer_email(self):
+        if self.user_id and self.user:
+            return (self.user.email or '').strip() or (self.email or '').strip()
+        return (self.email or '').strip()
+
+    @property
+    def customer_phone(self):
+        return (self.phone or '').strip()
+
+    @property
+    def has_vendor_reply(self):
+        return self.messages.filter(sender_role__in=['VENDOR', 'STAFF']).exists() or bool((self.admin_reply or '').strip())
+
+
+class InquiryMessage(models.Model):
+    class SenderRole(models.TextChoices):
+        CUSTOMER = 'CUSTOMER', 'Customer'
+        VENDOR = 'VENDOR', 'Vendor'
+        STAFF = 'STAFF', 'Staff'
+
+    inquiry = models.ForeignKey(Inquiry, on_delete=models.CASCADE, related_name='messages')
+    sender_user = models.ForeignKey(
+        CustomUser,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='inquiry_messages',
+    )
+    sender_role = models.CharField(max_length=20, choices=SenderRole.choices, default=SenderRole.CUSTOMER)
+    message = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at', 'pk']
+
+    def __str__(self):
+        return f"{self.get_sender_role_display()} message on inquiry #{self.inquiry_id}"
 
 
 def _normalize_single_primary(sender, parent_fk_name, parent_id):

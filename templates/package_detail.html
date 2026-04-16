@@ -567,9 +567,6 @@
           <form method="post" class="d-grid gap-2">
             {% csrf_token %}
             <input type="hidden" name="form_type" value="inquiry">
-            <div><label class="form-label mb-1">Full name</label>{{ inquiry_form.full_name }}{% if inquiry_form.full_name.errors %}<div class="text-danger small">{{ inquiry_form.full_name.errors|striptags }}</div>{% endif %}</div>
-            <div><label class="form-label mb-1">Email</label>{{ inquiry_form.email }}{% if inquiry_form.email.errors %}<div class="text-danger small">{{ inquiry_form.email.errors|striptags }}</div>{% endif %}</div>
-            <div><label class="form-label mb-1">Phone (optional)</label>{{ inquiry_form.phone }}{% if inquiry_form.phone.errors %}<div class="text-danger small">{{ inquiry_form.phone.errors|striptags }}</div>{% endif %}</div>
             <div><label class="form-label mb-1">Inquiry message</label>{{ inquiry_form.message }}{% if inquiry_form.message.errors %}<div class="text-danger small">{{ inquiry_form.message.errors|striptags }}</div>{% endif %}</div>
             <button type="submit" class="pd-book-btn primary" style="margin:0;">Send Inquiry</button>
           </form>
@@ -578,6 +575,11 @@
     {% elif user.is_authenticated %}
       <button class="pd-book-btn outline" disabled style="opacity:.5; cursor:not-allowed; margin-top:6px;">Make an Inquiry</button>
       <div style="background:var(--tm-ocean-light); border-radius:var(--tm-radius); padding:10px 14px; font-size:.82rem; color:var(--tm-ocean-dark); margin-top:8px;">Only customers can send inquiries.</div>
+    {% else %}
+      <a href="{% url 'login' %}?next={{ request.path|urlencode }}" class="pd-book-btn outline" style="margin-top:6px; display:inline-block; text-align:center;">
+        <i class="bi bi-box-arrow-in-right"></i> Login to Inquire
+      </a>
+      <div style="background:var(--tm-ocean-light); border-radius:var(--tm-radius); padding:10px 14px; font-size:.82rem; color:var(--tm-ocean-dark); margin-top:8px;">Please login as a customer to send inquiries.</div>
     {% endif %}
   </div>
 </div>
@@ -593,7 +595,7 @@
   </div>
   <div class="row g-4">
     {% for rp in related_packages %}
-    <div class="col-sm-6 col-md-6 col-lg-3">
+    <div class="col-sm-6 col-md-6 col-lg-4">
       {% include 'includes/package_card.html' with item=rp %}
     </div>
     {% endfor %}

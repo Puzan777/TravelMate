@@ -480,7 +480,8 @@
         <table class="table mb-0">
           <thead>
             <tr>
-              <th>Package</th>
+              <th>Item</th>
+              <th>Type</th>
               <th>Customer</th>
               <th>Date</th>
               <th class="text-end">Action</th>
@@ -489,8 +490,9 @@
           <tbody>
             {% for inquiry in recent_inquiries %}
             <tr>
-              <td class="fw-semibold">{{ inquiry.package.title|truncatechars:25 }}</td>
-              <td>{{ inquiry.full_name }}</td>
+              <td class="fw-semibold">{{ inquiry.target_name|truncatechars:25 }}</td>
+              <td><span class="vd-badge vd-badge-info">{{ inquiry.target_type }}</span></td>
+              <td>{{ inquiry.customer_name }}</td>
               <td>{{ inquiry.created_at|date:"M d" }}</td>
               <td class="text-end">
                 <a href="{% url 'vendor:inquiry_reply' inquiry.pk %}" class="vd-btn-outline vd-mini-btn">

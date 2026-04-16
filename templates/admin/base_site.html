@@ -71,18 +71,18 @@
     left: var(--vd-sidebar-w) !important;
     right: 0 !important;
     height: var(--vd-topbar-h) !important;
-    background: var(--vd-white) !important;
-    border-bottom: 1px solid var(--vd-line-soft) !important;
+    background: linear-gradient(90deg, var(--vd-ocean-deeper) 0%, var(--vd-ocean-dark) 52%, var(--vd-ocean) 100%) !important;
+    border-bottom: 1px solid rgba(255,255,255,.18) !important;
     display: flex !important;
     align-items: center !important;
     justify-content: space-between !important;
     padding: 0 24px !important;
     z-index: 1020 !important;
-    box-shadow: 0 1px 4px rgba(0,0,0,.04) !important;
+    box-shadow: 0 6px 18px rgba(0, 59, 80, .28) !important;
     width: auto !important;
     margin: 0 !important;
     line-height: normal !important;
-    color: var(--vd-text) !important;
+    color: #fff !important;
   }
 
   .tm-topbar-left {
@@ -96,14 +96,24 @@
     align-items: center;
     gap: 6px;
     font-size: 0.85rem;
-    color: var(--vd-text-muted);
+    color: rgba(255,255,255,.86);
   }
   .tm-breadcrumb a {
-    color: var(--vd-ocean);
+    color: #fff;
     text-decoration: none;
-    font-weight: 600;
+    font-weight: 700;
   }
-  .tm-breadcrumb a:hover { text-decoration: underline; }
+  .tm-breadcrumb a:hover {
+    text-decoration: underline;
+    color: #fff;
+  }
+  .tm-breadcrumb .bi,
+  .tm-breadcrumb span {
+    color: rgba(255,255,255,.82);
+  }
+  .tm-breadcrumb .bi {
+    font-size: 0.7rem;
+  }
 
   .tm-topbar-right {
     display: flex;
@@ -115,14 +125,15 @@
     align-items: center;
     gap: 8px;
     font-size: 0.85rem;
-    font-weight: 600;
-    color: var(--vd-text);
+    font-weight: 700;
+    color: #fff;
   }
   .tm-topbar-avatar {
     width: 34px;
     height: 34px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--vd-ocean), var(--vd-ocean-dark));
+    border: 1px solid rgba(255,255,255,.3);
+    background: linear-gradient(135deg, var(--vd-accent), #f2bf63);
     color: #fff;
     display: flex;
     align-items: center;
@@ -136,18 +147,18 @@
     gap: 5px;
     padding: 6px 14px;
     border-radius: 999px;
-    border: 1px solid var(--vd-line);
-    background: var(--vd-white);
-    color: var(--vd-text-muted);
+    border: 1px solid rgba(255,255,255,.3);
+    background: rgba(255,255,255,.12);
+    color: #fff;
     font-size: 0.8rem;
     font-weight: 600;
     cursor: pointer;
     transition: all var(--vd-transition);
   }
   .tm-btn-logout:hover {
-    border-color: var(--vd-danger);
-    color: var(--vd-danger);
-    background: var(--vd-danger-bg);
+    border-color: rgba(255,255,255,.46);
+    color: #fff;
+    background: rgba(255,255,255,.2);
   }
 
   /* ===== CUSTOM SIDEBAR — exact match vendor_base.html ===== */
@@ -288,6 +299,39 @@
     max-width: 1400px !important;
   }
 
+  .tm-page-title-wrap {
+    display: grid;
+    gap: 4px;
+    margin: 0 0 16px;
+  }
+
+  .tm-page-title-kicker {
+    margin: 0;
+    color: var(--vd-text-muted);
+    font-size: 0.74rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .tm-page-title {
+    margin: 0;
+    color: var(--vd-text);
+    font-family: "Fraunces", Georgia, serif;
+    font-size: 1.58rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.12;
+  }
+
+  .tm-page-subtitle {
+    margin: 0;
+    color: var(--vd-text-muted);
+    font-size: 0.9rem;
+    line-height: 1.45;
+    max-width: 860px;
+  }
+
   /* ===== DJANGO MODULE / CHANGELIST STYLING ===== */
   #content .module {
     border: none;
@@ -343,11 +387,11 @@
 
   /* Object tools (add/edit buttons on changelists) */
   .object-tools {
-    margin: 0 0 16px !important;
+    margin: 0 0 8px !important;
     padding: 0 !important;
     float: none !important;
     display: flex;
-    gap: 8px;
+    gap: 6px;
   }
   .object-tools li {
     list-style: none;
@@ -361,13 +405,21 @@
     background: var(--vd-ocean) !important;
     color: #fff !important;
     border-radius: var(--vd-radius-sm) !important;
-    padding: 7px 14px !important;
-    font-size: 0.82rem !important;
+    min-height: 32px;
+    padding: 6px 12px !important;
+    font-size: 0.78rem !important;
     font-weight: 600 !important;
     text-decoration: none !important;
     transition: background var(--vd-transition);
   }
   .object-tools a:hover { background: var(--vd-ocean-dark) !important; }
+
+  /* Hide default Django History button on all change pages */
+  .object-tools li.historylink,
+  .object-tools a.historylink,
+  .object-tools a[href$="/history/"] {
+    display: none !important;
+  }
 
   /* Changelist filters */
   #changelist-filter {
@@ -454,8 +506,11 @@
   <div class="tm-sidebar-section">
     <div class="tm-sidebar-section-label">Approvals</div>
     <nav class="tm-nav">
+      <a class="tm-nav-link{% if 'verification_status__exact=PENDING' in request.get_full_path %} active{% endif %}" href="{% url 'admin:vendor_vendorprofile_changelist' %}?verification_status__exact=PENDING">
+        <i class="bi bi-person-check"></i> Pending Vendors
+      </a>
       <a class="tm-nav-link{% if '/admin/pending-approvals/' in request.path %} active{% endif %}" href="{% url 'admin:pending_approvals' %}">
-        <i class="bi bi-clipboard-check"></i> Pending Approvals
+        <i class="bi bi-clipboard-check"></i> Pending Product
       </a>
     </nav>
   </div>
@@ -481,9 +536,6 @@
       <a class="tm-nav-link{% if '/admin/vendor/vendorprofile/' in request.path and 'verification_status__exact=PENDING' not in request.get_full_path %} active{% endif %}" href="{% url 'admin:vendor_vendorprofile_changelist' %}">
         <i class="bi bi-shop"></i> Vendors
       </a>
-      <a class="tm-nav-link{% if 'verification_status__exact=PENDING' in request.get_full_path %} active{% endif %}" href="{% url 'admin:vendor_vendorprofile_changelist' %}?verification_status__exact=PENDING">
-        <i class="bi bi-person-check"></i> Pending Verification
-      </a>
     </nav>
   </div>
 
@@ -506,6 +558,38 @@
   <div class="tm-topbar-left">
     <div class="tm-breadcrumb">
       <a href="{% url 'admin:index' %}">Dashboard</a>
+      {% if request.path != '/admin/' %}
+      <i class="bi bi-chevron-right" aria-hidden="true"></i>
+      <span>
+        {% if '/admin/vendor/vendorprofile/' in request.path and 'verification_status__exact=PENDING' in request.get_full_path %}
+          Pending Vendors
+        {% elif '/admin/vendor/vendorprofile/' in request.path %}
+          Vendors
+        {% elif '/admin/app/customuser/' in request.path %}
+          Users
+        {% elif '/admin/app/package/' in request.path %}
+          Packages
+        {% elif '/admin/app/activity/' in request.path %}
+          Activities
+        {% elif '/admin/app/activitycategory/' in request.path %}
+          Activity Categories
+        {% elif '/admin/app/destination/' in request.path %}
+          Destinations
+        {% elif '/admin/app/hotsale/' in request.path %}
+          Hot Sales
+        {% elif '/admin/app/booking/' in request.path %}
+          Bookings
+        {% elif '/admin/pending-approvals/' in request.path %}
+          Pending Product
+        {% elif '/admin/earnings/' in request.path %}
+          Earnings
+        {% elif '/admin/settings/' in request.path %}
+          Settings
+        {% else %}
+          {{ title|default:'Admin' }}
+        {% endif %}
+      </span>
+      {% endif %}
     </div>
   </div>
   <div class="tm-topbar-right">
@@ -516,7 +600,7 @@
       </div>
       <span>{{ user.get_short_name|default:user.get_username }}</span>
     </div>
-    <a href="{% url 'admin:logout' %}" class="tm-btn-logout" style="color: var(--vd-danger); border-color: var(--vd-danger-bg); background: var(--vd-danger-bg); display: inline-flex !important; text-decoration: none;">
+    <a href="{% url 'admin:logout' %}" class="tm-btn-logout" style="display: inline-flex !important; text-decoration: none;">
       <i class="bi bi-box-arrow-right"></i> Log out
     </a>
     {% endif %}
@@ -530,4 +614,41 @@
 
 {% block nav-global %}{% endblock %}
 
-{% block content_title %}{% endblock %}
+{% block content_title %}
+{% if title %}
+<div class="tm-page-title-wrap">
+  <h1 class="tm-page-title">{{ title }}</h1>
+  <p class="tm-page-subtitle">
+    {% if request.path == '/admin/' %}
+      Track platform health, approvals, and key operational metrics.
+    {% elif '/admin/vendor/vendorprofile/' in request.path and 'verification_status__exact=PENDING' in request.get_full_path %}
+      Review pending vendor submissions and take approval or rejection actions.
+    {% elif '/admin/vendor/vendorprofile/' in request.path %}
+      Manage vendor accounts, compliance details, and account lifecycle status.
+    {% elif '/admin/app/customuser/' in request.path %}
+      Manage user accounts, profile visibility, and access oversight.
+    {% elif '/admin/app/package/' in request.path %}
+      Manage package listings, pricing, and publishing readiness.
+    {% elif '/admin/app/activity/' in request.path %}
+      Manage activities, ownership records, and availability setup.
+    {% elif '/admin/app/activitycategory/' in request.path %}
+      Organize activity categories used across vendor experiences.
+    {% elif '/admin/app/destination/' in request.path %}
+      Manage destination content displayed across product pages.
+    {% elif '/admin/app/hotsale/' in request.path %}
+      Manage hot-sale campaigns and promotion visibility.
+    {% elif '/admin/app/booking/' in request.path %}
+      Monitor bookings, customer details, and fulfillment status.
+    {% elif '/admin/pending-approvals/' in request.path %}
+      Review submitted products before publishing them live.
+    {% elif '/admin/earnings/' in request.path %}
+      Track revenue performance and commerce summaries.
+    {% elif '/admin/settings/' in request.path %}
+      Configure platform-level controls and admin preferences.
+    {% else %}
+      Manage records and perform administrative operations for this section.
+    {% endif %}
+  </p>
+</div>
+{% endif %}
+{% endblock %}

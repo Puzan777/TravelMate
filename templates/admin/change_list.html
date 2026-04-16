@@ -130,7 +130,6 @@
         flex-wrap: wrap;
     }
     .page-header h1 {
-        display: none !important;
         margin: 0;
         color: var(--tm-text);
         font-family: "Fraunces", Georgia, serif;
@@ -139,36 +138,74 @@
         letter-spacing: -0.03em;
         line-height: 1.1;
     }
+
+    .page-header-kicker {
+      margin: 0 0 6px;
+      color: var(--tm-text-soft);
+      font-size: 0.76rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      line-height: 1.2;
+    }
+
+    .page-header-title {
+      display: grid;
+      gap: 0;
+      min-width: 280px;
+    }
+
+    .page-header-subtitle {
+      margin: 7px 0 0;
+      color: var(--tm-text-soft);
+      font-size: 0.9rem;
+      line-height: 1.4;
+      max-width: 780px;
+    }
     
     .object-tools {
-        margin: 0;
+        margin: 0 !important;
         padding: 0;
         list-style: none;
         display: flex;
-        gap: 8px;
+        gap: 6px;
         flex-wrap: wrap;
         justify-content: flex-end;
+      margin-left: auto;
     }
     .object-tools li { list-style-type: none; }
     .object-tools a {
-        min-height: 36px;
-        padding: 0 16px;
+      min-height: 32px;
+      padding: 0 12px;
         border-radius: 999px;
         background: linear-gradient(135deg, var(--tm-accent) 0%, var(--tm-accent-strong) 100%);
         color: white;
         text-decoration: none;
         font-weight: 800;
-        font-size: 0.8rem;
+      font-size: 0.76rem;
         transition: transform var(--tm-transition), box-shadow var(--tm-transition), filter var(--tm-transition);
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        box-shadow: 0 16px 30px rgba(185, 111, 56, 0.22);
+      box-shadow: 0 10px 20px rgba(185, 111, 56, 0.18);
     }
     .object-tools a:hover {
         transform: translateY(-1px);
         filter: saturate(1.04);
-        box-shadow: 0 12px 34px rgba(185, 111, 56, 0.26);
+        box-shadow: 0 10px 24px rgba(185, 111, 56, 0.22);
+    }
+
+    .object-tools a.tm-export-btn {
+      min-height: 30px;
+      padding: 0 10px;
+      font-size: 0.74rem;
+      box-shadow: none !important;
+      transform: none !important;
+    }
+
+    .object-tools a.tm-export-btn:hover {
+      box-shadow: none !important;
+      filter: saturate(1.02);
     }
     
     /* Result List Table overrriding Django */
@@ -248,12 +285,53 @@
 
 {% block content %}
   <div class="page-header">
-    <h1>{{ title|default:cl.opts.verbose_name_plural|capfirst }}</h1>
+    <div class="page-header-title">
+      <h1>
+        {% if '/admin/vendor/vendorprofile/' in request.path and 'verification_status__exact=PENDING' in request.get_full_path %}
+          Vendor Verifications
+        {% elif '/admin/app/activitycategory/' in request.path %}
+          Activity Category
+        {% elif '/admin/app/activity/' in request.path %}
+          Activities
+        {% elif '/admin/app/destination/' in request.path %}
+          Destinations
+        {% elif '/admin/app/package/' in request.path %}
+          Packages
+        {% elif '/admin/app/hotsale/' in request.path %}
+          Hot Sales list
+        {% elif '/admin/app/booking/' in request.path %}
+          Bookings
+        {% elif '/admin/app/customuser/' in request.path %}
+          Users
+        {% else %}
+          {{ title|default:cl.opts.verbose_name_plural|capfirst }}
+        {% endif %}
+      </h1>
+      {% if '/admin/app/package/' not in request.path and '/admin/app/hotsale/' not in request.path and '/admin/app/activity/' not in request.path %}
+      <p class="page-header-subtitle">
+        {% if '/admin/vendor/vendorprofile/' in request.path and 'verification_status__exact=PENDING' in request.get_full_path %}
+          Review pending vendor submissions and complete verification decisions.
+        {% elif '/admin/vendor/vendorprofile/' in request.path %}
+          Manage vendor records, business details, and account state.
+        {% elif '/admin/app/customuser/' in request.path %}
+          Manage customer and staff accounts with profile-level visibility.
+        {% elif '/admin/app/activitycategory/' in request.path %}
+          Manage activity grouping taxonomy used by vendors and listings.
+        {% elif '/admin/app/destination/' in request.path %}
+          Manage destination entries displayed in package and activity flows.
+        {% elif '/admin/app/booking/' in request.path %}
+          Monitor bookings, traveler details, and booking progress.
+        {% else %}
+          Manage records in this section using search, filters, and actions.
+        {% endif %}
+      </p>
+      {% endif %}
+    </div>
     {% block object-tools %}
       <ul class="object-tools">
         {% block object-tools-items %}
           <li>
-            <a href="{{ request.get_full_path }}{% if '?' in request.get_full_path %}&{% else %}?{% endif %}export=csv" style="background:var(--vd-success); box-shadow:none;">
+            <a class="tm-export-btn" href="{{ request.get_full_path }}{% if '?' in request.get_full_path %}&{% else %}?{% endif %}export=csv" style="background:var(--vd-success);">
               <i class="bi bi-file-earmark-spreadsheet" style="margin-right:6px;"></i> Export to CSV
             </a>
           </li>

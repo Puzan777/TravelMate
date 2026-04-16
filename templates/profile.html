@@ -1,241 +1,428 @@
 {% extends 'base.html' %}
 
+{% block title %}Profile | TravelMate{% endblock %}
+
 {% block content %}
 <div class="container py-5">
   <style>
-    .profile-shell {
-      --ink: #0f2640;
-      --muted: #5f7389;
-      --line: #d7e3f0;
-      --soft: #f4f8fc;
-      font-family: "Segoe UI", "Trebuchet MS", sans-serif;
-      background: #f4f8fc;
-      border: 1px solid #dbe7f3;
-      border-radius: 18px;
-      padding: 14px;
+    .profile-page {
+      --pf-ink: #16324a;
+      --pf-muted: #66788b;
+      --pf-line: #d9e5ef;
+      --pf-soft: #f4f8fb;
+      --pf-accent: #0d6b8a;
+      --pf-accent-soft: #e7f3f7;
+      display: grid;
+      gap: 18px;
+    }
+    .profile-card {
+      background: #fff;
+      border: 1px solid var(--pf-line);
+      border-radius: 20px;
+      box-shadow: 0 12px 28px rgba(16, 40, 64, 0.06);
     }
     .profile-hero {
-      border: 1px solid var(--line);
-      border-radius: 18px;
-      padding: 18px;
-      background:
-        radial-gradient(circle at 90% 8%, #d9ecff 0, #d9ecff 16%, transparent 17%),
-        linear-gradient(115deg, #f8fbff 0%, #eef5ff 40%, #f5fbff 100%);
-      box-shadow: 0 12px 24px rgba(11, 42, 73, 0.08);
-      margin-bottom: 16px;
+      padding: 24px;
+      background: linear-gradient(135deg, #f8fbfd 0%, #eef5f9 100%);
     }
-    .identity {
+    .profile-head {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 16px;
+      flex-wrap: wrap;
     }
-    .avatar-chip {
-      width: 52px;
-      height: 52px;
-      border-radius: 14px;
+    .profile-avatar {
+      width: 68px;
+      height: 68px;
+      border-radius: 18px;
       display: grid;
       place-items: center;
+      background: linear-gradient(135deg, #d8edf5, #c8e4ee);
+      color: var(--pf-accent);
+      font-size: 1.4rem;
       font-weight: 800;
-      color: #0c3558;
-      background: linear-gradient(135deg, #d4eaff, #bddfff);
-      border: 1px solid #a9d1f8;
     }
-    .welcome {
+    .profile-title {
       margin: 0;
-      color: var(--ink);
-      font-size: 1.05rem;
-      font-weight: 700;
+      color: var(--pf-ink);
+      font-size: 1.8rem;
+      font-weight: 800;
+      line-height: 1.1;
     }
-    .welcome-sub {
-      margin: 2px 0 0;
-      color: var(--muted);
-      font-size: 0.9rem;
+    .profile-subtitle {
+      margin: 6px 0 0;
+      color: var(--pf-muted);
+      font-size: 0.95rem;
     }
-    .metrics-grid {
+    .profile-stats {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 10px;
-      margin-top: 14px;
+      gap: 14px;
+      padding: 0 24px 24px;
     }
-    .metric {
-      border: 1px solid #d8e7f6;
-      background: rgba(255, 255, 255, 0.88);
-      border-radius: 12px;
-      padding: 10px 12px;
+    .profile-stat {
+      padding: 16px;
+      border: 1px solid var(--pf-line);
+      border-radius: 16px;
+      background: #fff;
     }
-    .metric p {
+    .profile-stat-label {
       margin: 0;
-    }
-    .metric-label {
+      color: var(--pf-muted);
       font-size: 0.78rem;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      color: #5b7087;
       font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
     }
-    .metric-value {
-      margin-top: 2px;
-      color: #102a45;
-      font-size: 1.25rem;
+    .profile-stat-value {
+      margin: 6px 0 0;
+      color: var(--pf-ink);
+      font-size: 1.5rem;
       font-weight: 800;
-      line-height: 1.2;
+      line-height: 1;
+    }
+    .profile-section {
+      padding: 22px;
+    }
+    .profile-section + .profile-section {
+      border-top: 1px solid #edf3f7;
+    }
+    .profile-tabs-wrap {
+      padding: 0 24px 24px;
     }
     .profile-tabs {
-      padding: 4px;
-      border: 1px solid var(--line);
-      background: #f6faff;
-      border-radius: 12px;
       display: inline-flex;
-      gap: 6px;
-      margin-bottom: 12px;
+      gap: 8px;
+      padding: 6px;
+      border-radius: 16px;
+      background: var(--pf-soft);
+      border: 1px solid var(--pf-line);
     }
     .profile-tabs .nav-link {
-      border-radius: 8px;
-      color: #37516f;
-      border: 1px solid transparent;
+      border: 0;
+      border-radius: 12px;
+      color: var(--pf-muted);
+      font-size: 0.9rem;
       font-weight: 700;
-      padding: 8px 14px;
+      padding: 10px 16px;
     }
     .profile-tabs .nav-link.active {
-      color: #10304f;
-      background: #ffffff;
-      border-color: #d3e3f4;
-      box-shadow: 0 3px 8px rgba(20, 54, 89, 0.08);
-    }
-    .profile-tab-card {
-      border: 1px solid #dce8f5;
-      border-radius: 14px;
-      overflow: hidden;
-      box-shadow: 0 10px 20px rgba(15, 34, 56, 0.05);
-    }
-    .profile-tab-card .card-body {
-      padding: 16px;
+      background: #fff;
+      color: var(--pf-ink);
+      box-shadow: 0 8px 18px rgba(16, 40, 64, 0.08);
     }
     .section-title {
-      margin: 0 0 12px;
-      font-size: 1rem;
+      margin: 0 0 14px;
+      color: var(--pf-ink);
+      font-size: 1.1rem;
       font-weight: 800;
-      color: var(--ink);
     }
-    .table-wrap {
-      border: 1px solid #e2ecf7;
-      border-radius: 10px;
+    .section-subtitle {
+      margin: 18px 0 12px;
+      color: var(--pf-ink);
+      font-size: 0.98rem;
+      font-weight: 800;
+    }
+    .table-shell {
+      border: 1px solid var(--pf-line);
+      border-radius: 16px;
       overflow: hidden;
       background: #fff;
     }
-    .table-wrap thead th {
+    .table-shell thead th {
+      background: var(--pf-soft);
+      color: var(--pf-muted);
       font-size: 0.78rem;
+      font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      color: #5f748b;
-      background: #f6faff;
-      border-bottom-color: #dfeaf5;
+      border-bottom-color: var(--pf-line);
     }
-    .table-wrap td {
-      color: #20364c;
+    .table-shell td {
       vertical-align: middle;
+      color: var(--pf-ink);
     }
     .empty-state {
-      border: 1px dashed #cbdcec;
-      border-radius: 10px;
-      padding: 16px;
-      color: #5f7389;
-      background: #f8fbff;
       margin: 0;
+      padding: 16px;
+      border: 1px dashed var(--pf-line);
+      border-radius: 16px;
+      background: var(--pf-soft);
+      color: var(--pf-muted);
     }
-    .fav-item {
-      border: 1px solid #deebf7;
-      border-radius: 10px;
-      padding: 10px;
-      background: #ffffff;
-    }
-    .reply-chip {
-      display: inline-block;
-      padding: 2px 8px;
-      border-radius: 999px;
-      font-size: 0.72rem;
-      font-weight: 700;
-      margin-bottom: 4px;
-      border: 1px solid;
-    }
-    .reply-chip.ok {
-      color: #0c6a3d;
-      border-color: #bfe9d2;
-      background: #ebf9f1;
-    }
-    .reply-chip.pending {
-      color: #7a5b08;
-      border-color: #f2e0ab;
-      background: #fff7df;
-    }
-    .inquiry-grid {
+    .favorites-list {
       display: grid;
       gap: 12px;
     }
-    .inquiry-card {
-      border: 1px solid #dce8f5;
-      border-radius: 12px;
-      background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
-      box-shadow: 0 8px 16px rgba(16, 42, 69, 0.05);
+    .favorite-card {
+      border: 1px solid var(--pf-line);
+      border-radius: 16px;
+      background: #fff;
       overflow: hidden;
     }
-    .inquiry-card-head {
-      padding: 10px 12px;
-      border-bottom: 1px solid #e5edf6;
-      background: #f6faff;
+    .inquiry-inbox {
+      display: grid;
+      grid-template-columns: minmax(230px, 280px) minmax(0, 1fr);
+      gap: 14px;
+      min-height: 520px;
+    }
+    .inquiry-sidebar {
+      border: 1px solid var(--pf-line);
+      border-radius: 16px;
+      background: #fff;
+      overflow-y: auto;
+      max-height: 620px;
+      padding: 8px;
+    }
+    .inquiry-item-btn {
+      width: 100%;
+      border: 1px solid transparent;
+      border-radius: 12px;
+      background: transparent;
+      text-align: left;
+      padding: 12px;
+      display: grid;
+      gap: 6px;
+      color: var(--pf-ink);
+      transition: all 0.2s ease;
+    }
+    .inquiry-item-btn + .inquiry-item-btn {
+      margin-top: 8px;
+    }
+    .inquiry-item-btn:hover {
+      background: #f6fbff;
+      border-color: #dbeaf4;
+    }
+    .inquiry-item-btn.active {
+      background: #ebf6fc;
+      border-color: #c9dfee;
+      box-shadow: inset 0 0 0 1px rgba(17, 94, 126, 0.1);
+    }
+    .inquiry-item-title {
+      font-size: 0.9rem;
+      font-weight: 700;
+      line-height: 1.3;
+    }
+    .inquiry-item-preview {
+      color: var(--pf-muted);
+      font-size: 0.82rem;
+      line-height: 1.4;
+    }
+    .inquiry-item-foot {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 2px;
+    }
+    .inquiry-chat-window {
+      border: 1px solid var(--pf-line);
+      border-radius: 16px;
+      background: #fff;
+      overflow: hidden;
+      display: grid;
+    }
+    .inquiry-pane {
+      display: none;
+      min-height: 560px;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+    }
+    .inquiry-pane.active {
+      display: grid;
+    }
+    .inquiry-chat-head {
+      padding: 14px 16px;
+      border-bottom: 1px solid #edf3f7;
+      background: linear-gradient(180deg, #f7fbfe, #fdfefe);
       display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 10px;
       flex-wrap: wrap;
     }
-    .inquiry-meta {
+    .inquiry-chat-title {
+      margin: 0;
+      color: var(--pf-ink);
+      font-size: 0.96rem;
+      font-weight: 800;
+      line-height: 1.35;
+    }
+    .inquiry-chat-subtitle {
+      margin: 2px 0 0;
+      color: var(--pf-muted);
       font-size: 0.8rem;
-      color: #61768d;
-      margin: 0;
     }
-    .inquiry-card-body {
-      padding: 12px;
+    .inquiry-thread {
+      padding: 16px;
       display: grid;
-      gap: 10px;
+      gap: 12px;
+      max-height: 420px;
+      overflow-y: auto;
+      background:
+        radial-gradient(circle at 82% 12%, rgba(13, 107, 138, 0.05), transparent 34%),
+        linear-gradient(180deg, #ffffff 0%, #f8fbfd 100%);
+      align-content: start;
     }
-    .inquiry-section {
-      border: 1px solid #e6edf6;
-      border-radius: 10px;
-      padding: 10px;
-      background: #ffffff;
+    .message-row {
+      display: flex;
+      width: 100%;
     }
-    .inquiry-section p {
-      margin: 0;
-      color: #22394f;
-      font-size: 0.88rem;
-      line-height: 1.5;
+    .message-row.customer {
+      justify-content: flex-start;
     }
-    .inquiry-label {
-      margin: 0 0 5px;
-      font-size: 0.75rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: #5f738a;
-      font-weight: 700;
+    .message-row.vendor {
+      justify-content: flex-end;
     }
-    .contact-pills {
+    .meta-text {
+      margin: 4px 0 0;
+      color: var(--pf-muted);
+      font-size: 0.84rem;
+    }
+    .pill-row {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
     }
-    .contact-pill {
-      display: inline-block;
-      border: 1px solid #d8e6f3;
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 5px 10px;
       border-radius: 999px;
-      padding: 4px 9px;
       font-size: 0.78rem;
-      color: #27415a;
-      background: #f7fbff;
+      font-weight: 700;
+      background: var(--pf-soft);
+      border: 1px solid var(--pf-line);
+      color: var(--pf-ink);
+    }
+    .reply-chip {
+      display: inline-block;
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 0.76rem;
+      font-weight: 700;
+    }
+    .reply-chip.ok {
+      background: #ebf8f1;
+      color: #156b44;
+    }
+    .reply-chip.pending {
+      background: #fff6df;
+      color: #8a6410;
+    }
+    .inquiry-type-pill {
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      font-size: 0.68rem;
+      border: 1px solid transparent;
+    }
+    .inquiry-type-pill.package {
+      background: #e9f2ff;
+      color: #0f4f95;
+      border-color: #cfe1f8;
+    }
+    .inquiry-type-pill.activity {
+      background: #eaf9f0;
+      color: #1b6f45;
+      border-color: #cae8d6;
+    }
+    .message-box {
+      width: fit-content;
+      max-width: min(82%, 620px);
+      padding: 14px;
+      border: 1px solid var(--pf-line);
+      border-radius: 14px;
+      background: #fbfdff;
+    }
+    .message-box.customer {
+      background: #f5f9ff;
+      border-color: #d5e5f6;
+      border-bottom-left-radius: 6px;
+    }
+    .message-box.vendor {
+      background: #ebf8ef;
+      border-color: #c9ead6;
+      border-bottom-right-radius: 6px;
+    }
+    .message-label {
+      margin: 0 0 8px;
+      color: var(--pf-muted);
+      font-size: 0.76rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .message-box p {
+      margin: 0;
+      color: var(--pf-ink);
+      line-height: 1.6;
+      word-break: break-word;
+    }
+    .inquiry-compose {
+      border-top: 1px solid #edf3f7;
+      padding: 14px 16px 16px;
+      background: #fff;
+    }
+    .inquiry-compose .form-control {
+      border-color: #ccdde8;
+      min-height: 96px;
+      resize: vertical;
+    }
+    .inquiry-compose .form-control:focus {
+      border-color: var(--pf-accent);
+      box-shadow: 0 0 0 3px rgba(13, 107, 138, 0.12);
+    }
+    .inquiry-compose-actions {
+      display: flex;
+      justify-content: flex-end;
+    }
+    .inquiry-status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 999px;
+      padding: 5px 11px;
+      font-size: 0.74rem;
+      font-weight: 700;
+    }
+    .inquiry-status-badge.replied {
+      background: #ebf8f1;
+      color: #156b44;
+    }
+    .inquiry-status-badge.pending {
+      background: #fff6df;
+      color: #8a6410;
+    }
+    .favorite-card {
+      padding: 16px;
+    }
+    .favorite-action {
+      display: flex;
+      justify-content: flex-start;
+    }
+    .favorite-title {
+      display: block;
+      margin: 0 0 6px;
+      color: var(--pf-ink);
+      font-weight: 700;
+      text-decoration: none;
+    }
+    .favorite-meta {
+      margin: 0 0 14px;
+      color: var(--pf-muted);
+      font-size: 0.88rem;
     }
     @media (max-width: 767px) {
-      .metrics-grid {
+      .profile-hero,
+      .profile-section,
+      .profile-stats,
+      .profile-tabs-wrap {
+        padding-left: 18px;
+        padding-right: 18px;
+      }
+      .profile-stats {
         grid-template-columns: 1fr;
+        padding-top: 0;
       }
       .profile-tabs {
         width: 100%;
@@ -244,244 +431,319 @@
       .profile-tabs .nav-link {
         white-space: nowrap;
       }
+      .inquiry-inbox {
+        grid-template-columns: 1fr;
+      }
+      .inquiry-sidebar,
+      .inquiry-thread {
+        max-height: none;
+      }
+      .inquiry-pane {
+        min-height: 0;
+      }
+      .message-box {
+        max-width: 100%;
+      }
     }
   </style>
 
-  <div class="profile-shell">
-    <div class="profile-hero">
-      <div class="identity">
-        <div class="avatar-chip">{{ user.username|slice:":1"|upper }}</div>
-        <div>
-          <p class="welcome">Welcome, {{ user.get_full_name|default:user.username }}</p>
-          <p class="welcome-sub">Track your trips, inquiries, and saved packages in one place.</p>
-        </div>
-      </div>
-
-      <div class="metrics-grid">
-        <div class="metric">
-          <p class="metric-label">Bookings</p>
-          <p class="metric-value">{{ total_booking_count }}</p>
-        </div>
-        <div class="metric">
-          <p class="metric-label">Inquiries</p>
-          <p class="metric-value">{{ inquiries|length }}</p>
-        </div>
-        <div class="metric">
-          <p class="metric-label">Favorites</p>
-          <p class="metric-value">{{ total_favorite_count }}</p>
-        </div>
-      </div>
-    </div>
-
-    <ul class="nav nav-pills profile-tabs" id="profileTab" role="tablist">
-      <li class="nav-item" role="presentation">
-        <button class="nav-link active" id="bookings-tab" data-bs-toggle="pill" data-bs-target="#bookings-pane" type="button" role="tab" aria-controls="bookings-pane" aria-selected="true">Bookings</button>
-      </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link" id="inquiries-tab" data-bs-toggle="pill" data-bs-target="#inquiries-pane" type="button" role="tab" aria-controls="inquiries-pane" aria-selected="false">Inquiries</button>
-      </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link" id="favorites-tab" data-bs-toggle="pill" data-bs-target="#favorites-pane" type="button" role="tab" aria-controls="favorites-pane" aria-selected="false">Favorites</button>
-      </li>
-    </ul>
-
-    <div class="tab-content" id="profileTabContent">
-      <div class="tab-pane fade show active" id="bookings-pane" role="tabpanel" aria-labelledby="bookings-tab" tabindex="0">
-        <div class="card profile-tab-card mb-4">
-          <div class="card-body">
-            <h2 class="section-title">Booking History</h2>
-
-            {% if bookings %}
-              <div class="table-responsive table-wrap">
-                <table class="table table-sm align-middle mb-0">
-                  <thead>
-                    <tr>
-                      <th>Package</th>
-                      <th>Traveler</th>
-                      <th>Destination</th>
-                      <th>Travel Date</th>
-                      <th>People</th>
-                      <th>Booked On</th>
-                      <th>Price</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {% for booking in bookings %}
-                      <tr>
-                        <td>
-                          <a href="{{ booking.package.get_absolute_url }}" class="text-decoration-none fw-semibold">
-                            {{ booking.package.title }}
-                          </a>
-                          <div class="small text-muted">{{ booking.package.duration }}</div>
-                        </td>
-                        <td>
-                          <div class="fw-semibold">{{ booking.full_name }}</div>
-                          <div class="small text-muted">{{ booking.email }}</div>
-                        </td>
-                        <td>
-                          {% if booking.package.destination %}
-                            {{ booking.package.destination.name }}
-                          {% else %}
-                            -
-                          {% endif %}
-                        </td>
-                        <td>{{ booking.travel_date|date:'M d, Y' }}</td>
-                        <td>{{ booking.number_of_people }}</td>
-                        <td>{{ booking.created_at|date:'M d, Y' }}</td>
-                        <td>Rs {{ booking.package.price }}</td>
-                      </tr>
-                    {% endfor %}
-                  </tbody>
-                </table>
-              </div>
-            {% else %}
-              <p class="empty-state">You have no bookings yet.</p>
-            {% endif %}
-
-            <h2 class="section-title mt-4">Activity Booking History</h2>
-            {% if activity_bookings %}
-              <div class="table-responsive table-wrap">
-                <table class="table table-sm align-middle mb-0">
-                  <thead>
-                    <tr>
-                      <th>Activity</th>
-                      <th>Traveler</th>
-                      <th>Category</th>
-                      <th>Travel Date</th>
-                      <th>People</th>
-                      <th>Booked On</th>
-                      <th>Total</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {% for booking in activity_bookings %}
-                      <tr>
-                        <td>
-                          <a href="{% url 'activity_detail' booking.activity.pk %}" class="text-decoration-none fw-semibold">
-                            {{ booking.activity.name }}
-                          </a>
-                          <div class="small text-muted">{{ booking.activity.duration }}</div>
-                        </td>
-                        <td>
-                          <div class="fw-semibold">{{ booking.full_name }}</div>
-                          <div class="small text-muted">{{ booking.email }}</div>
-                        </td>
-                        <td>{{ booking.activity.category.name }}</td>
-                        <td>{{ booking.travel_date|date:'M d, Y' }}</td>
-                        <td>{{ booking.number_of_people }}</td>
-                        <td>{{ booking.created_at|date:'M d, Y' }}</td>
-                        <td>Rs {{ booking.total_amount }}</td>
-                      </tr>
-                    {% endfor %}
-                  </tbody>
-                </table>
-              </div>
-            {% else %}
-              <p class="empty-state">You have no activity bookings yet.</p>
-            {% endif %}
+  <div class="profile-page">
+    <section class="profile-card">
+      <div class="profile-hero">
+        <div class="profile-head">
+          <div class="profile-avatar">{{ user.username|slice:":1"|upper }}</div>
+          <div>
+            <h1 class="profile-title">{{ user.get_full_name|default:user.username }}</h1>
+            <p class="profile-subtitle">Track your bookings, inquiries, and favorites in one place.</p>
           </div>
         </div>
       </div>
 
-      <div class="tab-pane fade" id="inquiries-pane" role="tabpanel" aria-labelledby="inquiries-tab" tabindex="0">
-        <div class="card profile-tab-card mb-4">
-          <div class="card-body">
-            <h2 class="section-title">My Inquiries</h2>
+      <div class="profile-stats">
+        <div class="profile-stat">
+          <p class="profile-stat-label">Bookings</p>
+          <p class="profile-stat-value">{{ total_booking_count }}</p>
+        </div>
+        <div class="profile-stat">
+          <p class="profile-stat-label">Inquiries</p>
+          <p class="profile-stat-value">{{ inquiries|length }}</p>
+        </div>
+        <div class="profile-stat">
+          <p class="profile-stat-label">Favorites</p>
+          <p class="profile-stat-value">{{ total_favorite_count }}</p>
+        </div>
+      </div>
 
-            {% if inquiries %}
-              <div class="inquiry-grid">
-                {% for inquiry in inquiries %}
-                  <article class="inquiry-card">
-                    <div class="inquiry-card-head">
-                      <a href="{{ inquiry.package.get_absolute_url }}" class="text-decoration-none fw-semibold">
-                        {{ inquiry.package.title }}
-                      </a>
-                      <p class="inquiry-meta mb-0">Submitted {{ inquiry.created_at|date:'M d, Y' }}</p>
-                    </div>
+      <div class="profile-tabs-wrap">
+        <ul class="nav profile-tabs" id="profileTab" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="bookings-tab" data-bs-toggle="pill" data-bs-target="#bookings-pane" type="button" role="tab" aria-controls="bookings-pane" aria-selected="true">Bookings</button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="inquiries-tab" data-bs-toggle="pill" data-bs-target="#inquiries-pane" type="button" role="tab" aria-controls="inquiries-pane" aria-selected="false">Inquiries</button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="favorites-tab" data-bs-toggle="pill" data-bs-target="#favorites-pane" type="button" role="tab" aria-controls="favorites-pane" aria-selected="false">Favorites</button>
+          </li>
+        </ul>
+      </div>
+    </section>
 
-                    <div class="inquiry-card-body">
-                      <div class="contact-pills">
-                        <span class="contact-pill">{{ inquiry.email }}</span>
-                        {% if inquiry.phone %}
-                          <span class="contact-pill">{{ inquiry.phone }}</span>
-                        {% endif %}
-                      </div>
-
-                      <section class="inquiry-section">
-                        <p class="inquiry-label">Your message</p>
-                        <p>{{ inquiry.message|linebreaksbr }}</p>
-                      </section>
-
-                      <section class="inquiry-section">
-                        <p class="inquiry-label">Team reply</p>
-                        {% if inquiry.admin_reply %}
-                          <span class="reply-chip ok">Replied</span>
-                          <p>{{ inquiry.admin_reply|linebreaksbr }}</p>
-                        {% else %}
-                          <span class="reply-chip pending">Pending</span>
-                          <p class="text-muted">Our team has received your inquiry and will reply soon.</p>
-                        {% endif %}
-                      </section>
-                    </div>
-                  </article>
+    <div class="tab-content">
+      <section class="profile-card profile-section tab-pane fade show active" id="bookings-pane" role="tabpanel" aria-labelledby="bookings-tab" tabindex="0">
+        <h2 class="section-title">Booking History</h2>
+        {% if bookings %}
+          <div class="table-responsive table-shell">
+            <table class="table table-sm align-middle mb-0">
+              <thead>
+                <tr>
+                  <th>Package</th>
+                  <th>Traveler</th>
+                  <th>Destination</th>
+                  <th>Travel Date</th>
+                  <th>People</th>
+                  <th>Booked On</th>
+                  <th>Price</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for booking in bookings %}
+                  <tr>
+                    <td>
+                      <a href="{{ booking.package.get_absolute_url }}" class="favorite-title mb-1">{{ booking.package.title }}</a>
+                      <div class="small text-muted">{{ booking.package.duration }}</div>
+                    </td>
+                    <td>
+                      <div class="fw-semibold">{{ booking.full_name }}</div>
+                      <div class="small text-muted">{{ booking.email }}</div>
+                    </td>
+                    <td>
+                      {% if booking.package.destination %}
+                        {{ booking.package.destination.name }}
+                      {% else %}
+                        -
+                      {% endif %}
+                    </td>
+                    <td>{{ booking.travel_date|date:'M d, Y' }}</td>
+                    <td>{{ booking.number_of_people }}</td>
+                    <td>{{ booking.created_at|date:'M d, Y' }}</td>
+                    <td>Rs {{ booking.package.price }}</td>
+                  </tr>
                 {% endfor %}
-              </div>
-            {% else %}
-              <p class="empty-state">You have not submitted any inquiries yet.</p>
-            {% endif %}
+              </tbody>
+            </table>
           </div>
-        </div>
-      </div>
+        {% else %}
+          <p class="empty-state">You have no bookings yet.</p>
+        {% endif %}
 
-      <div class="tab-pane fade" id="favorites-pane" role="tabpanel" aria-labelledby="favorites-tab" tabindex="0">
-        <div class="card profile-tab-card">
-          <div class="card-body">
-            <h2 class="section-title">Favorite Packages & Activities</h2>
+        <h3 class="section-subtitle">Activity Booking History</h3>
+        {% if activity_bookings %}
+          <div class="table-responsive table-shell">
+            <table class="table table-sm align-middle mb-0">
+              <thead>
+                <tr>
+                  <th>Activity</th>
+                  <th>Traveler</th>
+                  <th>Category</th>
+                  <th>Travel Date</th>
+                  <th>People</th>
+                  <th>Booked On</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for booking in activity_bookings %}
+                  <tr>
+                    <td>
+                      <a href="{% url 'activity_detail' booking.activity.pk %}" class="favorite-title mb-1">{{ booking.activity.name }}</a>
+                      <div class="small text-muted">{{ booking.activity.duration }}</div>
+                    </td>
+                    <td>
+                      <div class="fw-semibold">{{ booking.full_name }}</div>
+                      <div class="small text-muted">{{ booking.email }}</div>
+                    </td>
+                    <td>{{ booking.activity.category.name }}</td>
+                    <td>{{ booking.travel_date|date:'M d, Y' }}</td>
+                    <td>{{ booking.number_of_people }}</td>
+                    <td>{{ booking.created_at|date:'M d, Y' }}</td>
+                    <td>Rs {{ booking.total_amount }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <p class="empty-state">You have no activity bookings yet.</p>
+        {% endif %}
+      </section>
 
-            {% if favorite_packages or favorite_activities %}
-              <div class="d-grid gap-2">
-                {% for package in favorite_packages %}
-                  <div class="fav-item">
-                    <a href="{{ package.get_absolute_url }}" class="text-decoration-none fw-semibold d-block mb-1">
-                      {{ package.title }}
-                    </a>
-                    <div class="small text-muted mb-2">
-                      {% if package.destination %}{{ package.destination.name }}{% else %}{{ package.get_category_display }}{% endif %}
-                      | Rs {{ package.price }}
+      <section class="profile-card profile-section tab-pane fade" id="inquiries-pane" role="tabpanel" aria-labelledby="inquiries-tab" tabindex="0">
+        <h2 class="section-title">My Inquiries</h2>
+        {% if inquiries %}
+          <div class="inquiry-inbox">
+            <aside class="inquiry-sidebar" aria-label="Inquiry conversations">
+              {% for inquiry in inquiries %}
+                <button
+                  type="button"
+                  class="inquiry-item-btn{% if inquiry.id == active_inquiry_id %} active{% endif %}"
+                  data-inquiry-target="inquiry-pane-{{ inquiry.id }}"
+                >
+                  <span class="inquiry-item-title">{{ inquiry.target_name }}</span>
+                  <span class="pill inquiry-type-pill {{ inquiry.target_type|lower }}">{{ inquiry.target_type }}</span>
+                  <span class="inquiry-item-preview">{{ inquiry.latest_message_preview|default:'No messages yet.'|truncatechars:85 }}</span>
+                  <span class="inquiry-item-foot">
+                    {% if inquiry.thread_has_vendor_reply %}
+                      <span class="reply-chip ok">Replied</span>
+                    {% else %}
+                      <span class="reply-chip pending">Pending</span>
+                    {% endif %}
+                    <span class="small text-muted">{{ inquiry.created_at|date:'M d' }}</span>
+                  </span>
+                </button>
+              {% endfor %}
+            </aside>
+
+            <div class="inquiry-chat-window">
+              {% for inquiry in inquiries %}
+                <article id="inquiry-pane-{{ inquiry.id }}" class="inquiry-pane{% if inquiry.id == active_inquiry_id %} active{% endif %}">
+                  <div class="inquiry-chat-head">
+                    <div>
+                      <p class="inquiry-chat-title">{{ inquiry.target_name }}</p>
+                      <p class="inquiry-chat-subtitle">{{ inquiry.target_type }} inquiry chat with the vendor team</p>
                     </div>
-
-                    <form method="post" action="{% url 'toggle_favorite_package' package.slug %}">
-                      {% csrf_token %}
-                      <input type="hidden" name="next" value="profile">
-                      <button type="submit" class="btn btn-sm btn-outline-danger w-100">Remove</button>
-                    </form>
+                    <div class="pill-row">
+                      <span class="pill inquiry-type-pill {{ inquiry.target_type|lower }}">{{ inquiry.target_type }}</span>
+                      {% if inquiry.thread_has_vendor_reply %}
+                        <span class="inquiry-status-badge replied">Replied</span>
+                      {% else %}
+                        <span class="inquiry-status-badge pending">Awaiting reply</span>
+                      {% endif %}
+                    </div>
                   </div>
-                {% endfor %}
 
-                {% for activity in favorite_activities %}
-                  <div class="fav-item">
-                    <a href="{% url 'activity_detail' activity.pk %}" class="text-decoration-none fw-semibold d-block mb-1">
-                      {{ activity.name }}
-                    </a>
-                    <div class="small text-muted mb-2">
-                      {{ activity.category.name }} | Rs {{ activity.price }}
-                    </div>
-
-                    <form method="post" action="{% url 'toggle_favorite_activity' activity.pk %}">
-                      {% csrf_token %}
-                      <input type="hidden" name="next" value="profile">
-                      <button type="submit" class="btn btn-sm btn-outline-danger w-100">Remove</button>
-                    </form>
+                  <div class="inquiry-thread">
+                    {% for chat_message in inquiry.thread_messages %}
+                      {% if chat_message.sender_role == 'CUSTOMER' %}
+                        <div class="message-row customer">
+                          <div class="message-box customer">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                              <strong style="font-size: 0.8rem; color: #124d75;">You</strong>
+                              <span class="small text-muted">{{ chat_message.created_at|date:'M d, Y H:i' }}</span>
+                            </div>
+                            <p>{{ chat_message.message|linebreaksbr }}</p>
+                          </div>
+                        </div>
+                      {% else %}
+                        <div class="message-row vendor">
+                          <div class="message-box vendor">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                              <strong style="font-size: 0.8rem; color: #1c7b4c;">Vendor Team</strong>
+                              <span class="small text-muted">{{ chat_message.created_at|date:'M d, Y H:i' }}</span>
+                            </div>
+                            <p>{{ chat_message.message|linebreaksbr }}</p>
+                          </div>
+                        </div>
+                      {% endif %}
+                    {% empty %}
+                      <p class="mb-0 text-muted">No chat messages yet. Start by sending one below.</p>
+                    {% endfor %}
                   </div>
-                {% endfor %}
-              </div>
-            {% else %}
-              <p class="empty-state">No favorite items yet.</p>
-            {% endif %}
+
+                  <form method="post" class="inquiry-compose">
+                    {% csrf_token %}
+                    <input type="hidden" name="form_type" value="inquiry_message">
+                    <input type="hidden" name="inquiry_id" value="{{ inquiry.id }}">
+                    <p class="message-label">Send follow-up message</p>
+                    <textarea name="message" class="form-control mb-2" rows="3" placeholder="Type your message to the vendor..."></textarea>
+                    <div class="inquiry-compose-actions">
+                      <button type="submit" class="btn btn-sm btn-primary px-3">Send Message</button>
+                    </div>
+                  </form>
+                </article>
+              {% endfor %}
+            </div>
           </div>
-        </div>
-      </div>
+        {% else %}
+          <p class="empty-state">You have not submitted any inquiries yet.</p>
+        {% endif %}
+      </section>
+
+      <section class="profile-card profile-section tab-pane fade" id="favorites-pane" role="tabpanel" aria-labelledby="favorites-tab" tabindex="0">
+        <h2 class="section-title">Favorite Packages & Activities</h2>
+        {% if favorite_packages or favorite_activities %}
+          <div class="favorites-list">
+            {% for package in favorite_packages %}
+              <div class="favorite-card">
+                <a href="{{ package.get_absolute_url }}" class="favorite-title">{{ package.title }}</a>
+                <p class="favorite-meta">
+                  {% if package.destination %}{{ package.destination.name }}{% else %}{{ package.get_category_display }}{% endif %}
+                  | Rs {{ package.price }}
+                </p>
+                <form method="post" action="{% url 'toggle_favorite_package' package.slug %}" class="favorite-action">
+                  {% csrf_token %}
+                  <input type="hidden" name="next" value="profile">
+                  <button type="submit" class="btn btn-sm btn-outline-danger">Remove</button>
+                </form>
+              </div>
+            {% endfor %}
+
+            {% for activity in favorite_activities %}
+              <div class="favorite-card">
+                <a href="{% url 'activity_detail' activity.pk %}" class="favorite-title">{{ activity.name }}</a>
+                <p class="favorite-meta">{{ activity.category.name }} | Rs {{ activity.price }}</p>
+                <form method="post" action="{% url 'toggle_favorite_activity' activity.pk %}" class="favorite-action">
+                  {% csrf_token %}
+                  <input type="hidden" name="next" value="profile">
+                  <button type="submit" class="btn btn-sm btn-outline-danger">Remove</button>
+                </form>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="empty-state">No favorite items yet.</p>
+        {% endif %}
+      </section>
     </div>
   </div>
 </div>
+
+<script>
+  (function () {
+    var inquiryButtons = document.querySelectorAll('[data-inquiry-target]');
+    if (!inquiryButtons.length) {
+      return;
+    }
+
+    function activateInquiry(targetId) {
+      var panes = document.querySelectorAll('.inquiry-pane');
+      panes.forEach(function (pane) {
+        pane.classList.toggle('active', pane.id === targetId);
+      });
+
+      var activePane = document.getElementById(targetId);
+      if (activePane) {
+        var thread = activePane.querySelector('.inquiry-thread');
+        if (thread) {
+          thread.scrollTop = thread.scrollHeight;
+        }
+      }
+
+      inquiryButtons.forEach(function (button) {
+        button.classList.toggle('active', button.getAttribute('data-inquiry-target') === targetId);
+      });
+    }
+
+    inquiryButtons.forEach(function (button) {
+      button.addEventListener('click', function () {
+        activateInquiry(button.getAttribute('data-inquiry-target'));
+      });
+    });
+
+    var initiallyActive = document.querySelector('.inquiry-item-btn.active');
+    if (initiallyActive) {
+      activateInquiry(initiallyActive.getAttribute('data-inquiry-target'));
+    }
+  })();
+</script>
 {% endblock %}

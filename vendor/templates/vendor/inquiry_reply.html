@@ -12,49 +12,340 @@
 {% endblock %}
 
 {% block vendor_content %}
+<style>
+  .vd-chat-layout {
+    display: grid;
+    grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
+    gap: 16px;
+    align-items: start;
+  }
+  .vd-chat-side {
+    display: grid;
+    gap: 14px;
+    align-content: start;
+  }
+  .vd-customer-chip {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .vd-customer-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #1f7ea5, #3ca1c9);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.92rem;
+    flex-shrink: 0;
+  }
+  .vd-customer-name {
+    margin: 0;
+    font-size: 0.94rem;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+  .vd-customer-contact {
+    margin: 2px 0 0;
+    font-size: 0.8rem;
+    color: var(--vd-text-muted);
+    line-height: 1.35;
+    word-break: break-word;
+  }
+  .vd-meta-list {
+    display: grid;
+    gap: 8px;
+  }
+  .vd-meta-item {
+    border: 1px solid var(--vd-line-soft);
+    background: var(--vd-cream-light);
+    border-radius: 10px;
+    padding: 10px 11px;
+  }
+  .vd-meta-label {
+    margin: 0 0 2px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: var(--vd-text-muted);
+    text-transform: uppercase;
+  }
+  .vd-meta-value {
+    margin: 0;
+    font-size: 0.84rem;
+    color: var(--vd-text);
+    line-height: 1.35;
+    word-break: break-word;
+  }
+  .vd-thread-panel {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    min-height: 620px;
+    overflow: hidden;
+  }
+  .vd-thread-head {
+    padding: 15px 18px;
+    border-bottom: 1px solid var(--vd-line-soft);
+    background: linear-gradient(180deg, var(--vd-cream-light), #fdfdfe);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .vd-thread-title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--vd-text);
+    line-height: 1.35;
+  }
+  .vd-thread-subtitle {
+    margin: 2px 0 0;
+    font-size: 0.8rem;
+    color: var(--vd-text-muted);
+  }
+  .vd-thread-count {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 10px;
+    border-radius: 999px;
+    font-size: 0.74rem;
+    font-weight: 700;
+    background: var(--vd-info-bg);
+    color: var(--vd-info);
+  }
+  .vd-chat-thread {
+    display: grid;
+    gap: 12px;
+    max-height: 455px;
+    overflow-y: auto;
+    padding: 16px;
+    background:
+      radial-gradient(circle at 85% 10%, rgba(0, 105, 137, 0.04), transparent 34%),
+      linear-gradient(180deg, #ffffff 0%, #f9fbfc 100%);
+    align-content: start;
+  }
+  .vd-msg-row {
+    display: flex;
+    width: 100%;
+  }
+  .vd-msg-row.customer {
+    justify-content: flex-start;
+  }
+  .vd-msg-row.vendor {
+    justify-content: flex-end;
+  }
+  .vd-chat-bubble {
+    width: fit-content;
+    max-width: min(80%, 640px);
+    border-radius: 14px;
+    border: 1px solid transparent;
+    padding: 12px;
+  }
+  .vd-chat-bubble.customer {
+    background: #f6fbff;
+    border-color: #d7e8f3;
+    border-bottom-left-radius: 6px;
+  }
+  .vd-chat-bubble.vendor {
+    background: #eaf8ef;
+    border-color: #c9ead6;
+    border-bottom-right-radius: 6px;
+  }
+  .vd-message-text {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.55;
+    color: var(--vd-text);
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .vd-compose-box {
+    border-top: 1px solid var(--vd-line-soft);
+    padding: 15px 16px 16px;
+    background: #fff;
+  }
+  .vd-compose-hint {
+    margin: 0 0 8px;
+    font-size: 0.78rem;
+    color: var(--vd-text-muted);
+  }
+  .vd-compose-actions {
+    margin-top: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .vd-compose-actions .vd-btn-primary {
+    justify-content: center;
+    min-width: 156px;
+  }
+  @media (max-width: 991px) {
+    .vd-chat-layout {
+      grid-template-columns: 1fr;
+    }
+    .vd-thread-panel {
+      min-height: 0;
+    }
+    .vd-chat-thread {
+      max-height: 340px;
+    }
+  }
+</style>
+
 <div class="vd-page-header vd-fade-in">
   <div>
-    <h1 class="vd-page-title">Reply to Inquiry</h1>
+    <h1 class="vd-page-title">Inquiry Chat</h1>
+    <p class="vd-page-subtitle">Track customer conversation and respond from a single workspace.</p>
   </div>
   <a href="{% url 'vendor:inquiry_list' %}" class="vd-btn-outline"><i class="bi bi-arrow-left"></i> Back to Inquiries</a>
 </div>
 
-<div class="row justify-content-center">
-  <div class="col-lg-8">
-    <!-- Inquiry Details -->
-    <div class="vd-card mb-3 vd-fade-in vd-fade-in-1">
+<div class="vd-chat-layout">
+  <aside class="vd-chat-side">
+    <div class="vd-card vd-fade-in vd-fade-in-1">
       <div class="vd-card-header">
-        <h2><i class="bi bi-envelope-open me-2" style="color: var(--vd-ocean);"></i>Inquiry Details</h2>
+        <h2><i class="bi bi-person-circle me-2" style="color: var(--vd-ocean);"></i>Customer</h2>
       </div>
       <div class="vd-card-body">
-        <div class="mb-2"><strong>Package:</strong> {{ inquiry.package.title }}</div>
-        <div class="mb-2"><strong>Customer:</strong> {{ inquiry.full_name }} ({{ inquiry.email }})</div>
-        <div><strong>Message:</strong></div>
-        <div class="p-3 rounded-3 mt-1" style="background: var(--vd-cream-light); font-size: 0.9rem;">{{ inquiry.message }}</div>
+        <div class="vd-customer-chip mb-3">
+          <div class="vd-customer-avatar">{{ inquiry.customer_name|default:inquiry.customer_email|slice:':1'|upper }}</div>
+          <div>
+            <p class="vd-customer-name">{{ inquiry.customer_name }}</p>
+            <p class="vd-customer-contact">{{ inquiry.customer_email }}</p>
+            {% if inquiry.customer_phone %}
+              <p class="vd-customer-contact mb-0">{{ inquiry.customer_phone }}</p>
+            {% endif %}
+          </div>
+        </div>
+        {% if has_new_customer_message %}
+          <span class="vd-badge vd-badge-warning"><i class="bi bi-exclamation-circle-fill"></i> New customer message</span>
+        {% else %}
+          <span class="vd-badge vd-badge-success"><i class="bi bi-check-circle-fill"></i> Conversation up to date</span>
+        {% endif %}
       </div>
     </div>
 
-    <!-- Reply Form -->
     <div class="vd-card vd-fade-in vd-fade-in-2">
       <div class="vd-card-header">
-        <h2><i class="bi bi-reply me-2" style="color: var(--vd-ocean);"></i>Your Reply</h2>
+        <h2><i class="bi bi-journal-text me-2" style="color: var(--vd-ocean);"></i>Inquiry Snapshot</h2>
       </div>
       <div class="vd-card-body">
-        {% if form.errors %}
-        <div class="vd-alert vd-alert-danger"><i class="bi bi-exclamation-triangle-fill"></i> Please fix the errors below.</div>
-        {% endif %}
-
-        <form method="post">
-          {% csrf_token %}
-          <div class="mb-3">
-            <label class="vd-form-label">{{ form.admin_reply.label }}</label>
-            {{ form.admin_reply }}
-            <div class="text-danger small">{{ form.admin_reply.errors }}</div>
+        <div class="vd-meta-list">
+          <div class="vd-meta-item">
+            <p class="vd-meta-label">Item</p>
+            <p class="vd-meta-value">{{ inquiry.target_name }}</p>
           </div>
-          <button type="submit" class="vd-btn-primary w-100" style="justify-content: center;"><i class="bi bi-send"></i> Save Reply</button>
-        </form>
+          <div class="vd-meta-item">
+            <p class="vd-meta-label">Type</p>
+            <p class="vd-meta-value">{{ inquiry.target_type }}</p>
+          </div>
+          <div class="vd-meta-item">
+            <p class="vd-meta-label">Started</p>
+            <p class="vd-meta-value">{{ inquiry.created_at|date:'M d, Y H:i' }}</p>
+          </div>
+          <div class="vd-meta-item">
+            <p class="vd-meta-label">Last Activity</p>
+            <p class="vd-meta-value">{{ latest_activity_at|date:'M d, Y H:i' }}</p>
+          </div>
+          <div class="vd-meta-item">
+            <p class="vd-meta-label">Messages</p>
+            <p class="vd-meta-value">{{ thread_message_count }}</p>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
+  </aside>
+
+  <section class="vd-card vd-thread-panel vd-fade-in vd-fade-in-3">
+    <div class="vd-thread-head">
+      <div>
+        <h2 class="vd-thread-title">{{ inquiry.target_name }}</h2>
+        <p class="vd-thread-subtitle">Conversation with {{ inquiry.customer_name }}</p>
+      </div>
+      <div class="d-flex align-items-center gap-2 flex-wrap">
+        <span class="vd-badge vd-badge-info">{{ inquiry.target_type }}</span>
+        {% if has_new_customer_message %}
+          <span class="vd-badge vd-badge-warning"><i class="bi bi-bell-fill"></i> Needs reply</span>
+        {% endif %}
+        <span class="vd-thread-count"><i class="bi bi-chat-dots-fill"></i> {{ thread_message_count }} messages</span>
+      </div>
+    </div>
+
+    <div class="vd-chat-thread" id="vdThreadStream">
+      {% if thread_messages %}
+        {% for chat_message in thread_messages %}
+          {% if chat_message.sender_role == 'CUSTOMER' %}
+            <div class="vd-msg-row customer">
+              <div class="vd-chat-bubble customer">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <strong style="font-size: 0.82rem; color: #0b5f78;">{{ inquiry.customer_name }}</strong>
+                  <span class="text-muted" style="font-size: 0.76rem;">{{ chat_message.created_at|date:'M d, Y H:i' }}</span>
+                </div>
+                <p class="vd-message-text">{{ chat_message.message|linebreaksbr }}</p>
+              </div>
+            </div>
+          {% else %}
+            <div class="vd-msg-row vendor">
+              <div class="vd-chat-bubble vendor">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <strong style="font-size: 0.82rem; color: #1c7b4c;">
+                    {% if chat_message.sender_user %}{{ chat_message.sender_user.get_full_name|default:chat_message.sender_user.username }}{% else %}Vendor Team{% endif %}
+                  </strong>
+                  <span class="text-muted" style="font-size: 0.76rem;">{{ chat_message.created_at|date:'M d, Y H:i' }}</span>
+                </div>
+                <p class="vd-message-text">{{ chat_message.message|linebreaksbr }}</p>
+              </div>
+            </div>
+          {% endif %}
+        {% endfor %}
+      {% else %}
+        <div class="vd-empty" style="padding: 28px 8px;">
+          <div><i class="bi bi-chat-square-text"></i></div>
+          <p>No messages available in this chat yet.</p>
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="vd-compose-box">
+      <h2 style="font-size: 0.98rem; margin: 0 0 6px;"><i class="bi bi-send me-2" style="color: var(--vd-ocean);"></i>Send Reply</h2>
+      <p class="vd-compose-hint">Reply clearly and include practical details like timing, price, or next steps.</p>
+
+      {% if form.errors %}
+      <div class="vd-alert vd-alert-danger"><i class="bi bi-exclamation-triangle-fill"></i> Please fix the errors below.</div>
+      {% endif %}
+
+      <form method="post">
+        {% csrf_token %}
+        <div>
+          <label class="vd-form-label" for="{{ form.message.id_for_label }}">{{ form.message.label }}</label>
+          {{ form.message }}
+          <div class="text-danger small">{{ form.message.errors }}</div>
+        </div>
+        <div class="vd-compose-actions">
+          <a href="{% url 'vendor:inquiry_list' %}" class="vd-btn-outline"><i class="bi bi-arrow-left"></i> Back</a>
+          <button type="submit" class="vd-btn-primary"><i class="bi bi-send"></i> Send Message</button>
+        </div>
+      </form>
+    </div>
+  </section>
 </div>
+{% endblock %}
+
+{% block vendor_scripts %}
+<script>
+  (function () {
+    var thread = document.getElementById('vdThreadStream');
+    if (thread) {
+      thread.scrollTop = thread.scrollHeight;
+    }
+  })();
+</script>
 {% endblock %}

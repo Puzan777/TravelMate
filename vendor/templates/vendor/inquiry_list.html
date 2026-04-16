@@ -12,8 +12,8 @@
 {% block vendor_content %}
 <div class="vd-page-header vd-fade-in">
   <div>
-    <h1 class="vd-page-title">Package Inquiries</h1>
-    <p class="vd-page-subtitle">These inquiries are automatically routed to you from your package detail pages.</p>
+    <h1 class="vd-page-title">Customer Chats</h1>
+    <p class="vd-page-subtitle">Manage threaded conversations from package and activity inquiries.</p>
   </div>
   <a href="?{{ export_query_string }}" class="vd-btn-primary"><i class="bi bi-download"></i> Export CSV</a>
 </div>
@@ -23,15 +23,14 @@
     <form method="get" class="row g-2 align-items-end">
       <div class="col-lg-5">
         <label for="inquiry-search" class="vd-form-label">Search</label>
-        <input id="inquiry-search" type="text" name="q" value="{{ search_query }}" class="form-control" placeholder="Package, customer, email, message...">
+        <input id="inquiry-search" type="text" name="q" value="{{ search_query }}" class="form-control" placeholder="Package/activity, customer, message...">
       </div>
       <div class="col-lg-3 col-md-4">
-        <label for="inquiry-package" class="vd-form-label">Package</label>
-        <select id="inquiry-package" name="package" class="form-select">
-          <option value="all">All packages</option>
-          {% for package in package_options %}
-          <option value="{{ package.id }}"{% if selected_package == package.id|stringformat:'s' %} selected{% endif %}>{{ package.title }}</option>
-          {% endfor %}
+        <label for="inquiry-item-type" class="vd-form-label">Type</label>
+        <select id="inquiry-item-type" name="item_type" class="form-select">
+          <option value="all"{% if selected_item_type == 'all' %} selected{% endif %}>All types</option>
+          <option value="package"{% if selected_item_type == 'package' %} selected{% endif %}>Package</option>
+          <option value="activity"{% if selected_item_type == 'activity' %} selected{% endif %}>Activity</option>
         </select>
       </div>
       <div class="col-lg-2 col-md-4">
@@ -54,10 +53,10 @@
     <table class="table mb-0">
       <thead>
         <tr>
-          <th>Package</th>
+          <th>Item</th>
+          <th>Type</th>
           <th>Customer</th>
-          <th>Email</th>
-          <th>Message</th>
+          <th>Latest Customer Message</th>
           <th>Status</th>
           <th class="text-end">Action</th>
         </tr>
@@ -65,12 +64,14 @@
       <tbody>
         {% for inquiry in inquiries %}
         <tr>
-          <td class="fw-semibold" style="font-size: 0.85rem;">{{ inquiry.package.title }}</td>
-          <td style="font-size: 0.85rem;">{{ inquiry.full_name }}</td>
-          <td style="font-size: 0.85rem;">{{ inquiry.email }}</td>
-          <td style="font-size: 0.85rem; max-width: 220px;">{{ inquiry.message|truncatechars:70 }}</td>
+          <td class="fw-semibold" style="font-size: 0.85rem;">{{ inquiry.target_name }}</td>
+          <td><span class="vd-badge vd-badge-info">{{ inquiry.target_type }}</span></td>
+          <td style="font-size: 0.85rem;">{{ inquiry.customer_name }}</td>
+          <td style="font-size: 0.85rem; max-width: 260px;">{{ inquiry.latest_customer_message|default:'No customer message yet.'|truncatechars:90 }}</td>
           <td>
-            {% if inquiry.admin_reply %}
+            {% if inquiry.has_new_customer_message %}
+              <span class="vd-badge vd-badge-warning"><i class="bi bi-exclamation-circle-fill"></i> New Message</span>
+            {% elif inquiry.thread_has_vendor_reply %}
               <span class="vd-badge vd-badge-success"><i class="bi bi-check-circle-fill"></i> Replied</span>
             {% else %}
               <span class="vd-badge vd-badge-warning"><i class="bi bi-clock"></i> Pending</span>
@@ -78,7 +79,7 @@
           </td>
           <td class="text-end">
             <a href="{% url 'vendor:inquiry_reply' inquiry.pk %}" class="vd-btn-primary" style="padding: 4px 12px; font-size: 0.76rem;">
-              {% if inquiry.admin_reply %}Edit Reply{% else %}Reply{% endif %}
+              {% if inquiry.has_new_customer_message %}View New{% elif inquiry.thread_has_vendor_reply %}Open Chat{% else %}Reply{% endif %}
             </a>
           </td>
         </tr>

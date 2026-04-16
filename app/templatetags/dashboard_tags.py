@@ -165,7 +165,7 @@ def dashboard_hot_sale_packages(limit=6):
 
 @register.simple_tag
 def dashboard_recent_inquiries(limit=6):
-    return Inquiry.objects.select_related('package', 'user').order_by('-created_at')[:limit]
+    return Inquiry.objects.select_related('package', 'activity', 'user').order_by('-created_at')[:limit]
 
 
 @register.simple_tag

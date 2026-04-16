@@ -19,6 +19,7 @@ from app.models import (
 	Booking,
 	HotSale,
 	Inquiry,
+	InquiryMessage,
 	Package,
 	PackageImage,
 	PackageUnavailableDate,
@@ -134,7 +135,11 @@ def dashboard(request):
 		vendor_bookings
 		.select_related('package', 'user')[:5]
 	)
-	recent_inquiries = Inquiry.objects.filter(package__vendor=vendor_profile).select_related('package', 'user')[:5]
+	recent_inquiries = (
+		Inquiry.objects
+		.filter(Q(package__vendor=vendor_profile) | Q(activity__vendor=vendor_profile))
+		.select_related('package', 'activity', 'user')[:5]
+	)
 
 	# Monthly KPIs
 	now = timezone.now()
@@ -170,7 +175,7 @@ def dashboard(request):
 		'pending_package_count': pending_package_count,
 		'pending_activity_count': pending_activity_count,
 		'avg_rating': avg_rating,
-		'inquiry_count': Inquiry.objects.filter(package__vendor=vendor_profile).count(),
+		'inquiry_count': Inquiry.objects.filter(Q(package__vendor=vendor_profile) | Q(activity__vendor=vendor_profile)).count(),
 		'recent_bookings': recent_bookings,
 		'recent_inquiries': recent_inquiries,
 		'recent_hot_sales': HotSale.objects.filter(
@@ -889,35 +894,104 @@ def inquiry_list(request):
 
 	search_query = request.GET.get('q', '').strip()
 	selected_reply = request.GET.get('reply', 'all').lower()
-	selected_package = request.GET.get('package', 'all')
+	selected_item_type = request.GET.get('item_type', 'all').lower()
 
-	package_options = Package.objects.filter(vendor=vendor_profile).order_by('title')
-
-	inquiries = Inquiry.objects.filter(package__vendor=vendor_profile).select_related('package', 'user')
+	inquiries = (
+		Inquiry.objects
+		.filter(Q(package__vendor=vendor_profile) | Q(activity__vendor=vendor_profile))
+		.select_related('package', 'activity', 'user')
+		.prefetch_related('messages')
+	)
 
 	if search_query:
 		inquiries = inquiries.filter(
 			Q(package__title__icontains=search_query)
+			| Q(activity__name__icontains=search_query)
 			| Q(full_name__icontains=search_query)
 			| Q(email__icontains=search_query)
 			| Q(phone__icontains=search_query)
+			| Q(user__username__icontains=search_query)
+			| Q(user__first_name__icontains=search_query)
+			| Q(user__last_name__icontains=search_query)
+			| Q(user__email__icontains=search_query)
 			| Q(message__icontains=search_query)
 			| Q(admin_reply__icontains=search_query)
+			| Q(messages__message__icontains=search_query)
 		)
+		inquiries = inquiries.distinct()
 
-	if selected_reply == 'replied':
-		inquiries = inquiries.exclude(admin_reply='')
-	elif selected_reply == 'pending':
-		inquiries = inquiries.filter(admin_reply='')
+	if selected_item_type == 'package':
+		inquiries = inquiries.filter(package__isnull=False)
+	elif selected_item_type == 'activity':
+		inquiries = inquiries.filter(activity__isnull=False)
+	else:
+		selected_item_type = 'all'
+
+	inquiries = list(inquiries.order_by('-created_at'))
+
+	for inquiry in inquiries:
+		messages_thread = list(inquiry.messages.all())
+		latest_customer_message = ''
+		latest_vendor_message = ''
+		latest_customer_at = None
+		latest_vendor_at = None
+
+		for thread_message in reversed(messages_thread):
+			if not latest_customer_message and thread_message.sender_role == InquiryMessage.SenderRole.CUSTOMER:
+				latest_customer_message = (thread_message.message or '').strip()
+				latest_customer_at = thread_message.created_at
+			if not latest_vendor_message and thread_message.sender_role in {
+				InquiryMessage.SenderRole.VENDOR,
+				InquiryMessage.SenderRole.STAFF,
+			}:
+				latest_vendor_message = (thread_message.message or '').strip()
+				latest_vendor_at = thread_message.created_at
+			if latest_customer_message and latest_vendor_message:
+				break
+
+		if not latest_customer_message:
+			latest_customer_message = (inquiry.message or '').strip()
+			if latest_customer_message:
+				latest_customer_at = inquiry.created_at
+		if not latest_vendor_message:
+			latest_vendor_message = (inquiry.admin_reply or '').strip()
+			if latest_vendor_message:
+				latest_vendor_at = inquiry.replied_at or inquiry.created_at
+
+		inquiry.latest_customer_message = latest_customer_message
+		inquiry.latest_vendor_message = latest_vendor_message
+		inquiry.latest_customer_message_at = latest_customer_at
+		inquiry.thread_has_vendor_reply = bool(latest_vendor_message)
+		inquiry.has_new_customer_message = bool(
+			inquiry.thread_has_vendor_reply
+			and latest_customer_at
+			and (
+				not latest_vendor_at
+				or latest_customer_at > latest_vendor_at
+			)
+		)
+		inquiry.needs_vendor_reply = bool((not inquiry.thread_has_vendor_reply) or inquiry.has_new_customer_message)
+
+		if inquiry.has_new_customer_message:
+			inquiry.reply_status_label = 'New Message'
+		elif inquiry.thread_has_vendor_reply:
+			inquiry.reply_status_label = 'Replied'
+		else:
+			inquiry.reply_status_label = 'Pending'
+
+	if selected_reply == 'pending':
+		inquiries = [inquiry for inquiry in inquiries if inquiry.needs_vendor_reply]
+	elif selected_reply == 'replied':
+		inquiries = [inquiry for inquiry in inquiries if inquiry.thread_has_vendor_reply and not inquiry.has_new_customer_message]
 	else:
 		selected_reply = 'all'
 
-	if selected_package.isdigit():
-		inquiries = inquiries.filter(package_id=int(selected_package))
-	else:
-		selected_package = 'all'
-
-	inquiries = inquiries.order_by('-created_at')
+	inquiries.sort(
+		key=lambda inquiry: (
+			0 if inquiry.needs_vendor_reply else 1,
+			-(inquiry.latest_customer_message_at or inquiry.created_at).timestamp(),
+		)
+	)
 
 	if request.GET.get('export', '').lower() == 'csv':
 		response = HttpResponse(content_type='text/csv')
@@ -925,23 +999,27 @@ def inquiry_list(request):
 		writer = csv.writer(response)
 		writer.writerow([
 			'ID',
-			'Package',
+			'Item Type',
+			'Item',
 			'Customer',
 			'Email',
 			'Phone',
-			'Message',
+			'Latest Customer Message',
+			'Latest Vendor Reply',
 			'Reply Status',
 			'Created At',
 		])
 		for inquiry in inquiries:
 			writer.writerow([
 				inquiry.id,
-				inquiry.package.title,
-				inquiry.full_name,
-				inquiry.email,
-				inquiry.phone,
-				inquiry.message,
-				'Replied' if inquiry.admin_reply else 'Pending',
+				inquiry.target_type,
+				inquiry.target_name,
+				inquiry.customer_name,
+				inquiry.customer_email,
+				inquiry.customer_phone,
+				inquiry.latest_customer_message,
+				inquiry.latest_vendor_message,
+				inquiry.reply_status_label,
 				inquiry.created_at.strftime('%Y-%m-%d %H:%M:%S'),
 			])
 		return response
@@ -949,7 +1027,7 @@ def inquiry_list(request):
 	has_filters_applied = any([
 		bool(search_query),
 		selected_reply != 'all',
-		selected_package != 'all',
+		selected_item_type != 'all',
 	])
 
 	export_query = request.GET.copy()
@@ -962,10 +1040,9 @@ def inquiry_list(request):
 		{
 			'inquiries': inquiries,
 			'vendor_profile': vendor_profile,
-			'package_options': package_options,
 			'search_query': search_query,
 			'selected_reply': selected_reply,
-			'selected_package': selected_package,
+			'selected_item_type': selected_item_type,
 			'has_filters_applied': has_filters_applied,
 			'export_query_string': export_query.urlencode(),
 		},
@@ -1141,15 +1218,77 @@ def inquiry_reply(request, pk):
 	if vendor_profile is None:
 		return redirect('home')
 
-	inquiry = get_object_or_404(Inquiry, pk=pk, package__vendor=vendor_profile)
-	if request.method == 'POST':
-		form = VendorInquiryReplyForm(request.POST, instance=inquiry)
-		if form.is_valid():
-			form.save()
-			messages.success(request, 'Inquiry reply saved successfully.')
-			return redirect('vendor:inquiry_list')
+	inquiry = get_object_or_404(
+		Inquiry.objects
+		.select_related('package', 'activity', 'user')
+		.prefetch_related('messages', 'messages__sender_user')
+		.filter(Q(package__vendor=vendor_profile) | Q(activity__vendor=vendor_profile)),
+		pk=pk,
+	)
+	thread_messages = list(inquiry.messages.all())
+	if not thread_messages:
+		if (inquiry.message or '').strip():
+			thread_messages.append({
+				'sender_role': InquiryMessage.SenderRole.CUSTOMER,
+				'message': inquiry.message,
+				'created_at': inquiry.created_at,
+				'sender_user': inquiry.user,
+			})
+		if (inquiry.admin_reply or '').strip():
+			thread_messages.append({
+				'sender_role': InquiryMessage.SenderRole.VENDOR,
+				'message': inquiry.admin_reply,
+				'created_at': inquiry.replied_at or inquiry.created_at,
+				'sender_user': None,
+			})
+
+	latest_customer_at = None
+	latest_vendor_at = None
+	for thread_message in reversed(thread_messages):
+		role = thread_message.get('sender_role') if isinstance(thread_message, dict) else thread_message.sender_role
+		created_at = thread_message.get('created_at') if isinstance(thread_message, dict) else thread_message.created_at
+		if latest_customer_at is None and role == InquiryMessage.SenderRole.CUSTOMER:
+			latest_customer_at = created_at
+		if latest_vendor_at is None and role in {InquiryMessage.SenderRole.VENDOR, InquiryMessage.SenderRole.STAFF}:
+			latest_vendor_at = created_at
+		if latest_customer_at and latest_vendor_at:
+			break
+
+	has_new_customer_message = bool(
+		latest_customer_at
+		and (
+			latest_vendor_at is None
+			or latest_customer_at > latest_vendor_at
+		)
+	)
+
+	latest_activity_at = None
+	if thread_messages:
+		last_thread_message = thread_messages[-1]
+		latest_activity_at = last_thread_message.get('created_at') if isinstance(last_thread_message, dict) else last_thread_message.created_at
 	else:
-		form = VendorInquiryReplyForm(instance=inquiry)
+		latest_activity_at = inquiry.created_at
+
+	if request.method == 'POST':
+		form = VendorInquiryReplyForm(request.POST)
+		if form.is_valid():
+			reply_text = form.cleaned_data['message']
+			sender_role = InquiryMessage.SenderRole.VENDOR
+			if request.user.is_staff or request.user.is_superuser:
+				sender_role = InquiryMessage.SenderRole.STAFF
+			InquiryMessage.objects.create(
+				inquiry=inquiry,
+				sender_user=request.user,
+				sender_role=sender_role,
+				message=reply_text,
+			)
+			inquiry.admin_reply = reply_text
+			inquiry.replied_at = timezone.now()
+			inquiry.save(update_fields=['admin_reply', 'replied_at'])
+			messages.success(request, 'Reply sent successfully.')
+			return redirect('vendor:inquiry_reply', pk=inquiry.pk)
+	else:
+		form = VendorInquiryReplyForm()
 
 	return render(
 		request,
@@ -1157,5 +1296,9 @@ def inquiry_reply(request, pk):
 		{
 			'form': form,
 			'inquiry': inquiry,
+			'thread_messages': thread_messages,
+			'has_new_customer_message': has_new_customer_message,
+			'latest_activity_at': latest_activity_at,
+			'thread_message_count': len(thread_messages),
 		},
 	)

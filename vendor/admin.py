@@ -3,8 +3,9 @@ from django.conf import settings
 from django.contrib import admin, messages
 from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
 from django.core.mail import send_mail
+from django.http import HttpResponseRedirect
 from django.template.response import TemplateResponse
-from django.urls import reverse
+from django.urls import path, reverse
 from django.utils.html import format_html
 
 from .models import VendorProfile
@@ -42,6 +43,8 @@ class DeactivateVendorsForm(forms.Form):
 
 @admin.register(VendorProfile)
 class VendorProfileAdmin(admin.ModelAdmin):
+	change_form_template = 'admin/vendor/vendorprofile/change_form.html'
+
 	actions = (
 		'approve_selected_vendors',
 		'reject_selected_vendors',
@@ -50,21 +53,15 @@ class VendorProfileAdmin(admin.ModelAdmin):
 	)
 
 	list_display = (
-		'company_name',
-		'owner_full_name',
-		'account_holder_name',
-		'masked_mobile_payment_number',
-		'pan_vat_number',
-		'user',
-		'verification_status',
-		'account_status',
-		'is_approved',
-		'submitted_at',
-		'status_changed_at',
-		'verified_at',
+		'vendor_identity',
+		'business_contact',
+		'account_state',
+		'registered_on',
 		'view_details',
 	)
-	list_filter = ('verification_status', 'account_status', 'is_approved', 'submitted_at', 'verified_at', 'created_at')
+	list_display_links = None
+	list_per_page = 10
+	list_filter = ('verification_status', 'account_status')
 	search_fields = (
 		'company_name',
 		'owner_full_name',
@@ -76,25 +73,29 @@ class VendorProfileAdmin(admin.ModelAdmin):
 		'user__email',
 		'contact_phone',
 	)
-	readonly_fields = ('submitted_at', 'verified_at', 'created_at', 'updated_at', 'status_changed_at', 'business_certificate_preview')
+	readonly_fields = (
+		'identity_panel',
+		'payment_panel',
+		'verification_panel',
+		'timeline_panel',
+		'business_context_panel',
+		'business_certificate_preview',
+	)
 	fieldsets = (
-		('Vendor Identity', {
-			'fields': ('user', 'company_name', 'owner_full_name', 'owner_national_id', 'contact_phone', 'address'),
+		('Vendor Profile', {
+			'fields': ('identity_panel',),
 		}),
-		('Payment Details', {
-			'fields': ('account_holder_name', 'mobile_payment_number'),
-		}),
-		('Business KYC', {
-			'fields': ('pan_vat_number', 'business_registration_number', 'business_registration_certificate', 'business_certificate_preview'),
+		('Payment and Tax', {
+			'fields': ('payment_panel',),
 		}),
 		('Verification', {
-			'fields': ('verification_status', 'rejection_reason', 'is_approved', 'submitted_at', 'verified_at'),
+			'fields': ('verification_panel',),
 		}),
-		('Account Status', {
-			'fields': ('account_status', 'status_reason', 'status_changed_at'),
+		('Timeline', {
+			'fields': ('timeline_panel',),
 		}),
-		('System', {
-			'fields': ('created_at', 'updated_at'),
+		('Business Context', {
+			'fields': ('business_context_panel', 'business_certificate_preview'),
 		}),
 	)
 
@@ -110,8 +111,108 @@ class VendorProfileAdmin(admin.ModelAdmin):
 	def has_view_permission(self, request, obj=None):
 		return request.user.is_active and request.user.is_staff
 
+	def get_urls(self):
+		urls = super().get_urls()
+		custom_urls = [
+			path(
+				'<path:object_id>/approve/',
+				self.admin_site.admin_view(self.approve_vendor_view),
+				name='vendor_vendorprofile_approve',
+			),
+			path(
+				'<path:object_id>/reject/',
+				self.admin_site.admin_view(self.reject_vendor_view),
+				name='vendor_vendorprofile_reject',
+			),
+		]
+		return custom_urls + urls
+
+	def change_view(self, request, object_id, form_url='', extra_context=None):
+		extra_context = extra_context or {}
+		obj = self.get_object(request, object_id)
+		if obj:
+			is_pending = obj.verification_status == VendorProfile.VerificationStatus.PENDING
+			extra_context.update({
+				'vendor_is_pending': is_pending,
+				'approve_url': reverse('admin:vendor_vendorprofile_approve', args=[obj.pk]),
+				'reject_url': reverse('admin:vendor_vendorprofile_reject', args=[obj.pk]),
+				'back_to_pending_url': f"{reverse('admin:vendor_vendorprofile_changelist')}?verification_status__exact=PENDING",
+				'back_to_vendors_url': reverse('admin:vendor_vendorprofile_changelist'),
+			})
+		return super().change_view(request, object_id, form_url=form_url, extra_context=extra_context)
+
+	def _detail_redirect_url(self, profile, request):
+		changelist_url = reverse('admin:vendor_vendorprofile_changelist')
+		next_url = (request.POST.get('next_url') or '').strip()
+		if next_url and next_url.startswith(changelist_url):
+			return next_url
+		if profile.verification_status == VendorProfile.VerificationStatus.PENDING:
+			return f"{changelist_url}?verification_status__exact=PENDING"
+		return changelist_url
+
+	def approve_vendor_view(self, request, object_id):
+		profile = self.get_object(request, object_id)
+		if not profile:
+			self.message_user(request, 'Vendor profile was not found.', level=messages.ERROR)
+			return HttpResponseRedirect(reverse('admin:vendor_vendorprofile_changelist'))
+
+		if request.method != 'POST':
+			self.message_user(request, 'Approve action must be submitted from the detail page.', level=messages.ERROR)
+			return HttpResponseRedirect(reverse('admin:vendor_vendorprofile_change', args=[profile.pk]))
+
+		profile.verification_status = VendorProfile.VerificationStatus.APPROVED
+		profile.save()
+		try:
+			self._send_verification_email(profile, is_approved=True)
+		except Exception as exc:
+			self.message_user(
+				request,
+				f'Vendor approved, but approval email could not be sent to {profile.user.email}: {exc}',
+				level=messages.WARNING,
+			)
+		else:
+			self.message_user(request, 'Vendor approved successfully and email sent.', level=messages.SUCCESS)
+
+		return HttpResponseRedirect(self._detail_redirect_url(profile, request))
+
+	def reject_vendor_view(self, request, object_id):
+		profile = self.get_object(request, object_id)
+		if not profile:
+			self.message_user(request, 'Vendor profile was not found.', level=messages.ERROR)
+			return HttpResponseRedirect(reverse('admin:vendor_vendorprofile_changelist'))
+
+		if request.method != 'POST':
+			self.message_user(request, 'Reject action must be submitted from the detail page.', level=messages.ERROR)
+			return HttpResponseRedirect(reverse('admin:vendor_vendorprofile_change', args=[profile.pk]))
+
+		reason = (request.POST.get('reason') or '').strip()
+		if not reason:
+			self.message_user(request, 'Rejection reason is required.', level=messages.ERROR)
+			return HttpResponseRedirect(reverse('admin:vendor_vendorprofile_change', args=[profile.pk]))
+
+		profile.verification_status = VendorProfile.VerificationStatus.REJECTED
+		profile.rejection_reason = reason
+		profile.save()
+		try:
+			self._send_verification_email(profile, is_approved=False)
+		except Exception as exc:
+			self.message_user(
+				request,
+				f'Vendor rejected, but rejection email could not be sent to {profile.user.email}: {exc}',
+				level=messages.WARNING,
+			)
+		else:
+			self.message_user(request, 'Vendor rejected successfully and email sent.', level=messages.WARNING)
+
+		return HttpResponseRedirect(self._detail_redirect_url(profile, request))
+
 	def get_queryset(self, request):
 		qs = super().get_queryset(request)
+		url_name = getattr(getattr(request, 'resolver_match', None), 'url_name', '')
+		# Detail pages don't include verification_status__exact in query params,
+		# so allow all statuses there to avoid false "doesn't exist" errors.
+		if url_name.endswith('_change'):
+			return qs
 		status_filter = (request.GET.get('verification_status__exact') or '').strip().upper()
 		allowed_statuses = {
 			VendorProfile.VerificationStatus.PENDING,
@@ -125,6 +226,8 @@ class VendorProfileAdmin(admin.ModelAdmin):
 	def get_actions(self, request):
 		actions = super().get_actions(request)
 		status_filter = (request.GET.get('verification_status__exact') or '').strip().upper()
+		if status_filter == VendorProfile.VerificationStatus.PENDING:
+			return {}
 		is_verification_page = status_filter in {
 			VendorProfile.VerificationStatus.PENDING,
 			VendorProfile.VerificationStatus.REJECTED,
@@ -144,13 +247,156 @@ class VendorProfileAdmin(admin.ModelAdmin):
 		status_filter = (request.GET.get('verification_status__exact') or '').strip().upper()
 
 		title_map = {
-			VendorProfile.VerificationStatus.PENDING: 'Vendor Verification Queue (Pending)',
+			VendorProfile.VerificationStatus.PENDING: 'Vendor Verifications',
 			VendorProfile.VerificationStatus.REJECTED: 'Vendor Verification Queue (Rejected)',
 			VendorProfile.VerificationStatus.APPROVED: 'Vendor Profiles (Approved)',
 		}
 		extra_context['title'] = title_map.get(status_filter, 'Vendor Profiles (Approved)')
 
 		return super().changelist_view(request, extra_context=extra_context)
+
+	def _format_dt(self, value):
+		if not value:
+			return '-'
+		return value.strftime('%b %d, %Y %I:%M %p')
+
+	def _verification_badge(self, status):
+		label = dict(VendorProfile.VerificationStatus.choices).get(status, status or '-')
+		styles = {
+			VendorProfile.VerificationStatus.APPROVED: 'background:#e7f8ef;color:#065f46;border:1px solid #a7f3d0;',
+			VendorProfile.VerificationStatus.REJECTED: 'background:#fdecec;color:#9f1239;border:1px solid #fecdd3;',
+			VendorProfile.VerificationStatus.PENDING: 'background:#fff7e6;color:#92400e;border:1px solid #fcd9a1;',
+		}
+		style = styles.get(status, 'background:#f1f5f9;color:#334155;border:1px solid #cbd5e1;')
+		return format_html('<span style="display:inline-block;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700;{}">{}</span>', style, label)
+
+	def _account_badge(self, status):
+		label = dict(VendorProfile.AccountStatus.choices).get(status, status or '-')
+		styles = {
+			VendorProfile.AccountStatus.ACTIVE: 'background:#e0f2fe;color:#0c4a6e;border:1px solid #bae6fd;',
+			VendorProfile.AccountStatus.DEACTIVATED: 'background:#f3f4f6;color:#374151;border:1px solid #d1d5db;',
+		}
+		style = styles.get(status, 'background:#f1f5f9;color:#334155;border:1px solid #cbd5e1;')
+		return format_html('<span style="display:inline-block;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700;{}">{}</span>', style, label)
+
+	@admin.display(description='Vendor')
+	def vendor_identity(self, obj):
+		owner = obj.owner_full_name or '-'
+		return format_html(
+			'<div style="display:flex;flex-direction:column;line-height:1.25;">'
+			'<strong style="font-size:13px;color:#0f172a;">{}</strong>'
+			'<span style="font-size:11px;color:#64748b;">Owner: {}</span>'
+			'</div>',
+			obj.company_name,
+			owner,
+		)
+
+	@admin.display(description='Contact')
+	def business_contact(self, obj):
+		username = getattr(obj.user, 'username', '-') or '-'
+		email = getattr(obj.user, 'email', '-') or '-'
+		phone = obj.contact_phone or '-'
+		return format_html(
+			'<div style="display:flex;flex-direction:column;line-height:1.25;gap:1px;">'
+			'<span style="font-size:12px;color:#334155;">@{}</span>'
+			'<span style="font-size:11px;color:#64748b;">{}</span>'
+			'<span style="font-size:11px;color:#64748b;">{}</span>'
+			'</div>',
+			username,
+			email,
+			phone,
+		)
+
+	@admin.display(description='Account')
+	def account_state(self, obj):
+		return self._account_badge(obj.account_status)
+
+	@admin.display(description='Registered')
+	def registered_on(self, obj):
+		return self._format_dt(obj.created_at)
+
+	@admin.display(description='Identity')
+	def identity_panel(self, obj):
+		full_name = obj.owner_full_name or '-'
+		username = getattr(obj.user, 'username', '-') or '-'
+		email = getattr(obj.user, 'email', '-') or '-'
+		phone = obj.contact_phone or '-'
+		address = obj.address or '-'
+		return format_html(
+			'<div style="display:grid;gap:8px;font-size:12px;color:#334155;">'
+			'<div><strong>Company:</strong> {}</div>'
+			'<div><strong>Owner:</strong> {}</div>'
+			'<div><strong>Username:</strong> @{}</div>'
+			'<div><strong>Email:</strong> {}</div>'
+			'<div><strong>Phone:</strong> {}</div>'
+			'<div><strong>Address:</strong> {}</div>'
+			'</div>',
+			obj.company_name,
+			full_name,
+			username,
+			email,
+			phone,
+			address,
+		)
+
+	@admin.display(description='Payment and Tax')
+	def payment_panel(self, obj):
+		account_holder_name = (obj.account_holder_name or '').strip()
+		if not account_holder_name:
+			account_holder_name = (obj.owner_full_name or '').strip() or 'Not submitted'
+
+		esewa_number = (obj.mobile_payment_number or '').strip()
+		if not esewa_number:
+			esewa_number = (obj.contact_phone or '').strip() or 'Not submitted'
+
+		pan_number = obj.pan_vat_number or '-'
+		return format_html(
+			'<div style="display:grid;gap:8px;font-size:12px;color:#334155;">'
+			'<div><strong>Account Holder:</strong> {}</div>'
+			'<div><strong>eSewa Number:</strong> {}</div>'
+			'<div><strong>PAN/VAT Number:</strong> {}</div>'
+			'</div>',
+			account_holder_name,
+			esewa_number,
+			pan_number,
+		)
+
+	@admin.display(description='Verification Summary')
+	def verification_panel(self, obj):
+		return format_html(
+			'<div style="display:grid;gap:8px;font-size:12px;color:#334155;">'
+			'<div><strong>Verification Status:</strong> {}</div>'
+			'</div>',
+			self._verification_badge(obj.verification_status),
+		)
+
+	@admin.display(description='Timeline')
+	def timeline_panel(self, obj):
+		return format_html(
+			'<div style="display:grid;gap:8px;font-size:12px;color:#334155;">'
+			'<div><strong>Submitted At:</strong> {}</div>'
+			'<div><strong>Verified At:</strong> {}</div>'
+			'<div><strong>Created At:</strong> {}</div>'
+			'<div><strong>Updated At:</strong> {}</div>'
+			'</div>',
+			self._format_dt(obj.submitted_at),
+			self._format_dt(obj.verified_at),
+			self._format_dt(obj.created_at),
+			self._format_dt(obj.updated_at),
+		)
+
+	@admin.display(description='Business Context')
+	def business_context_panel(self, obj):
+		return format_html(
+			'<div style="display:grid;gap:8px;font-size:12px;color:#334155;">'
+			'<div><strong>Business Registration Number:</strong> {}</div>'
+			'<div><strong>Owner National ID:</strong> {}</div>'
+			'<div><strong>Account Status:</strong> {}</div>'
+			'</div>',
+			obj.business_registration_number or '-',
+			obj.owner_national_id or '-',
+			self._account_badge(obj.account_status),
+		)
 
 	@admin.display(description='Details')
 	def view_details(self, obj):

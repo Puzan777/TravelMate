@@ -84,6 +84,14 @@
           {% endfor %}
         </select>
 
+        <select name="dur" class="tm-filter-select">
+          <option value="">Any Duration</option>
+          <option value="1-3"{% if filter_dur == '1-3' %} selected{% endif %}>Short (1-3 days)</option>
+          <option value="4-7"{% if filter_dur == '4-7' %} selected{% endif %}>Medium (4-7 days)</option>
+          <option value="8-14"{% if filter_dur == '8-14' %} selected{% endif %}>Long (8-14 days)</option>
+          <option value="15+"{% if filter_dur == '15+' %} selected{% endif %}>Extended (15+ days)</option>
+        </select>
+
         <select name="sort" class="tm-filter-select">
           <option value="">Sort by</option>
           <option value="rating"{% if sort_by == 'rating' %} selected{% endif %}>Top Rated</option>

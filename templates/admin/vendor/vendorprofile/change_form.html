@@ -1,0 +1,208 @@
+{% extends "admin/change_form.html" %}
+{% load i18n %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+  #vendor-action-dock {
+    position: sticky;
+    bottom: 12px;
+    z-index: 60;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 0;
+    margin-top: 16px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+  }
+
+  #vendor-reject-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(15, 23, 42, 0.45);
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+
+  #vendor-reject-modal .modal-card {
+    width: min(520px, 100%);
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #cbd5e1;
+    box-shadow: 0 18px 32px rgba(15, 23, 42, 0.2);
+    padding: 16px;
+    box-sizing: border-box;
+    overflow: hidden;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  #vendor-reject-modal form,
+  #vendor-reject-modal label,
+  #vendor-reject-modal p,
+  #vendor-reject-modal h3 {
+    box-sizing: border-box;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  #vendor-reject-modal label {
+    float: none !important;
+    width: auto !important;
+    margin-left: 0 !important;
+  }
+
+  #vendor-reject-modal textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    resize: vertical;
+    margin-top: 8px;
+    box-sizing: border-box;
+    float: none !important;
+    margin-left: 0 !important;
+    max-width: 100%;
+  }
+
+  #vendor-reject-modal .modal-actions {
+    margin-top: 14px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  .vendor-btn {
+    border: 1px solid transparent;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    box-shadow: 0 6px 14px rgba(15, 118, 110, 0.24);
+  }
+
+  .vendor-btn-approve {
+    background: #166534;
+    border-color: #166534;
+    color: #fff;
+  }
+
+  .vendor-btn-reject {
+    background: #b91c1c;
+    border-color: #b91c1c;
+    color: #fff;
+  }
+
+  .vendor-btn-back {
+    background: #0f766e;
+    border-color: #0f766e;
+    color: #fff;
+  }
+
+  .vendor-btn-back:link,
+  .vendor-btn-back:visited,
+  .vendor-btn-back:hover,
+  .vendor-btn-back:focus,
+  .vendor-btn-back:active {
+    color: #fff !important;
+    text-decoration: none;
+  }
+
+  .vendor-btn-secondary {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+    color: #0f172a;
+  }
+</style>
+{% endblock %}
+
+{% block object-tools %}{% endblock %}
+
+{% block submit_buttons_top %}{% endblock %}
+
+{% block submit_buttons_bottom %}
+<div id="vendor-action-dock">
+  {% if original and vendor_is_pending %}
+  <form method="post" action="{{ approve_url }}" style="margin:0;">
+    {% csrf_token %}
+    <input type="hidden" name="next_url" value="{{ back_to_pending_url }}">
+    <button type="submit" class="vendor-btn vendor-btn-approve">Approve</button>
+  </form>
+  <button type="button" id="open-reject-modal" class="vendor-btn vendor-btn-reject">Reject</button>
+  {% endif %}
+
+  {% if original and original.verification_status == 'PENDING' %}
+  <a href="{{ back_to_pending_url }}" class="vendor-btn vendor-btn-back">Back to Pending Vendors</a>
+  {% else %}
+  <a href="{{ back_to_vendors_url }}" class="vendor-btn vendor-btn-back">Back to Vendors</a>
+  {% endif %}
+</div>
+
+{% if original and vendor_is_pending %}
+<div id="vendor-reject-modal" role="dialog" aria-modal="true" aria-labelledby="vendor-reject-title">
+  <div class="modal-card">
+    <h3 id="vendor-reject-title" style="margin:0 0 8px 0;">Reject Vendor</h3>
+    <p style="margin:0;color:#475569;">Please provide a reason. This will be saved and included in the rejection email.</p>
+    <form method="post" action="{{ reject_url }}">
+      {% csrf_token %}
+      <input type="hidden" name="next_url" value="{{ back_to_pending_url }}">
+      <label for="reject-reason" style="display:block;margin-top:12px;font-weight:600;">Rejection reason</label>
+      <textarea id="reject-reason" name="reason" required></textarea>
+      <div class="modal-actions">
+        <button type="button" id="close-reject-modal" class="vendor-btn vendor-btn-secondary">Cancel</button>
+        <button type="submit" class="vendor-btn vendor-btn-reject">Confirm Reject</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  (function () {
+    const modal = document.getElementById('vendor-reject-modal');
+    const openBtn = document.getElementById('open-reject-modal');
+    const closeBtn = document.getElementById('close-reject-modal');
+    const reasonField = document.getElementById('reject-reason');
+
+    if (!modal || !openBtn || !closeBtn) {
+      return;
+    }
+
+    const openModal = function () {
+      modal.style.display = 'flex';
+      if (reasonField) {
+        reasonField.focus();
+      }
+    };
+
+    const closeModal = function () {
+      modal.style.display = 'none';
+    };
+
+    openBtn.addEventListener('click', openModal);
+    closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', function (event) {
+      if (event.target === modal) {
+        closeModal();
+      }
+    });
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape' && modal.style.display === 'flex') {
+        closeModal();
+      }
+    });
+  })();
+</script>
+{% endif %}
+{% endblock %}

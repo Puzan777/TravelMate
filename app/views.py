@@ -8,7 +8,7 @@ import re
 from functools import wraps
 from decimal import Decimal, InvalidOperation
 from urllib.error import URLError
-from urllib.parse import urlencode, urlparse
+from urllib.parse import quote, urlencode, urlparse
 from urllib.request import Request, urlopen
 
 from django.conf import settings
@@ -45,6 +45,7 @@ from .models import (
     Destination,
     HotSale,
     Inquiry,
+    InquiryMessage,
     Package,
     PackageReview,
 )
@@ -115,8 +116,15 @@ def _ensure_customer_booking_access(request):
     return None
 
 
-@customer_only(error_message='Only customers can send inquiries.')
 def _ensure_customer_inquiry_access(request):
+    if not request.user.is_authenticated:
+        login_url = f"{reverse('login')}?next={quote(request.get_full_path())}"
+        return redirect(login_url)
+
+    if not _is_customer_user(request.user):
+        messages.error(request, 'Only customers can send inquiries.')
+        return redirect(request.META.get('HTTP_REFERER') or reverse('home'))
+
     return None
 
 
@@ -760,6 +768,25 @@ def package_list(request, category=None, hot_sales=False):
     if filter_dest:
         qs = qs.filter(destination__id=filter_dest)
 
+    # Filter by duration (Human-readable ranges)
+    filter_dur = request.GET.get('dur', '').strip()
+    if filter_dur:
+        packages_pool = list(qs)
+        match_ids = []
+        for p in packages_pool:
+            num_match = re.search(r'(\d+)', str(p.duration or ''))
+            if num_match:
+                days = int(num_match.group(1))
+                if filter_dur == '1-3' and 1 <= days <= 3:
+                    match_ids.append(p.id)
+                elif filter_dur == '4-7' and 4 <= days <= 7:
+                    match_ids.append(p.id)
+                elif filter_dur == '8-14' and 8 <= days <= 14:
+                    match_ids.append(p.id)
+                elif filter_dur == '15+' and days >= 15:
+                    match_ids.append(p.id)
+        qs = qs.filter(id__in=match_ids)
+
     # Sort
     sort_by = request.GET.get('sort', '').strip()
     if sort_by == 'price_low':
@@ -783,6 +810,7 @@ def package_list(request, category=None, hot_sales=False):
         'search_q': search_q,
         'filter_cat': active_cat,
         'filter_dest': filter_dest,
+        'filter_dur': filter_dur,
         'sort_by': sort_by,
         'category_choices': Package.Category.choices,
         'destinations': destinations,
@@ -824,6 +852,8 @@ def activity_detail(request, pk):
     blocked_dates_iso = [entry.date.isoformat() for entry in blocked_dates]
     activity_reviews = activity.reviews.select_related('user').all()
     can_review_activity = _can_user_review_activity(request.user, activity)
+    is_customer_user = _is_customer_user(request.user) if request.user.is_authenticated else False
+    can_submit_inquiry = request.user.is_authenticated and is_customer_user
 
     booking_initial = {'travel_date': timezone.localdate(), 'number_of_people': 1}
     if request.user.is_authenticated:
@@ -857,6 +887,7 @@ def activity_detail(request, pk):
             review_instance = user_activity_review or ActivityReview(activity=activity, user=request.user)
             review_form = ActivityReviewForm(request.POST, instance=review_instance)
             booking_form = ActivityBookingForm(initial=booking_initial, activity=activity)
+            inquiry_form = InquiryForm()
             if review_form.is_valid():
                 activity_review = review_form.save(commit=False)
                 activity_review.activity = activity
@@ -867,6 +898,31 @@ def activity_detail(request, pk):
                     success_message = 'Your activity review was updated successfully.'
                 messages.success(request, success_message)
                 return redirect('activity_detail', pk=activity.pk)
+        elif form_type == 'inquiry':
+            blocked_response = _ensure_customer_inquiry_access(request)
+            if blocked_response:
+                return blocked_response
+
+            booking_form = ActivityBookingForm(initial=booking_initial, activity=activity)
+            inquiry_form = InquiryForm(request.POST)
+            review_form = ActivityReviewForm(initial=review_initial, instance=user_activity_review)
+            if inquiry_form.is_valid():
+                inquiry = Inquiry.objects.create(
+                    activity=activity,
+                    user=request.user,
+                    full_name=request.user.get_full_name() or request.user.username,
+                    email=request.user.email or '',
+                    phone='',
+                    message=inquiry_form.cleaned_data['message'],
+                )
+                InquiryMessage.objects.create(
+                    inquiry=inquiry,
+                    sender_user=request.user,
+                    sender_role=InquiryMessage.SenderRole.CUSTOMER,
+                    message=(inquiry.message or '').strip(),
+                )
+                messages.success(request, 'Your inquiry has been sent. Our team will contact you soon.')
+                return redirect('activity_detail', pk=activity.pk)
         else:
             if not request.user.is_authenticated:
                 return redirect('login')
@@ -876,6 +932,7 @@ def activity_detail(request, pk):
                 return blocked_response
 
             booking_form = ActivityBookingForm(request.POST, activity=activity)
+            inquiry_form = InquiryForm()
             review_form = ActivityReviewForm(initial=review_initial, instance=user_activity_review)
             if booking_form.is_valid():
                 activity_booking = booking_form.save(commit=False)
@@ -906,9 +963,9 @@ def activity_detail(request, pk):
                 return redirect('activity_detail', pk=activity.pk)
     else:
         booking_form = ActivityBookingForm(initial=booking_initial, activity=activity)
+        inquiry_form = InquiryForm()
         review_form = ActivityReviewForm(initial=review_initial, instance=user_activity_review)
 
-    is_customer_user = _is_customer_user(request.user) if request.user.is_authenticated else False
     can_book_activity = (not request.user.is_authenticated) or is_customer_user
     is_favorite = False
     if request.user.is_authenticated:
@@ -930,6 +987,7 @@ def activity_detail(request, pk):
         'hot_sale_context': hot_sale_context,
         'activity_primary_image': activity_primary_image,
         'booking_form': booking_form,
+        'inquiry_form': inquiry_form,
         'booking_unit_price': booking_unit_price,
         'blocked_dates': blocked_dates,
         'blocked_dates_iso': blocked_dates_iso,
@@ -938,6 +996,7 @@ def activity_detail(request, pk):
         'can_review_activity': can_review_activity,
         'user_activity_review': user_activity_review,
         'is_customer_user': is_customer_user,
+        'can_submit_inquiry': can_submit_inquiry,
         'can_book_activity': can_book_activity,
         'is_favorite': is_favorite,
         'related_activities': related_activities,
@@ -966,7 +1025,7 @@ def package_detail(request, slug):
     can_review_package = _can_user_review_package(request.user, package)
     is_customer_user = _is_customer_user(request.user) if request.user.is_authenticated else False
     can_book_package = (not request.user.is_authenticated) or _is_customer_user(request.user)
-    can_submit_inquiry = (not request.user.is_authenticated) or is_customer_user
+    can_submit_inquiry = request.user.is_authenticated and is_customer_user
 
     if request.user.is_authenticated:
         is_favorite = request.user.favorite_packages.filter(pk=package.pk).exists()
@@ -983,16 +1042,11 @@ def package_detail(request, slug):
         }
 
     booking_initial = {'travel_date': timezone.localdate(), 'number_of_people': 1}
-    inquiry_initial = {}
     if request.user.is_authenticated:
         booking_initial.update({
             'full_name': request.user.get_full_name() or request.user.username,
             'email': request.user.email,
         })
-        inquiry_initial = {
-            'full_name': request.user.get_full_name() or request.user.username,
-            'email': request.user.email,
-        }
 
     if request.method == 'POST':
         form_type = request.POST.get('form_type')
@@ -1006,7 +1060,7 @@ def package_detail(request, slug):
                 return blocked_response
 
             booking_form = BookingForm(request.POST, package=package)
-            inquiry_form = InquiryForm(initial=inquiry_initial)
+            inquiry_form = InquiryForm()
             review_form = PackageReviewForm(initial=review_initial, instance=user_package_review)
             if booking_form.is_valid():
                 booking = booking_form.save(commit=False)
@@ -1044,11 +1098,20 @@ def package_detail(request, slug):
             inquiry_form = InquiryForm(request.POST)
             review_form = PackageReviewForm(initial=review_initial, instance=user_package_review)
             if inquiry_form.is_valid():
-                inquiry = inquiry_form.save(commit=False)
-                inquiry.package = package
-                if request.user.is_authenticated:
-                    inquiry.user = request.user
-                inquiry.save()
+                inquiry = Inquiry.objects.create(
+                    package=package,
+                    user=request.user,
+                    full_name=request.user.get_full_name() or request.user.username,
+                    email=request.user.email or '',
+                    phone='',
+                    message=inquiry_form.cleaned_data['message'],
+                )
+                InquiryMessage.objects.create(
+                    inquiry=inquiry,
+                    sender_user=request.user,
+                    sender_role=InquiryMessage.SenderRole.CUSTOMER,
+                    message=(inquiry.message or '').strip(),
+                )
                 messages.success(request, 'Your inquiry has been sent. Our team will contact you soon.')
                 return redirect('package_detail', slug=slug)
         elif form_type == 'review':
@@ -1060,7 +1123,7 @@ def package_detail(request, slug):
                 return redirect('package_detail', slug=slug)
 
             booking_form = BookingForm(initial=booking_initial, package=package)
-            inquiry_form = InquiryForm(initial=inquiry_initial)
+            inquiry_form = InquiryForm()
             review_instance = user_package_review or PackageReview(package=package, user=request.user)
             review_form = PackageReviewForm(request.POST, instance=review_instance)
             if review_form.is_valid():
@@ -1075,11 +1138,11 @@ def package_detail(request, slug):
                 return redirect('package_detail', slug=slug)
         else:
             booking_form = BookingForm(initial=booking_initial, package=package)
-            inquiry_form = InquiryForm(initial=inquiry_initial)
+            inquiry_form = InquiryForm()
             review_form = PackageReviewForm(initial=review_initial, instance=user_package_review)
     else:
         booking_form = BookingForm(initial=booking_initial, package=package)
-        inquiry_form = InquiryForm(initial=inquiry_initial)
+        inquiry_form = InquiryForm()
         review_form = PackageReviewForm(initial=review_initial, instance=user_package_review)
 
     # Related packages (same category or destination, different vendor)
@@ -1120,6 +1183,25 @@ def profile_view(request):
     if request.user.role == CustomUser.Role.VENDOR:
         return redirect('vendor:dashboard')
 
+    if request.method == 'POST' and request.POST.get('form_type') == 'inquiry_message':
+        inquiry_id = request.POST.get('inquiry_id')
+        message_text = (request.POST.get('message') or '').strip()
+        inquiry = get_object_or_404(Inquiry, pk=inquiry_id, user=request.user)
+        redirect_url = f"{reverse('profile')}?inquiry={inquiry.pk}"
+
+        if not message_text:
+            messages.error(request, 'Please type a message before sending.')
+            return redirect(redirect_url)
+
+        InquiryMessage.objects.create(
+            inquiry=inquiry,
+            sender_user=request.user,
+            sender_role=InquiryMessage.SenderRole.CUSTOMER,
+            message=message_text,
+        )
+        messages.success(request, 'Your message has been sent to the vendor.')
+        return redirect(redirect_url)
+
     bookings = (
         Booking.objects
         .filter(user=request.user)
@@ -1134,7 +1216,54 @@ def profile_view(request):
         .select_related('activity', 'activity__category')
         .order_by('-created_at')
     )
-    inquiries = Inquiry.objects.filter(user=request.user).select_related('package').order_by('-created_at')
+    inquiry_queryset = (
+        Inquiry.objects
+        .filter(user=request.user)
+        .select_related('package', 'activity')
+        .prefetch_related('messages', 'messages__sender_user')
+        .order_by('-created_at')
+    )
+    inquiries = list(inquiry_queryset)
+
+    for inquiry in inquiries:
+        thread_messages = list(inquiry.messages.all())
+        if not thread_messages:
+            if (inquiry.message or '').strip():
+                thread_messages.append({
+                    'sender_role': InquiryMessage.SenderRole.CUSTOMER,
+                    'message': inquiry.message,
+                    'created_at': inquiry.created_at,
+                })
+            if (inquiry.admin_reply or '').strip():
+                thread_messages.append({
+                    'sender_role': InquiryMessage.SenderRole.VENDOR,
+                    'message': inquiry.admin_reply,
+                    'created_at': inquiry.replied_at or inquiry.created_at,
+                })
+
+        inquiry.thread_messages = thread_messages
+
+        latest_message = ''
+        has_vendor_reply = False
+        for thread_message in thread_messages:
+            role = thread_message.get('sender_role') if isinstance(thread_message, dict) else thread_message.sender_role
+            message_text = thread_message.get('message') if isinstance(thread_message, dict) else thread_message.message
+            latest_message = (message_text or '').strip() or latest_message
+            if role in {InquiryMessage.SenderRole.VENDOR, InquiryMessage.SenderRole.STAFF}:
+                has_vendor_reply = True
+
+        inquiry.latest_message_preview = latest_message or (inquiry.message or '').strip()
+        inquiry.thread_has_vendor_reply = has_vendor_reply or bool((inquiry.admin_reply or '').strip())
+
+    active_inquiry_id = None
+    requested_inquiry_id = (request.GET.get('inquiry') or '').strip()
+    if requested_inquiry_id.isdigit():
+        requested_id = int(requested_inquiry_id)
+        if any(inquiry.pk == requested_id for inquiry in inquiries):
+            active_inquiry_id = requested_id
+
+    if active_inquiry_id is None and inquiries:
+        active_inquiry_id = inquiries[0].pk
     favorite_packages = request.user.favorite_packages.filter(is_active=True).select_related('destination').order_by('-updated_at')
     favorite_activities = request.user.favorite_activities.filter(is_active=True).select_related('category').order_by('-created_at')
     total_favorite_count = favorite_packages.count() + favorite_activities.count()
@@ -1144,6 +1273,7 @@ def profile_view(request):
         'activity_bookings': activity_bookings,
         'total_booking_count': bookings.count() + activity_bookings.count(),
         'inquiries': inquiries,
+        'active_inquiry_id': active_inquiry_id,
         'favorite_packages': favorite_packages,
         'favorite_activities': favorite_activities,
         'total_favorite_count': total_favorite_count,

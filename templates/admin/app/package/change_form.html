@@ -1,11 +1,113 @@
 {% extends "admin/change_form.html" %}
 {% load i18n admin_urls %}
 
+{% block extrastyle %}
+{{ block.super }}
+<style>
+  .tm-sticky-back-row {
+    position: sticky;
+    bottom: 12px;
+    z-index: 55;
+    border: 0 !important;
+    border-radius: 0;
+    background: transparent !important;
+    box-shadow: none;
+    backdrop-filter: none;
+    padding: 0 !important;
+    margin-top: 16px;
+    gap: 8px;
+  }
+
+  .object-tools a.viewsitelink {
+    display: none !important;
+  }
+
+  .tm-pending-btn {
+    border: 1px solid transparent;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    line-height: 1.2;
+    box-shadow: 0 6px 14px rgba(15, 118, 110, 0.24);
+  }
+
+  .tm-approve-btn {
+    background: #166534 !important;
+    border-color: #166534 !important;
+    color: #fff !important;
+  }
+
+  .tm-reject-btn {
+    background: #b91c1c !important;
+    border-color: #b91c1c !important;
+    color: #fff !important;
+  }
+
+  .tm-back-btn {
+    background: #0f766e !important;
+    border-color: #0f766e !important;
+    color: #fff !important;
+  }
+
+  .tm-back-btn:link,
+  .tm-back-btn:visited,
+  .tm-back-btn:hover,
+  .tm-back-btn:focus,
+  .tm-back-btn:active {
+    color: #fff !important;
+    text-decoration: none;
+  }
+
+  #package-reject-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(15, 23, 42, 0.45);
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+
+  #package-reject-modal .modal-card {
+    width: min(520px, 100%);
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #cbd5e1;
+    box-shadow: 0 18px 32px rgba(15, 23, 42, 0.2);
+    padding: 16px;
+    box-sizing: border-box;
+  }
+
+  #package-reject-modal textarea {
+    width: 100%;
+    min-height: 110px;
+    padding: 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    resize: vertical;
+    box-sizing: border-box;
+    margin-top: 8px;
+  }
+
+  #package-reject-modal .modal-actions {
+    margin-top: 12px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+</style>
+{% endblock %}
+
 {% block breadcrumbs %}
 <div class="breadcrumbs">
 <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
 {% if original and original.approval_status == 'PENDING' %}
-&rsaquo; <a href="{% url 'admin:pending_approvals' %}">Pending Approvals</a>
+&rsaquo; <a href="{% url 'admin:pending_approvals' %}">Pending Product</a>
 {% else %}
 &rsaquo; <a href="{% url 'admin:app_package_changelist' %}">Packages</a>
 {% endif %}
@@ -14,11 +116,115 @@
 {% endblock %}
 
 {% block object-tools %}
-  {% if original and original.approval_status == 'PENDING' %}
-    <ul class="object-tools">
-      <li><a href="{% url 'admin:pending_approvals' %}" class="tm-soft-button">&larr; Back to Pending Approvals</a></li>
-    </ul>
-  {% else %}
+  {% if not original or original.approval_status != 'PENDING' %}
     {{ block.super }}
   {% endif %}
+{% endblock %}
+
+{% block submit_buttons_top %}{% endblock %}
+
+{% block submit_buttons_bottom %}
+<div class="submit-row tm-sticky-back-row" style="display:flex;align-items:center;justify-content:flex-end;">
+  {% if original and original.approval_status == 'PENDING' %}
+  <input type="hidden" name="item_type" value="package">
+  <input type="hidden" name="item_id" value="{{ original.pk }}">
+  <input type="hidden" name="next" value="{% if request.GET.next %}{{ request.GET.next }}{% else %}{% url 'admin:pending_approvals' %}{% endif %}">
+  <button type="submit" formaction="{% url 'admin:pending_approvals' %}" formmethod="post" name="action" value="approve" class="tm-pending-btn tm-approve-btn">Approve</button>
+  <button type="button" id="open-package-reject-modal" class="tm-pending-btn tm-reject-btn">Reject</button>
+  {% endif %}
+  <a
+    id="package-back-link"
+    href="{% if original and original.approval_status == 'PENDING' %}{% url 'admin:pending_approvals' %}{% else %}{% url 'admin:app_package_changelist' %}{% endif %}"
+    class="tm-pending-btn tm-back-btn"
+  >
+    Back
+  </a>
+</div>
+
+{% if original and original.approval_status == 'PENDING' %}
+<div id="package-reject-modal" role="dialog" aria-modal="true" aria-labelledby="package-reject-title">
+  <div class="modal-card">
+    <h3 id="package-reject-title" style="margin:0 0 8px 0;">Reject Package</h3>
+    <p style="margin:0;color:#475569;">Please provide a rejection reason.</p>
+    <label for="package-reject-reason" style="display:block;margin-top:12px;font-weight:600;">Rejection reason</label>
+    <textarea id="package-reject-reason" name="rejection_reason"></textarea>
+    <div class="modal-actions">
+      <button type="button" id="close-package-reject-modal" class="tm-pending-btn">Cancel</button>
+      <button type="submit" id="confirm-package-reject" formaction="{% url 'admin:pending_approvals' %}" formmethod="post" name="action" value="reject" class="tm-pending-btn tm-reject-btn">Confirm Reject</button>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<script>
+  (function () {
+    const backLink = document.getElementById('package-back-link');
+    if (!backLink) {
+      return;
+    }
+
+    const nextUrl = "{{ request.GET.next|default:''|escapejs }}";
+    if (nextUrl) {
+      backLink.href = nextUrl;
+    }
+
+    const referrer = document.referrer;
+    if (!referrer) {
+      return;
+    }
+
+    try {
+      const refUrl = new URL(referrer);
+      if (refUrl.origin === window.location.origin) {
+        backLink.href = refUrl.pathname + refUrl.search + refUrl.hash;
+      }
+    } catch (e) {
+      // Keep fallback href when referrer parsing fails.
+    }
+
+    const rejectModal = document.getElementById('package-reject-modal');
+    const openRejectBtn = document.getElementById('open-package-reject-modal');
+    const closeRejectBtn = document.getElementById('close-package-reject-modal');
+    const confirmRejectBtn = document.getElementById('confirm-package-reject');
+    const rejectReason = document.getElementById('package-reject-reason');
+
+    if (rejectModal && openRejectBtn && closeRejectBtn) {
+      const openModal = function () {
+        rejectModal.style.display = 'flex';
+        if (rejectReason) {
+          rejectReason.focus();
+        }
+      };
+
+      const closeModal = function () {
+        rejectModal.style.display = 'none';
+      };
+
+      openRejectBtn.addEventListener('click', openModal);
+      closeRejectBtn.addEventListener('click', closeModal);
+      rejectModal.addEventListener('click', function (event) {
+        if (event.target === rejectModal) {
+          closeModal();
+        }
+      });
+      document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape' && rejectModal.style.display === 'flex') {
+          closeModal();
+        }
+      });
+
+      if (confirmRejectBtn && rejectReason) {
+        confirmRejectBtn.addEventListener('click', function (event) {
+          const reason = rejectReason.value.trim();
+          if (!reason) {
+            event.preventDefault();
+            rejectReason.focus();
+            return;
+          }
+          rejectReason.value = reason;
+        });
+      }
+    }
+  })();
+</script>
 {% endblock %}

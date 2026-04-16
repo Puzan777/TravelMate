@@ -4,7 +4,7 @@ from operator import attrgetter
 from django import forms
 from django.contrib import admin, messages
 from django.core.paginator import Paginator
-from django.db.models import Q
+from django.db.models import Count, Q
 from django.shortcuts import redirect
 from django.template.response import TemplateResponse
 from django.urls import path, reverse
@@ -99,9 +99,111 @@ class DestinationAdminForm(forms.ModelForm):
 
 @admin.register(CustomUser)
 class CustomUserAdmin(admin.ModelAdmin):
-    list_display = ('username', 'email', 'role', 'is_staff', 'is_superuser', 'is_active', 'view_details')
-    list_filter = ('role', 'is_staff', 'is_superuser', 'is_active')
+    change_form_template = 'admin/app/customuser/change_form.html'
+
+    list_display = ('user_identity', 'email', 'joined_on', 'last_login_on', 'activity_summary', 'view_details')
+    list_display_links = None
+    list_filter = ()
     search_fields = ('username', 'email')
+    ordering = ('-date_joined',)
+    list_per_page = 10
+    readonly_fields = ('user_identity_detail', 'email', 'joined_on', 'last_login_on', 'activity_detail_metrics')
+    fieldsets = (
+        ('Customer Account', {
+            'fields': ('user_identity_detail', 'email', 'joined_on', 'last_login_on'),
+        }),
+        ('Engagement', {
+            'fields': ('activity_detail_metrics',),
+        }),
+    )
+
+    def get_queryset(self, request):
+        return (
+            super()
+            .get_queryset(request)
+            .filter(
+                role=CustomUser.Role.CUSTOMER,
+                is_staff=False,
+                is_superuser=False,
+            )
+            .annotate(
+                package_booking_count=Count('bookings', distinct=True),
+                activity_booking_count=Count('activity_bookings', distinct=True),
+                favorite_package_count=Count('favorite_packages', distinct=True),
+                favorite_activity_count=Count('favorite_activities', distinct=True),
+            )
+        )
+
+    @admin.display(description='User')
+    def user_identity(self, obj):
+        display_name = obj.get_full_name() or obj.username
+        return format_html(
+            '<div style="display:flex; flex-direction:column; line-height:1.2;">'
+            '<strong style="font-size:13px;">{}</strong>'
+            '<span style="font-size:11px; color:#64748b;">@{}</span>'
+            '</div>',
+            display_name,
+            obj.username,
+        )
+
+    @admin.display(description='Joined')
+    def joined_on(self, obj):
+        if not obj.date_joined:
+            return '-'
+        return timezone.localtime(obj.date_joined).strftime('%Y-%m-%d')
+
+    @admin.display(description='Last login')
+    def last_login_on(self, obj):
+        if not obj.last_login:
+            return '-'
+        return timezone.localtime(obj.last_login).strftime('%Y-%m-%d %H:%M')
+
+    @admin.display(description='Activity')
+    def activity_summary(self, obj):
+        total_bookings = getattr(obj, 'package_booking_count', 0) + getattr(obj, 'activity_booking_count', 0)
+        total_favorites = getattr(obj, 'favorite_package_count', 0) + getattr(obj, 'favorite_activity_count', 0)
+        return format_html(
+            '<span style="font-size:12px; color:#334155;">'
+            'Bookings: <strong>{}</strong> | Favorites: <strong>{}</strong>'
+            '</span>',
+            total_bookings,
+            total_favorites,
+        )
+
+    @admin.display(description='User')
+    def user_identity_detail(self, obj):
+        display_name = obj.get_full_name() or obj.username
+        return format_html(
+            '<div style="display:flex; flex-direction:column; gap:2px; line-height:1.25;">'
+            '<strong style="font-size:14px; color:#0f172a;">{}</strong>'
+            '<span style="font-size:12px; color:#64748b;">@{}</span>'
+            '</div>',
+            display_name,
+            obj.username,
+        )
+
+    @admin.display(description='Engagement summary')
+    def activity_detail_metrics(self, obj):
+        package_booking_count = getattr(obj, 'package_booking_count', obj.bookings.count())
+        activity_booking_count = getattr(obj, 'activity_booking_count', obj.activity_bookings.count())
+        favorite_package_count = getattr(obj, 'favorite_package_count', obj.favorite_packages.count())
+        favorite_activity_count = getattr(obj, 'favorite_activity_count', obj.favorite_activities.count())
+        total_bookings = package_booking_count + activity_booking_count
+        total_favorites = favorite_package_count + favorite_activity_count
+        return format_html(
+            '<div style="display:grid; gap:8px; font-size:12px; color:#334155;">'
+            '<div><strong>Total bookings:</strong> {}</div>'
+            '<div><strong>Total favorites:</strong> {}</div>'
+            '<div>Package bookings: {} | Activity bookings: {}</div>'
+            '<div>Favorite packages: {} | Favorite activities: {}</div>'
+            '</div>',
+            total_bookings,
+            total_favorites,
+            package_booking_count,
+            activity_booking_count,
+            favorite_package_count,
+            favorite_activity_count,
+        )
 
     def has_add_permission(self, request):
         return False
@@ -113,7 +215,7 @@ class CustomUserAdmin(admin.ModelAdmin):
         return False
 
     def has_view_permission(self, request, obj=None):
-        return request.user.is_active and request.user.is_staff
+        return _is_platform_admin(request.user)
 
     @admin.display(description='Details')
     def view_details(self, obj):
@@ -324,7 +426,7 @@ class PackageAdmin(admin.ModelAdmin):
     search_fields = ('title', 'slug', 'destination__name', 'description')
     prepopulated_fields = {'slug': ('title',)}
     readonly_fields = ('cover_image_preview', 'created_at', 'updated_at')
-    list_editable = ('is_active', 'is_featured')
+    list_editable = ('is_featured',)
     list_display_links = None
 
     actions = None
@@ -334,7 +436,7 @@ class PackageAdmin(admin.ModelAdmin):
         view_url = reverse('admin:app_package_change', args=[obj.pk])
         return format_html(
             '<div style="display:flex;gap:4px;">'
-            '<a class="button" href="{}" target="_blank" style="padding:4px 8px; font-size:11px; background:var(--vd-ocean); border-color:var(--vd-ocean);">View details</a>'
+            '<a class="button" href="{}" style="padding:4px 8px; font-size:11px; background:var(--vd-ocean); border-color:var(--vd-ocean);">View details</a>'
             '</div>',
             view_url
         )
@@ -372,7 +474,7 @@ class PackageAdmin(admin.ModelAdmin):
             qs = qs.filter(approval_status=ApprovalStatus.APPROVED)
         else:
             qs = qs.filter(approval_status__in=[ApprovalStatus.APPROVED, ApprovalStatus.PENDING])
-        if request.user.is_superuser:
+        if _is_platform_admin(request.user):
             return qs
         vendor_profile = _current_vendor_profile(request.user)
         if vendor_profile:
@@ -395,7 +497,7 @@ class PackageAdmin(admin.ModelAdmin):
         return False
 
     def has_change_permission(self, request, obj=None):
-        return _is_platform_admin(request.user)
+        return _is_platform_admin(request.user) and obj is None
 
     def has_delete_permission(self, request, obj=None):
         return False
@@ -438,7 +540,7 @@ class ActivityAdmin(admin.ModelAdmin):
         view_url = reverse('admin:app_activity_change', args=[obj.pk])
         return format_html(
             '<div style="display:flex;gap:4px;">'
-            '<a class="button" href="{}" target="_blank" style="padding:4px 8px; font-size:11px; background:var(--vd-ocean); border-color:var(--vd-ocean);">View details</a>'
+            '<a class="button" href="{}" style="padding:4px 8px; font-size:11px; background:var(--vd-ocean); border-color:var(--vd-ocean);">View details</a>'
             '</div>',
             view_url
         )
@@ -869,7 +971,7 @@ def _pending_approvals_view(request):
 
     context = {
         **admin.site.each_context(request),
-        'title': 'Pending Approvals',
+        'title': 'Pending Product',
         'page_obj': page_obj,
         'vendor_options': vendor_options,
         'selected_vendor': selected_vendor,

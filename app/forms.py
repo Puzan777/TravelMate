@@ -7,7 +7,6 @@ from .models import (
     ActivityReview,
     Booking,
     CustomUser,
-    Inquiry,
     PackageReview,
 )
 
@@ -109,16 +108,20 @@ class BookingForm(forms.ModelForm):
         return cleaned_data
 
 
-class InquiryForm(forms.ModelForm):
-    class Meta:
-        model = Inquiry
-        fields = ("full_name", "email", "phone", "message")
-        widgets = {
-            "full_name": forms.TextInput(attrs={"class": "form-control", "placeholder": "Your full name"}),
-            "email": forms.EmailInput(attrs={"class": "form-control", "placeholder": "Your email"}),
-            "phone": forms.TextInput(attrs={"class": "form-control", "placeholder": "Phone (optional)"}),
-            "message": forms.Textarea(attrs={"class": "form-control", "rows": 4, "placeholder": "Tell us what you need"}),
-        }
+class InquiryForm(forms.Form):
+    message = forms.CharField(
+        max_length=2000,
+        widget=forms.Textarea(
+            attrs={
+                "class": "form-control",
+                "rows": 4,
+                "placeholder": "Tell us what you need",
+            }
+        ),
+    )
+
+    def clean_message(self):
+        return (self.cleaned_data.get('message') or '').strip()
 
 
 class ActivityBookingForm(forms.ModelForm):
