@@ -550,9 +550,9 @@
             </td>
             <td class="text-end">
               {% if sale.package %}
-                <a href="{{ sale.package.get_absolute_url }}" class="vd-btn-outline vd-mini-btn">View Details</a>
+                <a href="{% url 'vendor:package_detail' sale.package.pk %}?from=hot-sales" class="vd-btn-outline vd-mini-btn">View Details</a>
               {% elif sale.activity %}
-                <a href="{% url 'activity_detail' sale.activity.pk %}" class="vd-btn-outline vd-mini-btn">View Details</a>
+                <a href="{% url 'vendor:activity_detail' sale.activity.pk %}?from=hot-sales" class="vd-btn-outline vd-mini-btn">View Details</a>
               {% endif %}
             </td>
           </tr>

@@ -10,6 +10,19 @@
 {% endblock %}
 
 {% block vendor_content %}
+<style>
+  .vd-hot-sale-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 6px;
+  }
+  .vd-hot-sale-actions .vd-mini-btn {
+    min-width: 92px;
+    justify-content: center;
+  }
+</style>
+
 <div class="vd-page-header vd-fade-in">
   <div>
     <h1 class="vd-page-title">My Hot Sales</h1>
@@ -78,12 +91,18 @@
             {% endif %}
           </td>
           <td class="text-end">
-            {% if hot_sale.package %}
-            <a href="{{ hot_sale.package.get_absolute_url }}" class="vd-btn-outline" style="padding: 4px 10px; font-size: 0.76rem;">View Details</a>
-            {% elif hot_sale.activity %}
-            <a href="{% url 'activity_detail' hot_sale.activity.pk %}" class="vd-btn-outline" style="padding: 4px 10px; font-size: 0.76rem;">View Details</a>
-            {% endif %}
-            <a href="{% url 'vendor:hot_sale_edit' hot_sale.pk %}" class="vd-btn-primary" style="padding: 4px 10px; font-size: 0.76rem;">Edit</a>
+            <div class="vd-hot-sale-actions">
+              {% if hot_sale.package %}
+              <a href="{% url 'vendor:package_detail' hot_sale.package.pk %}?from=hot-sales" class="vd-btn-outline vd-mini-btn">View</a>
+              {% elif hot_sale.activity %}
+              <a href="{% url 'vendor:activity_detail' hot_sale.activity.pk %}?from=hot-sales" class="vd-btn-outline vd-mini-btn">View</a>
+              {% endif %}
+              <a href="{% url 'vendor:hot_sale_edit' hot_sale.pk %}" class="vd-btn-primary vd-mini-btn">Edit</a>
+              <form method="post" action="{% url 'vendor:hot_sale_delete' hot_sale.pk %}" class="m-0" onsubmit="return confirm('Delete this hot sale? This will not affect existing bookings.');">
+                {% csrf_token %}
+                <button type="submit" class="vd-btn-outline vd-mini-btn" style="color: var(--vd-danger); border-color: #FCA5A5;">Delete</button>
+              </form>
+            </div>
           </td>
         </tr>
         {% endfor %}

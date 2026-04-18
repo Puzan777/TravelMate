@@ -509,14 +509,14 @@
             <p class="dash-hero-stat-note">Total revenue this month.</p>
           </article>
           <a class="dash-hero-stat dash-hero-stat-link is-pending" href="{% url 'admin:pending_approvals' %}">
-            <p class="dash-hero-stat-label">Pending Product Approvals</p>
+            <p class="dash-hero-stat-label">Pending Tour Approvals</p>
             <p class="dash-hero-stat-value" style="color: var(--vd-accent-hover);">{{ pending_product }}</p>
             <p class="dash-hero-stat-note">Awaiting admin approval.</p>
           </a>
         </div>
       </div>
       <div class="dash-actions dash-action-panel">
-        <a class="dash-link is-accent" href="{% url 'admin:pending_approvals' %}">Approve Pending Products</a>
+        <a class="dash-link is-accent" href="{% url 'admin:pending_approvals' %}">Approve Pending Tours</a>
         <a class="dash-link" href="{% url 'admin:app_booking_changelist' %}">Bookings</a>
       </div>
     </div>

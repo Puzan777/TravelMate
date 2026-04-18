@@ -215,6 +215,16 @@ class VendorHotSaleForm(forms.ModelForm):
         if bool(package) == bool(activity):
             raise forms.ValidationError('Please choose either a package or an activity.')
 
+        duplicate_qs = HotSale.objects.all()
+        if self.instance and self.instance.pk:
+            duplicate_qs = duplicate_qs.exclude(pk=self.instance.pk)
+
+        if package and duplicate_qs.filter(package=package).exists():
+            self.add_error('package', 'This package already has a hot sale. Please edit or delete the existing one.')
+
+        if activity and duplicate_qs.filter(activity=activity).exists():
+            self.add_error('activity', 'This activity already has a hot sale. Please edit or delete the existing one.')
+
         return cleaned_data
 
 

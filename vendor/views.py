@@ -8,6 +8,7 @@ from django.db import transaction
 from django.db.models import Avg, Q, Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 
 from app.models import (
@@ -285,6 +286,38 @@ def package_list(request):
 
 
 @login_required
+def package_detail(request, pk):
+	vendor_profile = _get_approved_vendor_profile(request)
+	if vendor_profile is None:
+		return redirect('home')
+
+	opened_from_hot_sales = (request.GET.get('from') or '').strip().lower() == 'hot-sales'
+	back_url = reverse('vendor:hot_sale_list') if opened_from_hot_sales else reverse('vendor:package_list')
+	back_label = 'Back to Hot Sales' if opened_from_hot_sales else 'Back to Packages'
+
+	package = get_object_or_404(
+		Package.objects
+		.select_related('destination', 'vendor')
+		.prefetch_related('images', 'itinerary_entries'),
+		pk=pk,
+		vendor=vendor_profile,
+	)
+
+	return render(
+		request,
+		'vendor/package_detail.html',
+		{
+			'package': package,
+			'vendor_profile': vendor_profile,
+			'package_images': package.images.all().order_by('-is_primary', 'created_at'),
+			'itinerary_entries': package.itinerary_entries.all().order_by('day_number'),
+			'back_url': back_url,
+			'back_label': back_label,
+		},
+	)
+
+
+@login_required
 def activity_list(request):
 	vendor_profile = _get_approved_vendor_profile(request)
 	if vendor_profile is None:
@@ -358,6 +391,37 @@ def activity_list(request):
 			'activity_difficulty_options': Activity.DifficultyLevel.choices,
 			'activity_category_options': activity_category_options,
 			'has_filters_applied': has_filters_applied,
+		},
+	)
+
+
+@login_required
+def activity_detail(request, pk):
+	vendor_profile = _get_approved_vendor_profile(request)
+	if vendor_profile is None:
+		return redirect('home')
+
+	opened_from_hot_sales = (request.GET.get('from') or '').strip().lower() == 'hot-sales'
+	back_url = reverse('vendor:hot_sale_list') if opened_from_hot_sales else reverse('vendor:activity_list')
+	back_label = 'Back to Hot Sales' if opened_from_hot_sales else 'Back to Activities'
+
+	activity = get_object_or_404(
+		Activity.objects
+		.select_related('category', 'destination', 'vendor')
+		.prefetch_related('images'),
+		pk=pk,
+		vendor=vendor_profile,
+	)
+
+	return render(
+		request,
+		'vendor/activity_detail.html',
+		{
+			'activity': activity,
+			'vendor_profile': vendor_profile,
+			'activity_images': activity.images.all().order_by('-is_primary', 'created_at'),
+			'back_url': back_url,
+			'back_label': back_label,
 		},
 	)
 
@@ -887,6 +951,26 @@ def hot_sale_edit(request, pk):
 
 
 @login_required
+def hot_sale_delete(request, pk):
+	vendor_profile = _get_approved_vendor_profile(request)
+	if vendor_profile is None:
+		return redirect('home')
+
+	hot_sale = get_object_or_404(
+		HotSale.objects.filter(Q(package__vendor=vendor_profile) | Q(activity__vendor=vendor_profile)),
+		pk=pk,
+	)
+
+	if request.method != 'POST':
+		messages.info(request, 'Please use the delete button to remove a hot sale.')
+		return redirect('vendor:hot_sale_list')
+
+	hot_sale.delete()
+	messages.success(request, 'Hot sale removed successfully.')
+	return redirect('vendor:hot_sale_list')
+
+
+@login_required
 def inquiry_list(request):
 	vendor_profile = _get_approved_vendor_profile(request)
 	if vendor_profile is None:
@@ -1169,7 +1253,7 @@ def booking_list(request):
 			])
 		return response
 
-	paginator = Paginator(bookings, 12)
+	paginator = Paginator(bookings, 10)
 	page_obj = paginator.get_page(request.GET.get('page'))
 	bookings = page_obj.object_list
 
@@ -1208,6 +1292,29 @@ def booking_list(request):
 			'pagination_query_string': pagination_query_string,
 			'export_query_string': export_query.urlencode(),
 			'has_filters_applied': has_filters_applied,
+		},
+	)
+
+
+@login_required
+def booking_detail(request, pk):
+	vendor_profile = _get_approved_vendor_profile(request)
+	if vendor_profile is None:
+		return redirect('home')
+
+	booking = get_object_or_404(
+		Booking.objects.visible_in_listings()
+		.select_related('package', 'package__destination', 'user')
+		.filter(package__vendor=vendor_profile),
+		pk=pk,
+	)
+
+	return render(
+		request,
+		'vendor/booking_detail.html',
+		{
+			'booking': booking,
+			'vendor_profile': vendor_profile,
 		},
 	)
 

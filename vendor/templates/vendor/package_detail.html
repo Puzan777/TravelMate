@@ -1,0 +1,88 @@
+{% extends 'vendor/vendor_base.html' %}
+
+{% block page_title %}Package Detail{% endblock %}
+{% block nav_packages %}active{% endblock %}
+
+{% block breadcrumb %}
+  <a href="{% url 'vendor:dashboard' %}">Dashboard</a>
+  <i class="bi bi-chevron-right"></i>
+  <a href="{% url 'vendor:package_list' %}">Packages</a>
+  <i class="bi bi-chevron-right"></i>
+  <span>Detail</span>
+{% endblock %}
+
+{% block vendor_content %}
+<div class="vd-page-header vd-fade-in">
+  <div>
+    <h1 class="vd-page-title">{{ package.title }}</h1>
+    <p class="vd-page-subtitle">Package details in vendor dashboard view.</p>
+  </div>
+  <a href="{{ back_url }}" class="vd-btn-outline"><i class="bi bi-arrow-left"></i> {{ back_label }}</a>
+</div>
+
+<div class="vd-card vd-fade-in vd-fade-in-1">
+  <div class="vd-table-wrap">
+    <table class="table mb-0">
+      <tbody>
+        <tr><th style="width: 260px;">Title</th><td>{{ package.title }}</td></tr>
+        <tr><th>Category</th><td>{{ package.get_category_display }}</td></tr>
+        <tr><th>Destination</th><td>{{ package.destination.name|default:'-' }}</td></tr>
+        <tr><th>Region</th><td>{{ package.region|default:'-' }}</td></tr>
+        <tr><th>City</th><td>{{ package.city|default:'-' }}</td></tr>
+        <tr><th>Duration</th><td>{{ package.duration|default:'-' }}</td></tr>
+        <tr><th>Price</th><td>Rs. {{ package.price }}</td></tr>
+        <tr><th>Max People</th><td>{{ package.max_people|default:'-' }}</td></tr>
+        <tr><th>Trip Difficulty</th><td>{{ package.trip_difficulty|default:'-' }}</td></tr>
+        <tr><th>Tour Type</th><td>{{ package.tour_type|default:'-' }}</td></tr>
+        <tr><th>Best Season</th><td>{{ package.best_season|default:'-' }}</td></tr>
+        <tr><th>Status</th><td>{{ package.get_approval_status_display }}{% if package.approval_status == 'APPROVED' %}{% if package.is_active %} (Live){% else %} (Paused){% endif %}{% endif %}</td></tr>
+        <tr><th>Description</th><td>{{ package.description|linebreaksbr }}</td></tr>
+        <tr><th>Major Highlights</th><td>{{ package.major_highlights|default:'-'|linebreaksbr }}</td></tr>
+        <tr><th>Created</th><td>{{ package.created_at|date:'M d, Y H:i' }}</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% if package_images %}
+<div class="vd-card vd-fade-in vd-fade-in-2 mt-3">
+  <div class="vd-card-header"><h2><i class="bi bi-images me-2" style="color: var(--vd-ocean);"></i>Images</h2></div>
+  <div class="vd-card-body">
+    <div class="d-flex flex-wrap gap-2">
+      {% for image in package_images %}
+      <div style="width: 170px;">
+        <img src="{{ image.image.url }}" alt="Package image" style="width: 100%; height: 105px; object-fit: cover; border-radius: 8px; border: 1px solid var(--vd-line-soft);">
+        {% if image.is_primary %}<div class="small mt-1" style="color: var(--vd-ocean); font-weight: 700;">Cover image</div>{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% if itinerary_entries %}
+<div class="vd-card vd-fade-in vd-fade-in-3 mt-3">
+  <div class="vd-card-header"><h2><i class="bi bi-map me-2" style="color: var(--vd-ocean);"></i>Itinerary</h2></div>
+  <div class="vd-table-wrap">
+    <table class="table mb-0">
+      <thead>
+        <tr>
+          <th>Day</th>
+          <th>Title</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for entry in itinerary_entries %}
+        <tr>
+          <td>{{ entry.day_number }}</td>
+          <td>{{ entry.title }}</td>
+          <td>{{ entry.description|truncatechars:180 }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

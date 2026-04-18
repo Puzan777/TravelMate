@@ -1,0 +1,47 @@
+{% extends 'vendor/vendor_base.html' %}
+
+{% block page_title %}Booking Detail{% endblock %}
+{% block nav_bookings %}active{% endblock %}
+
+{% block breadcrumb %}
+  <a href="{% url 'vendor:dashboard' %}">Dashboard</a>
+  <i class="bi bi-chevron-right"></i>
+  <a href="{% url 'vendor:booking_list' %}">Bookings</a>
+  <i class="bi bi-chevron-right"></i>
+  <span>Detail</span>
+{% endblock %}
+
+{% block vendor_content %}
+<div class="vd-page-header vd-fade-in">
+  <div>
+    <h1 class="vd-page-title">Booking #{{ booking.pk }}</h1>
+    <p class="vd-page-subtitle">Complete booking information for vendor review.</p>
+  </div>
+  <a href="{% url 'vendor:booking_list' %}" class="vd-btn-outline"><i class="bi bi-arrow-left"></i> Back to Bookings</a>
+</div>
+
+<div class="vd-card vd-fade-in vd-fade-in-1">
+  <div class="vd-table-wrap">
+    <table class="table mb-0">
+      <tbody>
+        <tr><th style="width: 260px;">Package</th><td>{{ booking.package.title }}</td></tr>
+        <tr><th>Destination</th><td>{{ booking.package.destination.name|default:'-' }}</td></tr>
+        <tr><th>Traveler Name</th><td>{{ booking.full_name }}</td></tr>
+        <tr><th>Traveler Account</th><td>{% if booking.user %}{{ booking.user.username }}{% else %}Guest{% endif %}</td></tr>
+        <tr><th>Email</th><td>{{ booking.email }}</td></tr>
+        <tr><th>Phone</th><td>{{ booking.phone }}</td></tr>
+        <tr><th>Travel Date</th><td>{{ booking.travel_date|date:'M d, Y' }}</td></tr>
+        <tr><th>Number of People</th><td>{{ booking.number_of_people }}</td></tr>
+        <tr><th>Payment Method</th><td>{{ booking.get_payment_method_display }}</td></tr>
+        <tr><th>Payment Status</th><td>{{ booking.get_payment_status_display }}</td></tr>
+        <tr><th>Transaction Reference</th><td>{{ booking.transaction_reference|default:'-' }}</td></tr>
+        <tr><th>Pickup Location</th><td>{{ booking.pickup_location|default:'-' }}</td></tr>
+        <tr><th>Nationality</th><td>{{ booking.nationality|default:'-' }}</td></tr>
+        <tr><th>Emergency Contact</th><td>{{ booking.emergency_contact|default:'-' }}</td></tr>
+        <tr><th>Total Amount</th><td>Rs. {{ booking.total_amount }}</td></tr>
+        <tr><th>Booked On</th><td>{{ booking.created_at|date:'M d, Y H:i' }}</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

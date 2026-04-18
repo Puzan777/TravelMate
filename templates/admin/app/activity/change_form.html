@@ -103,7 +103,7 @@
 <div class="breadcrumbs">
 <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
 {% if original and original.approval_status == 'PENDING' %}
-&rsaquo; <a href="{% url 'admin:pending_approvals' %}">Pending Product</a>
+&rsaquo; <a href="{% url 'admin:pending_approvals' %}">Pending Tours</a>
 {% else %}
 &rsaquo; <a href="{% url 'admin:app_activity_changelist' %}">Activities</a>
 {% endif %}

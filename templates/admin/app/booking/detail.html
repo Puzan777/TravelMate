@@ -1,0 +1,107 @@
+{% extends "admin/base_site.html" %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+  .tm-booking-detail-wrap {
+    max-width: 980px;
+  }
+  .tm-booking-detail-card {
+    background: #fff;
+    border: 1px solid #d9e2ec;
+    border-radius: 12px;
+    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
+    overflow: hidden;
+  }
+  .tm-booking-detail-head {
+    padding: 16px 20px;
+    border-bottom: 1px solid #e5edf5;
+    background: linear-gradient(180deg, #f8fbff, #ffffff);
+  }
+  .tm-booking-detail-title {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1e293b;
+  }
+  .tm-booking-detail-subtitle {
+    margin: 4px 0 0;
+    color: #64748b;
+    font-size: 0.9rem;
+  }
+  .tm-detail-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .tm-detail-table th,
+  .tm-detail-table td {
+    padding: 11px 14px;
+    border-bottom: 1px solid #eef3f8;
+    vertical-align: top;
+    text-align: left;
+  }
+  .tm-detail-table th {
+    width: 240px;
+    background: #f9fbfd;
+    color: #475569;
+    font-size: 0.82rem;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+  }
+  .tm-detail-table td {
+    color: #0f172a;
+    font-size: 0.95rem;
+  }
+  .tm-back-row {
+    margin-top: 14px;
+    display: flex;
+    justify-content: flex-end;
+  }
+  .tm-back-row .button {
+    background: #0f766e;
+    border-color: #0f766e;
+    color: #fff;
+    text-decoration: none;
+  }
+  .tm-back-row .button:hover,
+  .tm-back-row .button:focus {
+    filter: brightness(0.96);
+    color: #fff;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="tm-booking-detail-wrap">
+  <div class="tm-booking-detail-card">
+    <div class="tm-booking-detail-head">
+      <h1 class="tm-booking-detail-title">Booking #{{ booking.pk }}</h1>
+      <p class="tm-booking-detail-subtitle">Full booking information</p>
+    </div>
+
+    <table class="tm-detail-table">
+      <tr><th>Package</th><td>{% if booking.package %}{{ booking.package.title }}{% else %}-{% endif %}</td></tr>
+      <tr><th>Vendor</th><td>{% if booking.package and booking.package.vendor %}{{ booking.package.vendor.company_name }}{% else %}-{% endif %}</td></tr>
+      <tr><th>Customer User</th><td>{% if booking.user %}{{ booking.user.username }}{% else %}-{% endif %}</td></tr>
+      <tr><th>Traveler Name</th><td>{{ booking.full_name|default:'-' }}</td></tr>
+      <tr><th>Email</th><td>{{ booking.email|default:'-' }}</td></tr>
+      <tr><th>Phone</th><td>{{ booking.phone|default:'-' }}</td></tr>
+      <tr><th>Nationality</th><td>{{ booking.nationality|default:'-' }}</td></tr>
+      <tr><th>Emergency Contact</th><td>{{ booking.emergency_contact|default:'-' }}</td></tr>
+      <tr><th>Pickup Location</th><td>{{ booking.pickup_location|default:'-' }}</td></tr>
+      <tr><th>Travel Date</th><td>{% if booking.travel_date %}{{ booking.travel_date|date:'Y-m-d' }}{% else %}-{% endif %}</td></tr>
+      <tr><th>Number of People</th><td>{{ booking.number_of_people }}</td></tr>
+      <tr><th>Payment Method</th><td>{{ booking.get_payment_method_display }}</td></tr>
+      <tr><th>Payment Status</th><td>{{ booking.get_payment_status_display }}</td></tr>
+      <tr><th>Transaction Reference</th><td>{{ booking.transaction_reference|default:'-' }}</td></tr>
+      <tr><th>Total Amount</th><td>{% if booking.total_amount is not None %}{{ booking.total_amount }}{% else %}-{% endif %}</td></tr>
+      <tr><th>Paid At</th><td>{% if booking.paid_at %}{{ booking.paid_at|date:'Y-m-d H:i' }}{% else %}-{% endif %}</td></tr>
+      <tr><th>Created At</th><td>{% if booking.created_at %}{{ booking.created_at|date:'Y-m-d H:i' }}{% else %}-{% endif %}</td></tr>
+    </table>
+  </div>
+
+  <div class="tm-back-row">
+    <a class="button" href="{{ back_url }}">Back to Bookings</a>
+  </div>
+</div>
+{% endblock %}

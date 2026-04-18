@@ -98,6 +98,7 @@
           <td class="text-end">
             <div class="d-flex gap-1 justify-content-end">
               <a href="{% url 'vendor:package_availability' package.pk %}" class="vd-btn-outline" style="padding: 4px 10px; font-size: 0.76rem;">Availability</a>
+              <a href="{% url 'vendor:package_detail' package.pk %}" class="vd-btn-outline" style="padding: 4px 10px; font-size: 0.76rem;">View</a>
               <a href="{% url 'vendor:package_edit' package.pk %}" class="vd-btn-primary" style="padding: 4px 10px; font-size: 0.76rem;">Edit</a>
             </div>
           </td>

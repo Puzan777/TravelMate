@@ -1,0 +1,63 @@
+{% extends 'vendor/vendor_base.html' %}
+
+{% block page_title %}Activity Detail{% endblock %}
+{% block nav_activities %}active{% endblock %}
+
+{% block breadcrumb %}
+  <a href="{% url 'vendor:dashboard' %}">Dashboard</a>
+  <i class="bi bi-chevron-right"></i>
+  <a href="{% url 'vendor:activity_list' %}">Activities</a>
+  <i class="bi bi-chevron-right"></i>
+  <span>Detail</span>
+{% endblock %}
+
+{% block vendor_content %}
+<div class="vd-page-header vd-fade-in">
+  <div>
+    <h1 class="vd-page-title">{{ activity.name }}</h1>
+    <p class="vd-page-subtitle">Activity details in vendor dashboard view.</p>
+  </div>
+  <a href="{{ back_url }}" class="vd-btn-outline"><i class="bi bi-arrow-left"></i> {{ back_label }}</a>
+</div>
+
+<div class="vd-card vd-fade-in vd-fade-in-1">
+  <div class="vd-table-wrap">
+    <table class="table mb-0">
+      <tbody>
+        <tr><th style="width: 260px;">Name</th><td>{{ activity.name }}</td></tr>
+        <tr><th>Category</th><td>{{ activity.category.name }}</td></tr>
+        <tr><th>Destination</th><td>{{ activity.destination.name|default:'-' }}</td></tr>
+        <tr><th>Region</th><td>{{ activity.region|default:'-' }}</td></tr>
+        <tr><th>City</th><td>{{ activity.city|default:'-' }}</td></tr>
+        <tr><th>Duration</th><td>{{ activity.duration|default:'-' }}</td></tr>
+        <tr><th>Price</th><td>Rs. {{ activity.price }}</td></tr>
+        <tr><th>Difficulty</th><td>{{ activity.get_difficulty_level_display }}</td></tr>
+        <tr><th>Min Age</th><td>{{ activity.min_age|default:'-' }}</td></tr>
+        <tr><th>Group Size</th><td>{{ activity.max_group_size|default:'-' }}</td></tr>
+        <tr><th>Best Season</th><td>{{ activity.best_season|default:'-' }}</td></tr>
+        <tr><th>Status</th><td>{{ activity.get_approval_status_display }}{% if activity.approval_status == 'APPROVED' %}{% if activity.is_active %} (Live){% else %} (Paused){% endif %}{% endif %}</td></tr>
+        <tr><th>Description</th><td>{{ activity.description|linebreaksbr }}</td></tr>
+        <tr><th>Equipment Provided</th><td>{{ activity.equipment_provided|default:'-'|linebreaksbr }}</td></tr>
+        <tr><th>Safety Notes</th><td>{{ activity.safety_notes|default:'-'|linebreaksbr }}</td></tr>
+        <tr><th>Created</th><td>{{ activity.created_at|date:'M d, Y H:i' }}</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% if activity_images %}
+<div class="vd-card vd-fade-in vd-fade-in-2 mt-3">
+  <div class="vd-card-header"><h2><i class="bi bi-images me-2" style="color: var(--vd-ocean);"></i>Images</h2></div>
+  <div class="vd-card-body">
+    <div class="d-flex flex-wrap gap-2">
+      {% for image in activity_images %}
+      <div style="width: 170px;">
+        <img src="{{ image.image.url }}" alt="Activity image" style="width: 100%; height: 105px; object-fit: cover; border-radius: 8px; border: 1px solid var(--vd-line-soft);">
+        {% if image.is_primary %}<div class="small mt-1" style="color: var(--vd-ocean); font-weight: 700;">Cover image</div>{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

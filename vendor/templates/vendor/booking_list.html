@@ -10,9 +10,24 @@
 {% endblock %}
 
 {% block vendor_content %}
+<style>
+  .vd-booking-item-cell {
+    min-width: 260px;
+    max-width: 340px;
+  }
+  .vd-booking-item-name {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    word-break: break-word;
+    line-height: 1.35;
+  }
+</style>
+
 <div class="vd-page-header vd-fade-in">
   <div>
-    <h1 class="vd-page-title">Package Bookings</h1>
+    <h1 class="vd-page-title">Bookings</h1>
     <p class="vd-page-subtitle">All bookings made for your packages.</p>
   </div>
   <a href="?{{ export_query_string }}" class="vd-btn-primary"><i class="bi bi-download"></i> Export CSV</a>
@@ -73,7 +88,7 @@
     <table class="table mb-0">
       <thead>
         <tr>
-          <th>Package</th>
+          <th>Item</th>
           <th>Traveler</th>
           <th>Contact</th>
           <th>Travel Date</th>
@@ -81,14 +96,31 @@
           <th>Payment</th>
           <th>Booked On</th>
           <th class="text-end">Total</th>
+          <th class="text-end">Action</th>
         </tr>
       </thead>
       <tbody>
         {% for booking in bookings %}
         <tr>
-          <td>
-            <div class="fw-semibold" style="font-size: 0.85rem;">{{ booking.package.title }}</div>
-            <div class="small" style="color: var(--vd-text-muted);">{{ booking.package.destination.name|default:'—' }}</div>
+          <td class="vd-booking-item-cell">
+            <div class="fw-semibold vd-booking-item-name" style="font-size: 0.85rem;">
+              {% if booking.package %}
+                {{ booking.package.title|truncatewords:15|truncatechars:90 }}
+              {% elif booking.activity %}
+                {{ booking.activity.name|truncatewords:15|truncatechars:90 }}
+              {% else %}
+                -
+              {% endif %}
+            </div>
+            <div class="small" style="color: var(--vd-text-muted);">
+              {% if booking.package and booking.package.destination %}
+                {{ booking.package.destination.name }}
+              {% elif booking.activity and booking.activity.category %}
+                {{ booking.activity.category.name }}
+              {% else %}
+                —
+              {% endif %}
+            </div>
           </td>
           <td>
             <div class="fw-semibold" style="font-size: 0.85rem;">{{ booking.full_name }}</div>
@@ -116,6 +148,9 @@
           </td>
           <td style="font-size: 0.85rem;">{{ booking.created_at|date:"M d, Y" }}</td>
           <td class="text-end fw-semibold" style="font-size: 0.85rem;">Rs. {{ booking.total_amount }}</td>
+          <td class="text-end">
+            <a href="{% url 'vendor:booking_detail' booking.pk %}" class="vd-btn-outline" style="padding: 4px 12px; font-size: 0.76rem;">View Detail</a>
+          </td>
         </tr>
         {% endfor %}
       </tbody>

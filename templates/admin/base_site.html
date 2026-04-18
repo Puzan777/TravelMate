@@ -510,7 +510,7 @@
         <i class="bi bi-person-check"></i> Pending Vendors
       </a>
       <a class="tm-nav-link{% if '/admin/pending-approvals/' in request.path %} active{% endif %}" href="{% url 'admin:pending_approvals' %}">
-        <i class="bi bi-clipboard-check"></i> Pending Product
+        <i class="bi bi-clipboard-check"></i> Pending Tours
       </a>
     </nav>
   </div>
@@ -580,7 +580,7 @@
         {% elif '/admin/app/booking/' in request.path %}
           Bookings
         {% elif '/admin/pending-approvals/' in request.path %}
-          Pending Product
+          Pending Tours
         {% elif '/admin/earnings/' in request.path %}
           Earnings
         {% elif '/admin/settings/' in request.path %}
