@@ -9,6 +9,7 @@ from django.urls import reverse
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils import timezone
+from decimal import Decimal
 
 
 class CustomUser(AbstractUser):
@@ -1020,3 +1021,112 @@ def _enforce_customer_activity_favorite_access(sender, instance, action, reverse
 
     if not _is_customer_account(instance):
         raise ValidationError('Only customers can add activities to favorites.')
+
+
+class Settlement(models.Model):
+    class MoneyHolder(models.TextChoices):
+        PLATFORM = 'PLATFORM', 'Platform'
+        VENDOR = 'VENDOR', 'Vendor'
+
+    class Direction(models.TextChoices):
+        PLATFORM_TO_VENDOR = 'PLATFORM_TO_VENDOR', 'Platform pays Vendor'
+        VENDOR_TO_PLATFORM = 'VENDOR_TO_PLATFORM', 'Vendor pays Platform'
+
+    class Status(models.TextChoices):
+        PENDING = 'PENDING', 'Pending'
+        SETTLED = 'SETTLED', 'Settled'
+        PARTIAL = 'PARTIAL', 'Partial'
+
+    booking = models.OneToOneField('Booking', on_delete=models.CASCADE, null=True, blank=True, related_name='settlement')
+    activity_booking = models.OneToOneField('ActivityBooking', on_delete=models.CASCADE, null=True, blank=True, related_name='settlement')
+    
+    gross_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    commission_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    vendor_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    
+    money_holder = models.CharField(max_length=20, choices=MoneyHolder.choices)
+    settlement_direction = models.CharField(max_length=30, choices=Direction.choices)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+    
+    settled_at = models.DateTimeField(null=True, blank=True)
+    notes = models.TextField(blank=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        constraints = [
+            models.CheckConstraint(
+                check=(
+                    (models.Q(booking__isnull=False) & models.Q(activity_booking__isnull=True))
+                    | (models.Q(booking__isnull=True) & models.Q(activity_booking__isnull=False))
+                ),
+                name='settlement_exactly_one_booking',
+            ),
+        ]
+
+    def clean(self):
+        if bool(self.booking_id) == bool(self.activity_booking_id):
+            raise ValidationError('Settlement must reference exactly one booking or activity booking.')
+
+    def __str__(self):
+        if self.booking_id:
+            return f"Settlement for Booking #{self.booking_id}"
+        return f"Settlement for Activity Booking #{self.activity_booking_id}"
+
+    @property
+    def vendor_profile(self):
+        if self.booking_id and self.booking:
+            return self.booking.package.vendor
+        if self.activity_booking_id and self.activity_booking:
+            return self.activity_booking.activity.vendor
+        return None
+
+def _sync_settlement(booking_instance, is_activity=False):
+    # Determine the values
+    gross_amount = booking_instance.total_amount or Decimal('0')
+    commission_amount = (gross_amount * Decimal('0.10')).quantize(Decimal('0.00'))
+    vendor_amount = gross_amount - commission_amount
+    
+    if booking_instance.payment_method == 'ESEWA': # or PaymentMethod.ESEWA
+        money_holder = Settlement.MoneyHolder.PLATFORM
+        direction = Settlement.Direction.PLATFORM_TO_VENDOR
+    else: # CASH
+        money_holder = Settlement.MoneyHolder.VENDOR
+        direction = Settlement.Direction.VENDOR_TO_PLATFORM
+
+    kwargs = {}
+    if is_activity:
+        kwargs['activity_booking'] = booking_instance
+    else:
+        kwargs['booking'] = booking_instance
+        
+    settlement, created = Settlement.objects.get_or_create(
+        **kwargs,
+        defaults={
+            'gross_amount': gross_amount,
+            'commission_amount': commission_amount,
+            'vendor_amount': vendor_amount,
+            'money_holder': money_holder,
+            'settlement_direction': direction,
+            'status': Settlement.Status.PENDING,
+        }
+    )
+    
+    if not created:
+        if settlement.status != Settlement.Status.SETTLED:
+            settlement.gross_amount = gross_amount
+            settlement.commission_amount = commission_amount
+            settlement.vendor_amount = vendor_amount
+            settlement.money_holder = money_holder
+            settlement.settlement_direction = direction
+            settlement.save()
+            
+@receiver(post_save, sender=Booking)
+def _booking_post_save_settlement(sender, instance, **kwargs):
+    _sync_settlement(instance, is_activity=False)
+
+@receiver(post_save, sender=ActivityBooking)
+def _activity_booking_post_save_settlement(sender, instance, **kwargs):
+    _sync_settlement(instance, is_activity=True)

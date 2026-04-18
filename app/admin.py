@@ -44,7 +44,7 @@ admin.ModelAdmin.changelist_view = _custom_changelist_view
 from .models import (
     Activity, ActivityBooking, ActivityCategory, ActivityImage, ApprovalStatus, Booking, CustomUser, Destination,
     DestinationImage,
-    HotSale, Package, PackageImage, PackageItinerary, ActivityReview, PackageReview,
+    HotSale, Package, PackageImage, PackageItinerary, ActivityReview, PackageReview, Settlement,
 )
 
 # Keep Django's nav sidebar enabled so navigation persists on changelists,
@@ -505,6 +505,9 @@ class PackageAdmin(admin.ModelAdmin):
     def has_view_permission(self, request, obj=None):
         return request.user.is_active and request.user.is_staff
 
+    def change_view(self, request, object_id, form_url='', extra_context=None):
+        return redirect('admin:app_booking_detail', object_id=object_id)
+
 
 class ActivityImageInline(admin.TabularInline):
     model = ActivityImage
@@ -696,18 +699,18 @@ class PackageItineraryAdmin(admin.ModelAdmin):
 
 @admin.register(Booking)
 class BookingAdmin(admin.ModelAdmin):
-    list_per_page = 20
+    list_per_page = 10
     list_display = (
         'package_short_title',
-        'vendor_name',
+        'vendor_name_short',
         'full_name',
-        'number_of_people',
         'payment_method',
         'payment_status',
         'total_price',
-        'travel_date',
         'created_at',
+        'view_details',
     )
+    list_display_links = None
     list_filter = ('package__vendor', 'payment_method', 'payment_status', 'travel_date', 'created_at')
     search_fields = (
         'package__title',
@@ -725,6 +728,39 @@ class BookingAdmin(admin.ModelAdmin):
         ('Payment', {'fields': ('payment_method', 'transaction_reference', 'payment_status', 'total_amount', 'paid_at')}),
         ('System', {'fields': ('created_at',)}),
     )
+
+    def get_urls(self):
+        urls = super().get_urls()
+        info = self.model._meta.app_label, self.model._meta.model_name
+        custom_urls = [
+            path(
+                '<int:object_id>/detail/',
+                self.admin_site.admin_view(self.detail_view),
+                name='%s_%s_detail' % info,
+            ),
+        ]
+        return custom_urls + urls
+
+    def detail_view(self, request, object_id):
+        if not self.has_view_permission(request):
+            from django.core.exceptions import PermissionDenied
+
+            raise PermissionDenied
+
+        obj = self.get_object(request, object_id)
+        if obj is None:
+            from django.http import Http404
+
+            raise Http404('Booking not found.')
+
+        context = dict(
+            self.admin_site.each_context(request),
+            opts=self.model._meta,
+            title='Booking details',
+            booking=obj,
+            back_url=reverse('admin:app_booking_changelist'),
+        )
+        return TemplateResponse(request, 'admin/app/booking/detail.html', context)
 
     def get_queryset(self, request):
         qs = (
@@ -751,9 +787,13 @@ class BookingAdmin(admin.ModelAdmin):
         return request.user.is_active and request.user.is_staff
 
     @admin.display(description='Vendor')
-    def vendor_name(self, obj):
+    def vendor_name_short(self, obj):
         if obj.package and obj.package.vendor:
-            return obj.package.vendor.company_name
+            company_name = obj.package.vendor.company_name or ''
+            words = company_name.split()
+            if len(words) <= 15:
+                return company_name
+            return f"{' '.join(words[:15])}..."
         return '-'
 
     @admin.display(description='Package')
@@ -772,6 +812,11 @@ class BookingAdmin(admin.ModelAdmin):
         if not obj.package or obj.package.price is None:
             return '-'
         return obj.package.price * obj.number_of_people
+
+    @admin.display(description='Action')
+    def view_details(self, obj):
+        url = reverse('admin:app_booking_detail', args=[obj.pk])
+        return format_html('<a class="button" href="{}">View detail</a>', url)
 
 
 @admin.register(ActivityBooking)
@@ -971,7 +1016,7 @@ def _pending_approvals_view(request):
 
     context = {
         **admin.site.each_context(request),
-        'title': 'Pending Product',
+        'title': 'Pending Tours',
         'page_obj': page_obj,
         'vendor_options': vendor_options,
         'selected_vendor': selected_vendor,
@@ -986,17 +1031,158 @@ def _earnings_view(request):
     if not (request.user.is_active and request.user.is_staff):
         from django.core.exceptions import PermissionDenied
         raise PermissionDenied
+
+    from django.db.models import Sum
+    from django.template.response import TemplateResponse
+    from django.utils import timezone
+    import csv
+    from django.http import HttpResponse
+    from django.shortcuts import redirect
+    from .models import Settlement
+    from vendor.models import VendorProfile
+    from django.db.models import Q
+
+    if request.method == 'POST' and 'bulk_settle' in request.POST:
+        settle_ids = request.POST.getlist('settlement_ids')
+        if settle_ids:
+            Settlement.objects.filter(id__in=settle_ids, status=Settlement.Status.PENDING).update(
+                status=Settlement.Status.SETTLED,
+                settled_at=timezone.now()
+            )
+        return redirect(request.get_full_path())
+
+    qs = Settlement.objects.all().select_related('booking__package__vendor', 'activity_booking__activity__vendor')
+
+    # Custom date filtering
+    date_filter = request.GET.get('date_filter', 'all')
+    if date_filter != 'all':
+        from datetime import timedelta
+        now = timezone.now()
+        if date_filter == 'this_week':
+            start_date = now - timedelta(days=now.weekday())
+        elif date_filter == 'this_month':
+            start_date = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        elif date_filter == 'last_3_months':
+            start_date = now - timedelta(days=90)
+        elif date_filter == 'last_6_months':
+            start_date = now - timedelta(days=180)
+        elif date_filter == 'this_year':
+            start_date = now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+        else:
+            start_date = None
+
+    # Base querysets
+    vendor_payouts = qs.filter(settlement_direction=Settlement.Direction.PLATFORM_TO_VENDOR, status=Settlement.Status.PENDING)
+    commission_collections = qs.filter(settlement_direction=Settlement.Direction.VENDOR_TO_PLATFORM, status=Settlement.Status.PENDING)
+    settled_history = qs.filter(status=Settlement.Status.SETTLED)
+
+    # Apply date filters
+    if date_filter != 'all' and 'start_date' in locals() and start_date:
+        vendor_payouts = vendor_payouts.filter(created_at__gte=start_date)
+        commission_collections = commission_collections.filter(created_at__gte=start_date)
+        settled_history = settled_history.filter(settled_at__gte=start_date)
+
+    # Apply vendor filtering
+    vendor_filter = request.GET.get('vendor_filter', 'all')
+    if vendor_filter != 'all' and vendor_filter.isdigit():
+        vendor_id = int(vendor_filter)
+        vendor_q = Q(booking__package__vendor_id=vendor_id) | Q(activity_booking__activity__vendor_id=vendor_id)
+        vendor_payouts = vendor_payouts.filter(vendor_q)
+        commission_collections = commission_collections.filter(vendor_q)
+        settled_history = settled_history.filter(vendor_q)
+
+    vendor_payouts = vendor_payouts.order_by('-created_at')
+    commission_collections = commission_collections.order_by('-created_at')
+    settled_history = settled_history.order_by('-settled_at')
+
+    export_tab = request.GET.get('export_tab')
+    if export_tab in ['payouts', 'collections', 'history']:
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = f'attachment; filename=settlements_{export_tab}.csv'
+        writer = csv.writer(response)
+        writer.writerow(['ID', 'Vendor', 'Type', 'Method', 'Gross', 'Commission', 'Vendor Net', 'Holder', 'Direction', 'Status', 'Settled At'])
+        
+        export_qs = vendor_payouts if export_tab == 'payouts' else commission_collections if export_tab == 'collections' else settled_history
+        for obj in export_qs:
+            vendor = obj.vendor_profile.company_name if obj.vendor_profile else 'Unknown'
+            b_type = 'Package' if obj.booking_id else 'Activity'
+            method = getattr(obj.booking or obj.activity_booking, 'payment_method', '')
+            writer.writerow([
+                obj.id, vendor, b_type, method,
+                obj.gross_amount, obj.commission_amount, obj.vendor_amount,
+                obj.get_money_holder_display(), obj.get_settlement_direction_display(),
+                obj.get_status_display(), obj.settled_at
+            ])
+        return response
+
+    total_pending_payouts = vendor_payouts.aggregate(t=Sum('vendor_amount'))['t'] or 0
+    total_pending_collections = commission_collections.aggregate(t=Sum('commission_amount'))['t'] or 0
+    
+    current_month = timezone.now().month
+    current_year = timezone.now().year
+    total_settled_this_month = settled_history.filter(settled_at__month=current_month, settled_at__year=current_year).aggregate(t=Sum('gross_amount'))['t'] or 0
+
+    # Calculate Tab Totals based on current filters
+    tab_payouts_gross = vendor_payouts.aggregate(t=Sum('gross_amount'))['t'] or 0
+    tab_payouts_commission = vendor_payouts.aggregate(t=Sum('commission_amount'))['t'] or 0
+    tab_payouts_vendor = vendor_payouts.aggregate(t=Sum('vendor_amount'))['t'] or 0
+
+    tab_collections_gross = commission_collections.aggregate(t=Sum('gross_amount'))['t'] or 0
+    tab_collections_commission = commission_collections.aggregate(t=Sum('commission_amount'))['t'] or 0
+    tab_collections_vendor = commission_collections.aggregate(t=Sum('vendor_amount'))['t'] or 0
+
+    tab_history_gross = settled_history.aggregate(t=Sum('gross_amount'))['t'] or 0
+    tab_history_commission = settled_history.aggregate(t=Sum('commission_amount'))['t'] or 0
+    tab_history_vendor = settled_history.aggregate(t=Sum('vendor_amount'))['t'] or 0
+
+    all_vendors = VendorProfile.objects.all().order_by('company_name')
+
+    from django.contrib import admin
     context = {
         **admin.site.each_context(request),
-        'title': 'Earnings & Transactions',
+        'title': 'Earnings & Settlements',
+        'vendor_payouts': vendor_payouts,
+        'commission_collections': commission_collections,
+        'settled_history': settled_history,
+        'total_pending_payouts': total_pending_payouts,
+        'total_pending_collections': total_pending_collections,
+        'total_settled_this_month': total_settled_this_month,
+        
+        'tab_payouts_gross': tab_payouts_gross,
+        'tab_payouts_commission': tab_payouts_commission,
+        'tab_payouts_vendor': tab_payouts_vendor,
+        
+        'tab_collections_gross': tab_collections_gross,
+        'tab_collections_commission': tab_collections_commission,
+        'tab_collections_vendor': tab_collections_vendor,
+        
+        'tab_history_gross': tab_history_gross,
+        'tab_history_commission': tab_history_commission,
+        'tab_history_vendor': tab_history_vendor,
+        
+        'current_date_filter': date_filter,
+        'current_vendor_filter': vendor_filter,
+        'all_vendors': all_vendors,
     }
-    return TemplateResponse(request, 'admin/earnings.html', context)
+    return TemplateResponse(request, 'admin/app/settlement/changelist.html', context)
 
 
 def _settings_view(request):
     if not (request.user.is_active and request.user.is_staff):
         from django.core.exceptions import PermissionDenied
         raise PermissionDenied
+    
+    from django.contrib import messages
+    from django.shortcuts import redirect
+    
+    if request.method == 'POST':
+        request.user.first_name = request.POST.get('first_name', '')
+        request.user.last_name = request.POST.get('last_name', '')
+        request.user.email = request.POST.get('email', '')
+        request.user.save()
+        messages.success(request, 'Your admin profile settings have been updated successfully.')
+        return redirect('admin:settings')
+
     context = {
         **admin.site.each_context(request),
         'title': 'System Settings',
@@ -1015,3 +1201,5 @@ def _custom_get_urls(self):
     return custom_urls + _original_get_urls(self)
 
 admin.AdminSite.get_urls = _custom_get_urls
+
+
