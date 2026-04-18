@@ -79,57 +79,42 @@
 
 {% block content %}
 <div id="content-main">
-    <div class="mockup-alert">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-        </svg>
-        <div>
-            <h2 style="margin-top:0; margin-bottom:8px; font-size:16px;">Platform Feature Context</h2>
-            <p style="margin:0; color:var(--vd-text-muted); line-height:1.5;">This Settings view provides the structure for managing Admin Profile, Bank Details, and notification preferences. Form submissions are disabled in this prototype.</p>
+    {% if messages %}
+    <div style="margin-bottom: 24px;">
+        {% for message in messages %}
+        <div style="background-color: var(--vd-cream-light); border: 1px solid #10b981; padding: 16px; border-radius: var(--vd-radius-md); color: #047857; display: flex; align-items: center; gap: 12px;">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:20px; height:20px; stroke-width:2px; flex-shrink:0;">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            {{ message }}
         </div>
+        {% endfor %}
     </div>
+    {% endif %}
 
     <div class="settings-panel">
-        <form>
+        <form method="post">
+            {% csrf_token %}
             <div class="settings-group">
                 <h2>Profile Settings</h2>
                 <div style="display:flex; gap:24px;">
                     <div class="form-row" style="flex:1;">
                         <label>First Name</label>
-                        <input type="text" value="{{ user.first_name }}" disabled />
+                        <input type="text" name="first_name" value="{{ user.first_name }}" />
                     </div>
                     <div class="form-row" style="flex:1;">
                         <label>Last Name</label>
-                        <input type="text" value="{{ user.last_name }}" disabled />
+                        <input type="text" name="last_name" value="{{ user.last_name }}" />
                     </div>
                 </div>
                 <div class="form-row">
                     <label>Email Address</label>
-                    <input type="email" value="{{ user.email }}" disabled />
+                    <input type="email" name="email" value="{{ user.email }}" />
                 </div>
             </div>
             
-            <div class="settings-group">
-                <h2>Admin Bank Details</h2>
-                <div class="form-row">
-                    <label>Bank Name</label>
-                    <input type="text" value="Standard Chartered Bank" disabled />
-                </div>
-                <div style="display:flex; gap:24px;">
-                    <div class="form-row" style="flex:1;">
-                        <label>Account Holder</label>
-                        <input type="text" value="TravelMate Global" disabled />
-                    </div>
-                    <div class="form-row" style="flex:1;">
-                        <label>Account Number</label>
-                        <input type="password" value="********9023" disabled />
-                    </div>
-                </div>
-            </div>
-
             <div class="submit-row" style="margin-top:24px; background:none; padding:0; border:none;">
-                <input type="button" value="Save Preferences" class="default" style="background:var(--vd-accent); border:none; cursor:not-allowed;" disabled />
+                <input type="submit" value="Save Preferences" class="default" style="background:var(--vd-accent); border:none; cursor:pointer;" />
             </div>
         </form>
     </div>
