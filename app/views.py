@@ -873,10 +873,9 @@ def package_list(request, category=None, hot_sales=False):
     if search_q:
         qs = qs.filter(
             Q(title__icontains=search_q)
-            | Q(description__icontains=search_q)
             | Q(destination__name__icontains=search_q)
+            | Q(region__icontains=search_q)
             | Q(city__icontains=search_q)
-            | Q(vendor__company_name__icontains=search_q)
         )
 
     # Filter by category (from dropdown or URL)
@@ -1622,24 +1621,28 @@ def search_view(request):
             if query:
                 packages = packages.filter(
                     Q(title__icontains=query)
-                    | Q(description__icontains=query)
                     | Q(destination__name__icontains=query)
-                    | Q(vendor__company_name__icontains=query)
+                    | Q(region__icontains=query)
+                    | Q(city__icontains=query)
                 )
             if category:
                 packages = packages.filter(category=category)
             packages = packages.order_by('-rating', '-created_at')[:24]
 
-        if search_type in ('all', 'activities'):
+        # Only show activities when no package category is selected,
+        # since package categories (STANDARD/LUXURY/TREKKING/HELI)
+        # do not apply to activities.
+        if search_type in ('all', 'activities') and not category:
             activities = Activity.objects.filter(
                 is_active=True, approval_status=ApprovalStatus.APPROVED
             ).select_related('vendor', 'category').prefetch_related('images')
             if query:
                 activities = activities.filter(
                     Q(name__icontains=query)
-                    | Q(description__icontains=query)
+                    | Q(destination__name__icontains=query)
+                    | Q(region__icontains=query)
+                    | Q(city__icontains=query)
                     | Q(category__name__icontains=query)
-                    | Q(vendor__company_name__icontains=query)
                 )
             activities = activities.order_by('-rating', '-created_at')[:24]
 
@@ -1749,9 +1752,10 @@ def activity_list_view(request):
     if search_q:
         activities = activities.filter(
             Q(name__icontains=search_q)
-            | Q(description__icontains=search_q)
+            | Q(destination__name__icontains=search_q)
+            | Q(region__icontains=search_q)
+            | Q(city__icontains=search_q)
             | Q(category__name__icontains=search_q)
-            | Q(vendor__company_name__icontains=search_q)
         )
 
     # Filter by category
@@ -1798,8 +1802,8 @@ def vendor_showcase(request):
         VendorProfile.objects
         .filter(verification_status='APPROVED', account_status='ACTIVE')
         .annotate(
-            package_count=Count('packages', filter=Q(packages__is_active=True, packages__approval_status=ApprovalStatus.APPROVED)),
-            activity_count=Count('activities', filter=Q(activities__is_active=True, activities__approval_status=ApprovalStatus.APPROVED)),
+            package_count=Count('packages', filter=Q(packages__is_active=True, packages__approval_status=ApprovalStatus.APPROVED), distinct=True),
+            activity_count=Count('activities', filter=Q(activities__is_active=True, activities__approval_status=ApprovalStatus.APPROVED), distinct=True),
         )
         .order_by('-package_count', '-activity_count')
     )

@@ -135,11 +135,8 @@
 {% block submit_buttons_bottom %}
 <div id="vendor-action-dock">
   {% if original and vendor_is_pending %}
-  <form method="post" action="{{ approve_url }}" style="margin:0;">
-    {% csrf_token %}
-    <input type="hidden" name="next_url" value="{{ back_to_pending_url }}">
-    <button type="submit" class="vendor-btn vendor-btn-approve">Approve</button>
-  </form>
+  <input type="hidden" name="next_url" value="{{ back_to_pending_url }}">
+  <button type="submit" formaction="{{ approve_url }}" formmethod="post" class="vendor-btn vendor-btn-approve">Approve</button>
   <button type="button" id="open-reject-modal" class="vendor-btn vendor-btn-reject">Reject</button>
   {% endif %}
 
@@ -155,16 +152,12 @@
   <div class="modal-card">
     <h3 id="vendor-reject-title" style="margin:0 0 8px 0;">Reject Vendor</h3>
     <p style="margin:0;color:#475569;">Please provide a reason. This will be saved and included in the rejection email.</p>
-    <form method="post" action="{{ reject_url }}">
-      {% csrf_token %}
-      <input type="hidden" name="next_url" value="{{ back_to_pending_url }}">
-      <label for="reject-reason" style="display:block;margin-top:12px;font-weight:600;">Rejection reason</label>
-      <textarea id="reject-reason" name="reason" required></textarea>
-      <div class="modal-actions">
-        <button type="button" id="close-reject-modal" class="vendor-btn vendor-btn-secondary">Cancel</button>
-        <button type="submit" class="vendor-btn vendor-btn-reject">Confirm Reject</button>
-      </div>
-    </form>
+    <label for="reject-reason" style="display:block;margin-top:12px;font-weight:600;">Rejection reason</label>
+    <textarea id="reject-reason" name="reason"></textarea>
+    <div class="modal-actions">
+      <button type="button" id="close-reject-modal" class="vendor-btn vendor-btn-secondary">Cancel</button>
+      <button type="submit" id="confirm-reject-btn" formaction="{{ reject_url }}" formmethod="post" class="vendor-btn vendor-btn-reject">Confirm Reject</button>
+    </div>
   </div>
 </div>
 
@@ -202,6 +195,19 @@
         closeModal();
       }
     });
+
+    const confirmBtn = document.getElementById('confirm-reject-btn');
+    if (confirmBtn && reasonField) {
+      confirmBtn.addEventListener('click', function (event) {
+        const reason = reasonField.value.trim();
+        if (!reason) {
+          event.preventDefault();
+          reasonField.focus();
+          return;
+        }
+        reasonField.value = reason;
+      });
+    }
   })();
 </script>
 {% endif %}

@@ -6,7 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Avg, Q, Sum
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -18,6 +18,7 @@ from app.models import (
 	ActivityUnavailableDate,
 	ApprovalStatus,
 	Booking,
+	CustomUser,
 	HotSale,
 	Inquiry,
 	InquiryMessage,
@@ -120,6 +121,19 @@ def register(request):
 
 	return render(request, 'vendor/register.html', {'form': form})
 
+
+def check_registration_fields(request):
+	"""AJAX endpoint: check username / email availability for vendor registration."""
+	errors = {}
+	username = (request.GET.get('username') or '').strip()
+	email = (request.GET.get('email') or '').strip().lower()
+
+	if username and CustomUser.objects.filter(username__iexact=username).exists():
+		errors['username'] = 'A user with that username already exists.'
+	if email and CustomUser.objects.filter(email__iexact=email).exists():
+		errors['email'] = 'An account with this email already exists.'
+
+	return JsonResponse(errors)
 
 @login_required
 def dashboard(request):

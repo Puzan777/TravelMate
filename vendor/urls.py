@@ -6,6 +6,7 @@ app_name = 'vendor'
 
 urlpatterns = [
     path('register/', views.register, name='register'),
+    path('register/check/', views.check_registration_fields, name='check_registration_fields'),
     path('dashboard/', views.dashboard, name='dashboard'),
     path('bookings/', views.booking_list, name='booking_list'),
     path('bookings/<int:pk>/', views.booking_detail, name='booking_detail'),

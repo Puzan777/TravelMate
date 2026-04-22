@@ -494,6 +494,21 @@
   let currentTab = 0;
   const tabs = document.getElementsByClassName("step-section");
   const indicators = document.getElementsByClassName("step-indicator");
+  const CHECK_URL = "{% url 'vendor:check_registration_fields' %}";
+
+  // On page load, jump to the first step that contains server-side errors
+  (function jumpToFirstErrorStep() {
+    for (let i = 0; i < tabs.length; i++) {
+      const serverErrors = tabs[i].querySelectorAll('.text-danger');
+      for (let j = 0; j < serverErrors.length; j++) {
+        if (serverErrors[j].textContent.trim().length > 0) {
+          currentTab = i;
+          showTab(currentTab);
+          return;
+        }
+      }
+    }
+  })();
 
   showTab(currentTab);
 
@@ -503,7 +518,6 @@
     }
     tabs[n].classList.add("active");
 
-    // Buttons logic
     if (n == 0) {
       document.getElementById("prevBtn").style.display = "none";
     } else {
@@ -520,7 +534,6 @@
       document.getElementById("nextBtn").style.backgroundColor = "#0ea5e9";
     }
 
-    // Step logic
     for (let i = 0; i < indicators.length; i++) {
       indicators[i].classList.remove("active");
       if (i < n) {
@@ -528,15 +541,180 @@
         indicators[i].innerHTML = '<i class="bi bi-check" style="font-size:1.5rem;"></i><div class="step-label">' + indicators[i].querySelector('.step-label').textContent + '</div>';
       } else {
         indicators[i].classList.remove("completed");
-        // reset number if going backwards
         indicators[i].innerHTML = (i + 1) + '<div class="step-label">' + indicators[i].querySelector('.step-label').textContent + '</div>';
       }
     }
     indicators[n].classList.add("active");
   }
 
-  function nextPrev(n) {
-    if (n == 1 && !validateForm()) return false;
+  // --- helpers to show / clear errors ---
+  function showFieldError(input, errorMsg) {
+    const isCheckbox = input.type === 'checkbox';
+    if (isCheckbox) {
+      const checkWrapper = input.closest('.form-check') || input.parentElement;
+      let errorDiv = checkWrapper.querySelector('.text-danger');
+      if (errorDiv) {
+        if (!errorDiv.textContent.trim()) {
+          errorDiv.innerHTML = '<span class="client-error-msg">' + errorMsg + '</span>';
+        }
+      } else {
+        const span = document.createElement('div');
+        span.className = 'text-danger small client-error-msg';
+        span.textContent = errorMsg;
+        checkWrapper.appendChild(span);
+      }
+    } else {
+      const inputGroup = input.closest('.auth-input-group');
+      if (inputGroup) {
+        inputGroup.classList.add('error');
+        let errorDiv = inputGroup.nextElementSibling;
+        while (errorDiv && !errorDiv.classList.contains('text-danger')) {
+          errorDiv = errorDiv.nextElementSibling;
+        }
+        if (errorDiv) {
+          // Clear any existing content and inject fresh error
+          errorDiv.innerHTML = '<span class="client-error-msg">' + errorMsg + '</span>';
+        }
+      }
+    }
+  }
+
+  function clearClientErrors(container) {
+    container.querySelectorAll('.client-error-msg').forEach(el => el.remove());
+    container.querySelectorAll('.auth-input-group.error').forEach(el => el.classList.remove('error'));
+  }
+
+  // --- basic (synchronous) field validation ---
+  function validateBasicFields() {
+    let valid = true;
+    const step = tabs[currentTab];
+    clearClientErrors(step);
+
+    const inputs = step.querySelectorAll("input, select");
+    for (let i = 0; i < inputs.length; i++) {
+      const input = inputs[i];
+      const isCheckbox = input.type === 'checkbox';
+      let errorMsg = '';
+
+      if (input.required && input.value.trim() === '' && !isCheckbox) {
+        errorMsg = 'This field is required.';
+      } else if (input.required && isCheckbox && !input.checked) {
+        errorMsg = 'You must agree to the Terms & Conditions.';
+      } else if (!input.checkValidity()) {
+        if (input.type === 'email') {
+          errorMsg = 'Enter a valid email address.';
+        } else {
+          errorMsg = input.validationMessage || 'Please enter a valid value.';
+        }
+      }
+
+      if (errorMsg) {
+        valid = false;
+        showFieldError(input, errorMsg);
+      } else {
+        const inputGroup = input.closest('.auth-input-group');
+        if (inputGroup) inputGroup.classList.remove('error');
+      }
+    }
+    return valid;
+  }
+
+  // --- Step 1 specific: password + AJAX username/email checks ---
+  async function validateAccountStep() {
+    const step = tabs[0];
+    const usernameInput = step.querySelector('[name="username"]');
+    const emailInput = step.querySelector('[name="email"]');
+    const password1Input = step.querySelector('[name="password1"]');
+    const password2Input = step.querySelector('[name="password2"]');
+    let valid = true;
+
+    // Password strength checks (client-side mirrors Django's validators)
+    if (password1Input && password1Input.value) {
+      const pwd = password1Input.value;
+      if (pwd.length < 8) {
+        showFieldError(password1Input, 'This password is too short. It must contain at least 8 characters.');
+        valid = false;
+      } else if (/^\d+$/.test(pwd)) {
+        showFieldError(password1Input, 'This password is entirely numeric.');
+        valid = false;
+      }
+    }
+
+    // Password match check
+    if (password1Input && password2Input && password1Input.value && password2Input.value) {
+      if (password1Input.value !== password2Input.value) {
+        showFieldError(password2Input, 'The two password fields didn\'t match.');
+        valid = false;
+      }
+    }
+
+    // AJAX check for existing username / email
+    const username = (usernameInput ? usernameInput.value.trim() : '');
+    const email = (emailInput ? emailInput.value.trim() : '');
+
+    if (username || email) {
+      try {
+        const params = new URLSearchParams();
+        if (username) params.set('username', username);
+        if (email) params.set('email', email);
+
+        const resp = await fetch(CHECK_URL + '?' + params.toString());
+        const data = await resp.json();
+
+        if (data.username && usernameInput) {
+          showFieldError(usernameInput, data.username);
+          valid = false;
+        }
+        if (data.email && emailInput) {
+          showFieldError(emailInput, data.email);
+          valid = false;
+        }
+      } catch (err) {
+        // Network error — let the server validate on submit
+        console.warn('Could not check username/email:', err);
+      }
+    }
+
+    if (!valid) {
+      const firstError = step.querySelector('.auth-input-group.error, .client-error-msg');
+      if (firstError) firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    return valid;
+  }
+
+  // --- main navigation (now async) ---
+  let isValidating = false;
+
+  async function nextPrev(n) {
+    if (isValidating) return;
+
+    if (n == 1) {
+      // Basic validation first
+      if (!validateBasicFields()) {
+        const firstError = tabs[currentTab].querySelector('.auth-input-group.error, .client-error-msg');
+        if (firstError) firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return false;
+      }
+
+      // For Step 1 (Account), do additional async checks
+      if (currentTab === 0) {
+        isValidating = true;
+        const nextBtn = document.getElementById("nextBtn");
+        const origHTML = nextBtn.innerHTML;
+        nextBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Checking...';
+        nextBtn.disabled = true;
+
+        try {
+          const accountValid = await validateAccountStep();
+          if (!accountValid) return false;
+        } finally {
+          nextBtn.innerHTML = origHTML;
+          nextBtn.disabled = false;
+          isValidating = false;
+        }
+      }
+    }
 
     currentTab = currentTab + n;
 
@@ -547,21 +725,31 @@
     showTab(currentTab);
   }
 
-  function validateForm() {
-    let valid = true;
-    let inputs = tabs[currentTab].querySelectorAll("input, select");
-
-    for (let i = 0; i < inputs.length; i++) {
-      // Basic HTML5 validation
-      if (!inputs[i].checkValidity() || (inputs[i].value == "" && inputs[i].required)) {
-        inputs[i].parentElement.classList.add("error");
-        valid = false;
-      } else {
-        inputs[i].parentElement.classList.remove("error");
+  // Clear client errors when user starts typing
+  document.getElementById('vendorWizardForm').addEventListener('input', function(e) {
+    const input = e.target;
+    const inputGroup = input.closest('.auth-input-group');
+    if (inputGroup) {
+      inputGroup.classList.remove('error');
+      let errorDiv = inputGroup.nextElementSibling;
+      while (errorDiv && !errorDiv.classList.contains('text-danger')) {
+        errorDiv = errorDiv.nextElementSibling;
+      }
+      if (errorDiv) {
+        const clientMsg = errorDiv.querySelector('.client-error-msg');
+        if (clientMsg) clientMsg.remove();
       }
     }
-    return valid;
-  }
+  });
+
+  // Clear checkbox error on change
+  document.getElementById('vendorWizardForm').addEventListener('change', function(e) {
+    if (e.target.type === 'checkbox') {
+      const checkWrapper = e.target.closest('.form-check') || e.target.parentElement;
+      const clientMsg = checkWrapper.querySelector('.client-error-msg');
+      if (clientMsg) clientMsg.remove();
+    }
+  });
 </script>
 {% endblock %}
 {% block footer %}{% endblock %}

@@ -12,6 +12,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils import timezone
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
+from django.utils.http import url_has_allowed_host_and_scheme
 
 import csv
 from django.http import HttpResponse
@@ -56,6 +57,7 @@ class ActivityCategoryAdmin(admin.ModelAdmin):
     list_display = ('name', 'admin_actions')
     search_fields = ('name',)
     list_display_links = None
+    actions = None
 
     @admin.display(description='Actions')
     def admin_actions(self, obj):
@@ -231,6 +233,8 @@ class DestinationAdmin(admin.ModelAdmin):
     list_editable = ('is_featured',)
     readonly_fields = ('current_images_manager',)
     list_display_links = None
+    actions = None
+    
     fieldsets = (
         ('Basic Info', {'fields': ('name', 'short_description', 'is_featured')}),
         ('Travel Info', {'fields': ('best_season', 'visa_info', 'safety_note')}),
@@ -506,7 +510,7 @@ class PackageAdmin(admin.ModelAdmin):
         return request.user.is_active and request.user.is_staff
 
     def change_view(self, request, object_id, form_url='', extra_context=None):
-        return redirect('admin:app_booking_detail', object_id=object_id)
+        return super().change_view(request, object_id, form_url=form_url, extra_context=extra_context)
 
 
 class ActivityImageInline(admin.TabularInline):

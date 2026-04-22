@@ -209,9 +209,9 @@ class VendorProfileAdmin(admin.ModelAdmin):
 	def get_queryset(self, request):
 		qs = super().get_queryset(request)
 		url_name = getattr(getattr(request, 'resolver_match', None), 'url_name', '')
-		# Detail pages don't include verification_status__exact in query params,
+		# Detail pages and action URLs don't include verification_status__exact in query params,
 		# so allow all statuses there to avoid false "doesn't exist" errors.
-		if url_name.endswith('_change'):
+		if url_name.endswith(('_change', '_approve', '_reject')):
 			return qs
 		status_filter = (request.GET.get('verification_status__exact') or '').strip().upper()
 		allowed_statuses = {
@@ -568,7 +568,7 @@ class VendorProfileAdmin(admin.ModelAdmin):
 
 		self.message_user(
 			request,
-			f'{updated} vendor(s) reactivated. Products remain inactive until manually re-enabled.',
+			f'{updated} vendor(s) reactivated. Their approved packages and activities have been automatically re-enabled.',
 			level=messages.SUCCESS,
 		)
 

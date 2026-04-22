@@ -110,3 +110,17 @@ class VendorProfile(models.Model):
 				Q(package__vendor=self) | Q(activity__vendor=self),
 				is_active=True,
 			).update(is_active=False)
+			
+		elif (
+			self.account_status == self.AccountStatus.ACTIVE
+			and previous_status == self.AccountStatus.DEACTIVATED
+		):
+			from app.models import Activity, Package, ApprovalStatus
+			
+			Package.objects.filter(
+				vendor=self, approval_status=ApprovalStatus.APPROVED
+			).update(is_active=True)
+			
+			Activity.objects.filter(
+				vendor=self, approval_status=ApprovalStatus.APPROVED
+			).update(is_active=True)
