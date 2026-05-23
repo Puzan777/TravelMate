@@ -114,6 +114,16 @@
   .tm-breadcrumb .bi {
     font-size: 0.7rem;
   }
+  .tm-sidebar-toggle {
+    display: none;
+    background: transparent;
+    border: none;
+    color: #fff;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0;
+    margin-right: 12px;
+  }
 
   .tm-topbar-right {
     display: flex;
@@ -451,10 +461,15 @@
 
   /* ===== RESPONSIVE ===== */
   @media (max-width: 991.98px) {
-    .tm-sidebar { transform: translateX(-100%); transition: transform var(--vd-transition); }
+    .tm-sidebar { transform: translateX(-100%); transition: transform var(--vd-transition); box-shadow: 4px 0 24px rgba(0,0,0,0.15); }
     .tm-sidebar.show { transform: translateX(0); }
     #header { left: 0 !important; }
+    #main { width: 100% !important; margin-left: 0 !important; }
     #container { margin-left: 0 !important; }
+    .tm-sidebar-toggle { display: block; }
+  }
+  @media (max-width: 600px) {
+    .tm-breadcrumb { display: none; }
   }
 </style>
 {% endblock %}
@@ -556,6 +571,9 @@
 <!-- ===== TOP NAVBAR ===== -->
 <header id="header">
   <div class="tm-topbar-left">
+    <button type="button" class="tm-sidebar-toggle" onclick="document.getElementById('tmSidebar').classList.toggle('show')">
+      <i class="bi bi-list"></i>
+    </button>
     <div class="tm-breadcrumb">
       <a href="{% url 'admin:index' %}">Dashboard</a>
       {% if request.path != '/admin/' %}
@@ -600,7 +618,7 @@
       </div>
       <span>{{ user.get_short_name|default:user.get_username }}</span>
     </div>
-    <a href="{% url 'admin:logout' %}" class="tm-btn-logout" style="display: inline-flex !important; text-decoration: none;">
+    <a href="{% url 'logout' %}" class="tm-btn-logout" style="display: inline-flex !important; text-decoration: none;">
       <i class="bi bi-box-arrow-right"></i> Log out
     </a>
     {% endif %}

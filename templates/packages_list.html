@@ -94,6 +94,7 @@
 
         <select name="sort" class="tm-filter-select">
           <option value="">Sort by</option>
+          <option value="featured"{% if sort_by == 'featured' %} selected{% endif %}>Featured Only</option>
           <option value="rating"{% if sort_by == 'rating' %} selected{% endif %}>Top Rated</option>
           <option value="price_low"{% if sort_by == 'price_low' %} selected{% endif %}>Price: Low → High</option>
           <option value="price_high"{% if sort_by == 'price_high' %} selected{% endif %}>Price: High → Low</option>
@@ -101,6 +102,11 @@
         </select>
 
         <button type="submit" class="tm-filter-btn"><i class="bi bi-search"></i> Search</button>
+        {% if search_q or filter_cat or filter_dest or filter_dur or sort_by %}
+        <a href="{{ request.path }}" class="tm-filter-btn" style="background:#b91c1c; text-decoration:none; color:#fff; display:inline-flex; align-items:center; gap:6px;">
+          <i class="bi bi-x-circle"></i> Remove Filter
+        </a>
+        {% endif %}
       </form>
     </div>
 
@@ -114,10 +120,11 @@
       <div class="col-12" style="text-align:center; padding:60px 20px;">
         <i class="bi bi-box-seam" style="font-size:3rem; color:var(--tm-text-light); display:block; margin-bottom:16px;"></i>
         <h3 style="color:var(--tm-text);">No packages found</h3>
-        <p style="color:var(--tm-text-muted);">Try different search terms or <a href="{% url 'packages_luxury' %}">view all packages</a>.</p>
+        <p style="color:var(--tm-text-muted);">Try different search terms or <a href="{% url 'packages_all' %}">view all packages</a>.</p>
       </div>
       {% endfor %}
     </div>
+    {% include 'includes/pagination.html' %}
     {% endif %}
   </div>
 </section>

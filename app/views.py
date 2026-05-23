@@ -19,6 +19,7 @@ from django.core.exceptions import PermissionDenied
 from django.core.mail import send_mail
 from django.core.signing import BadSignature, SignatureExpired
 from django.http import JsonResponse
+from django.core.paginator import Paginator
 from django.db.models import Q
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout
@@ -791,15 +792,26 @@ def home(request):
     # Top Destinations — only featured
     destinations = Destination.objects.prefetch_related('images').filter(is_featured=True).order_by('name')[:8]
 
-    # Best Packages — only featured
-    packages = Package.objects.filter(
-        is_active=True, approval_status=ApprovalStatus.APPROVED, is_featured=True
-    ).select_related('vendor').order_by('-rating', '-created_at')[:8]
+    # Best Packages — top 6 featured, ordered by most booked first
+    packages = (
+        Package.objects.filter(
+            is_active=True, approval_status=ApprovalStatus.APPROVED, is_featured=True
+        )
+        .select_related('vendor')
+        .annotate(booking_count=Count('bookings'))
+        .order_by('-booking_count', '-rating', '-created_at')[:6]
+    )
 
-    # Trending Activities — only featured
-    activities = Activity.objects.filter(
-        is_active=True, approval_status=ApprovalStatus.APPROVED, is_featured=True
-    ).select_related('vendor', 'category').prefetch_related('images').order_by('-rating', '-created_at')[:8]
+    # Trending Activities — top 6 featured, ordered by most booked first
+    activities = (
+        Activity.objects.filter(
+            is_active=True, approval_status=ApprovalStatus.APPROVED, is_featured=True
+        )
+        .select_related('vendor', 'category')
+        .prefetch_related('images')
+        .annotate(booking_count=Count('bookings'))
+        .order_by('-booking_count', '-rating', '-created_at')[:6]
+    )
 
     # Hero stats
     stats = {
@@ -861,6 +873,8 @@ def destination_detail(request, pk):
 
 # ----------------- Package views -----------------
 def package_list(request, category=None, hot_sales=False):
+    from django.db.models import Count
+
     qs = Package.objects.filter(is_active=True, approval_status=ApprovalStatus.APPROVED).select_related('vendor', 'destination')
     title = 'All Packages'
 
@@ -868,15 +882,16 @@ def package_list(request, category=None, hot_sales=False):
         qs = qs.none()
         title = 'Packages'
 
-    # Search
+    # Search (multi-word: each word must match at least one field)
     search_q = request.GET.get('q', '').strip()
     if search_q:
-        qs = qs.filter(
-            Q(title__icontains=search_q)
-            | Q(destination__name__icontains=search_q)
-            | Q(region__icontains=search_q)
-            | Q(city__icontains=search_q)
-        )
+        for word in search_q.split():
+            qs = qs.filter(
+                Q(title__icontains=word)
+                | Q(destination__name__icontains=word)
+                | Q(region__icontains=word)
+                | Q(city__icontains=word)
+            )
 
     # Filter by category (from dropdown or URL)
     filter_cat = request.GET.get('cat', '').strip()
@@ -913,7 +928,10 @@ def package_list(request, category=None, hot_sales=False):
 
     # Sort
     sort_by = request.GET.get('sort', '').strip()
-    if sort_by == 'price_low':
+    if sort_by == 'featured':
+        qs = qs.filter(is_featured=True).order_by('-rating', '-created_at')
+        title = 'Featured Packages'
+    elif sort_by == 'price_low':
         qs = qs.order_by('price')
     elif sort_by == 'price_high':
         qs = qs.order_by('-price')
@@ -922,12 +940,31 @@ def package_list(request, category=None, hot_sales=False):
     elif sort_by == 'newest':
         qs = qs.order_by('-created_at')
     else:
-        qs = qs.order_by('-rating', '-created_at')
+        # Weighted random: favour higher-rated and more-booked packages
+        import random as _random
+        qs = qs.annotate(booking_count=Count('bookings'))
+        pkg_list = list(qs)
+        if pkg_list:
+            now = timezone.now()
+            for p in pkg_list:
+                rating_w = float(p.rating or 0) * 2          # 0-10
+                booking_w = min(getattr(p, 'booking_count', 0), 20)  # cap at 20
+                age_days = (now - p.created_at).days if p.created_at else 999
+                newness_w = max(0, 5 - (age_days / 30))       # newer = higher, fades over 5 months
+                p._sort_weight = rating_w + booking_w + newness_w + _random.uniform(0, 3)
+            pkg_list.sort(key=lambda p: p._sort_weight, reverse=True)
+        qs = pkg_list  # list instead of queryset, template iterates fine
 
     destinations = Destination.objects.all().order_by('name')
 
+    # Pagination (12 per page)
+    paginator = Paginator(qs, 12)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
     context = {
-        'packages': qs,
+        'packages': page_obj,
+        'page_obj': page_obj,
         'category': category,
         'hot_sales': hot_sales,
         'title': title,
@@ -1065,7 +1102,6 @@ def activity_detail(request, pk):
                 if booking_unit_price is not None and activity_booking.number_of_people:
                     activity_booking.total_amount = booking_unit_price * activity_booking.number_of_people
                 activity_booking.save()
-                _send_new_activity_booking_emails(activity_booking)
                 if activity_booking.payment_method == ActivityBooking.PaymentMethod.ESEWA:
                     payment_request, payment_error = _build_activity_esewa_payment_request(request, activity_booking)
                     if payment_error:
@@ -1083,6 +1119,8 @@ def activity_detail(request, pk):
                         'esewa_payload': payment_request['payment_payload'],
                     })
 
+                # Only send emails for non-eSewa (cash on arrival) bookings
+                _send_new_activity_booking_emails(activity_booking)
                 messages.success(request, 'Your activity booking request has been submitted successfully.')
                 return redirect('activity_detail', pk=activity.pk)
     else:
@@ -1193,7 +1231,6 @@ def package_detail(request, slug):
                 if booking_unit_price is not None and booking.number_of_people:
                     booking.total_amount = booking_unit_price * booking.number_of_people
                 booking.save()
-                _send_new_booking_emails(booking)
                 if booking.payment_method == Booking.PaymentMethod.ESEWA:
                     payment_request, payment_error = _build_package_esewa_payment_request(request, booking)
                     if payment_error:
@@ -1211,6 +1248,8 @@ def package_detail(request, slug):
                         'esewa_payload': payment_request['payment_payload'],
                     })
                 else:
+                    # Only send emails for non-eSewa (cash on arrival) bookings
+                    _send_new_booking_emails(booking)
                     messages.success(request, 'Your booking request has been submitted successfully.')
                 return redirect('package_detail', slug=slug)
         elif form_type == 'inquiry':
@@ -1503,6 +1542,7 @@ def esewa_callback(request):
         booking.payment_status = ActivityBooking.PaymentStatus.PAID
         booking.transaction_reference = str(verified_reference or callback['reference'] or '').strip()
         booking.save()
+        _send_new_activity_booking_emails(booking)
         messages.success(request, 'Activity payment verified successfully through eSewa.')
         return redirect('activity_detail', pk=booking.activity.pk)
 
@@ -1558,6 +1598,7 @@ def esewa_callback(request):
     booking.payment_status = Booking.PaymentStatus.PAID
     booking.transaction_reference = str(verified_reference or callback['reference'] or '').strip()
     booking.save()
+    _send_new_booking_emails(booking)
     messages.success(request, 'Payment verified successfully through eSewa.')
     return redirect('package_detail', slug=booking.package.slug)
 
@@ -1607,52 +1648,98 @@ def esewa_failure(request):
 # ─── Search View ───
 def search_view(request):
     query = request.GET.get('q', '').strip()
-    category = request.GET.get('category', '').strip()
-    search_type = request.GET.get('type', 'all').strip()
+    search_type = request.GET.get('type', 'packages').strip()
+    if search_type not in ('packages', 'activities'):
+        search_type = 'packages'
+        
+    vendor_id = request.GET.get('vendor', '').strip()
 
     packages = Package.objects.none()
     activities = Activity.objects.none()
+    vendor_name = ''
 
-    if query or category:
-        if search_type in ('all', 'packages'):
+    if vendor_id:
+        # Vendor-specific filter (from "View Offerings" link)
+        from vendor.models import VendorProfile
+        try:
+            vendor_profile = VendorProfile.objects.get(pk=vendor_id)
+            vendor_name = vendor_profile.company_name
+        except VendorProfile.DoesNotExist:
+            vendor_profile = None
+
+        if vendor_profile:
             packages = Package.objects.filter(
-                is_active=True, approval_status=ApprovalStatus.APPROVED
+                is_active=True, approval_status=ApprovalStatus.APPROVED,
+                vendor=vendor_profile,
             ).select_related('vendor', 'destination')
-            if query:
-                packages = packages.filter(
-                    Q(title__icontains=query)
-                    | Q(destination__name__icontains=query)
-                    | Q(region__icontains=query)
-                    | Q(city__icontains=query)
-                )
-            if category:
-                packages = packages.filter(category=category)
-            packages = packages.order_by('-rating', '-created_at')[:24]
-
-        # Only show activities when no package category is selected,
-        # since package categories (STANDARD/LUXURY/TREKKING/HELI)
-        # do not apply to activities.
-        if search_type in ('all', 'activities') and not category:
             activities = Activity.objects.filter(
-                is_active=True, approval_status=ApprovalStatus.APPROVED
+                is_active=True, approval_status=ApprovalStatus.APPROVED,
+                vendor=vendor_profile,
             ).select_related('vendor', 'category').prefetch_related('images')
-            if query:
-                activities = activities.filter(
-                    Q(name__icontains=query)
-                    | Q(destination__name__icontains=query)
-                    | Q(region__icontains=query)
-                    | Q(city__icontains=query)
-                    | Q(category__name__icontains=query)
-                )
-            activities = activities.order_by('-rating', '-created_at')[:24]
+
+    elif query:
+        packages = Package.objects.filter(
+            is_active=True, approval_status=ApprovalStatus.APPROVED
+        ).select_related('vendor', 'destination')
+        for word in query.split():
+            packages = packages.filter(
+                Q(title__icontains=word)
+                | Q(destination__name__icontains=word)
+                | Q(region__icontains=word)
+                | Q(city__icontains=word)
+                
+            )
+
+        activities = Activity.objects.filter(
+            is_active=True, approval_status=ApprovalStatus.APPROVED
+        ).select_related('vendor', 'category').prefetch_related('images')
+        for word in query.split():
+            activities = activities.filter(
+                Q(name__icontains=word)
+                | Q(destination__name__icontains=word)
+                | Q(region__icontains=word)
+                | Q(city__icontains=word)
+                | Q(category__name__icontains=word)
+            )
+
+    # Calculate counts before slicing
+    packages_count = packages.count()
+    activities_count = activities.count()
+    total_count = packages_count + activities_count
+
+    # Slice queries (removed limit for pagination)
+    packages = packages.order_by('-rating', '-created_at')
+    activities = activities.order_by('-rating', '-created_at')
+
+    # Combine and sort results based on search_type
+    packages_list = list(packages) if search_type == 'packages' else []
+    activities_list = list(activities) if search_type == 'activities' else []
+
+    for p in packages_list:
+        p.is_package = True
+    for a in activities_list:
+        a.is_activity = True
+        
+    results = packages_list + activities_list
+    results.sort(
+        key=lambda x: (float(getattr(x, 'rating', 0) or 0), x.created_at.timestamp() if getattr(x, 'created_at', None) else 0), 
+        reverse=True
+    )
+
+    # Pagination (12 items per page)
+    from django.core.paginator import Paginator
+    paginator = Paginator(results, 12)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
 
     context = {
-        'query': query,
-        'category': category,
+        'query': query or vendor_name,
         'search_type': search_type,
-        'packages': packages,
-        'activities': activities,
-        'total_results': len(packages) + len(activities),
+        'results': page_obj,  # Pass page_obj as results so loop works
+        'page_obj': page_obj, # Pass explicitly for pagination template
+        'packages_count': packages_count,
+        'activities_count': activities_count,
+        'total_count': total_count,
     }
     context.update(_favorite_card_context(request))
     return render(request, 'search_results.html', context)
@@ -1739,24 +1826,28 @@ def search_suggestions(request):
 
 # ─── Activity List View ───
 def activity_list_view(request):
+    from django.db.models import Count
+
     activities = Activity.objects.filter(
         is_active=True, approval_status=ApprovalStatus.APPROVED
     ).select_related('vendor', 'category').prefetch_related('images')
 
+    title = 'All Activities'
     selected_category = request.GET.get('category', '').strip()
     selected_difficulty = request.GET.get('difficulty', '').strip()
     search_q = request.GET.get('q', '').strip()
     sort_by = request.GET.get('sort', '').strip()
 
-    # Search
+    # Search (multi-word: each word must match at least one field)
     if search_q:
-        activities = activities.filter(
-            Q(name__icontains=search_q)
-            | Q(destination__name__icontains=search_q)
-            | Q(region__icontains=search_q)
-            | Q(city__icontains=search_q)
-            | Q(category__name__icontains=search_q)
-        )
+        for word in search_q.split():
+            activities = activities.filter(
+                Q(name__icontains=word)
+                | Q(destination__name__icontains=word)
+                | Q(region__icontains=word)
+                | Q(city__icontains=word)
+                | Q(category__name__icontains=word)
+            )
 
     # Filter by category
     if selected_category:
@@ -1767,7 +1858,10 @@ def activity_list_view(request):
         activities = activities.filter(difficulty_level=selected_difficulty)
 
     # Sort
-    if sort_by == 'price_low':
+    if sort_by == 'featured':
+        activities = activities.filter(is_featured=True).order_by('-rating', '-created_at')
+        title = 'Featured Activities'
+    elif sort_by == 'price_low':
         activities = activities.order_by('price')
     elif sort_by == 'price_high':
         activities = activities.order_by('-price')
@@ -1776,12 +1870,32 @@ def activity_list_view(request):
     elif sort_by == 'newest':
         activities = activities.order_by('-created_at')
     else:
-        activities = activities.order_by('-rating', '-created_at')
+        # Weighted random: favour higher-rated and more-booked activities
+        import random as _random
+        activities = activities.annotate(booking_count=Count('bookings'))
+        act_list = list(activities)
+        if act_list:
+            now = timezone.now()
+            for a in act_list:
+                rating_w = float(a.rating or 0) * 2
+                booking_w = min(getattr(a, 'booking_count', 0), 20)
+                age_days = (now - a.created_at).days if a.created_at else 999
+                newness_w = max(0, 5 - (age_days / 30))
+                a._sort_weight = rating_w + booking_w + newness_w + _random.uniform(0, 3)
+            act_list.sort(key=lambda a: a._sort_weight, reverse=True)
+        activities = act_list
 
     categories = ActivityCategory.objects.filter(is_active=True).order_by('name')
 
+    # Pagination (12 per page)
+    paginator = Paginator(activities, 12)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
     context = {
-        'activities': activities,
+        'activities': page_obj,
+        'page_obj': page_obj,
+        'title': title,
         'categories': categories,
         'selected_category': selected_category,
         'selected_difficulty': selected_difficulty,

@@ -461,6 +461,22 @@
     .dash-hero h1 {
       font-size: 1.6rem !important;
     }
+    .snapshot-list {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  @media (max-width: 500px) {
+    .dash-hero-stats {
+      grid-template-columns: 1fr;
+    }
+    .snapshot-list {
+      grid-template-columns: 1fr;
+    }
+    .trend-wrap {
+      grid-template-columns: repeat(6, minmax(30px, 1fr));
+      gap: 4px;
+    }
   }
 </style>
 {% endblock %}
@@ -473,10 +489,10 @@
 {% dashboard_pending_product_count as pending_product %}
 {% dashboard_average_platform_rating as avg_rating %}
 {% dashboard_hot_sale_breakdown as hot_sale_breakdown %}
-{% dashboard_top_products 10 as top_products %}
+{% dashboard_top_products 30 as top_products %}
 {% dashboard_product_trends 6 as product_trends %}
 {% dashboard_recent_users 8 as recent_users %}
-{% dashboard_recent_bookings 10 as recent_bookings %}
+{% dashboard_recent_bookings 30 as recent_bookings %}
 {% dashboard_recent_vendor_applications 8 as vendor_applications %}
 {% dashboard_total_revenue as total_revenue %}
 {% dashboard_approved_vendor_count as total_vendors %}
@@ -508,11 +524,11 @@
             <p class="dash-hero-stat-value" style="color: var(--vd-accent);">Rs {{ month_revenue|floatformat:0 }}</p>
             <p class="dash-hero-stat-note">Total revenue this month.</p>
           </article>
-          <a class="dash-hero-stat dash-hero-stat-link is-pending" href="{% url 'admin:pending_approvals' %}">
+          <article class="dash-hero-stat is-pending">
             <p class="dash-hero-stat-label">Pending Tour Approvals</p>
             <p class="dash-hero-stat-value" style="color: var(--vd-accent-hover);">{{ pending_product }}</p>
             <p class="dash-hero-stat-note">Awaiting admin approval.</p>
-          </a>
+          </article>
         </div>
       </div>
       <div class="dash-actions dash-action-panel">
@@ -591,7 +607,9 @@
   </section>
 
   <section class="dash-panel">
-    <h2>Top Products by Booking Volume</h2>
+    <div style="margin-bottom:12px;">
+      <h2 style="margin:0;">Top Products by Booking Volume</h2>
+    </div>
     {% if top_products %}
     <div class="table-wrap">
       <table class="dash-table">
@@ -606,7 +624,7 @@
         </thead>
         <tbody>
           {% for product in top_products %}
-          <tr>
+          <tr class="tp-row">
             <td>{{ product.product_name }}</td>
             <td>{{ product.product_type }}</td>
             <td>{{ product.vendor_name }}</td>
@@ -617,14 +635,24 @@
         </tbody>
       </table>
     </div>
+    {% if top_products|length > 6 %}
+    <div id="top-products-pagination" style="display:flex; justify-content:space-between; align-items:center; margin-top:12px;">
+      <span id="tp-page-info" style="color:#617682; font-size:0.85rem; font-weight:700;"></span>
+      <div style="display:flex; gap:6px;">
+        <button id="tp-prev" class="trend-switch-btn" style="min-height:32px;" disabled><i class="bi bi-chevron-left"></i></button>
+        <button id="tp-next" class="trend-switch-btn" style="min-height:32px;"><i class="bi bi-chevron-right"></i></button>
+      </div>
+    </div>
+    {% endif %}
     {% else %}
     <p class="dash-panel-copy">No product data found.</p>
     {% endif %}
   </section>
 
-  <section class="dash-split">
-    <div class="dash-panel">
-      <h2>Recent Bookings</h2>
+  <section class="dash-panel">
+      <div style="margin-bottom:12px;">
+        <h2 style="margin:0;">Recent Bookings</h2>
+      </div>
       {% if recent_bookings %}
       <div class="table-wrap">
         <table class="dash-table">
@@ -639,7 +667,7 @@
           </thead>
           <tbody>
             {% for booking in recent_bookings %}
-            <tr>
+            <tr class="rb-row">
               <td>{{ booking.package.title }}</td>
               <td>{{ booking.full_name }}</td>
               <td>{{ booking.travel_date|date:"M d, Y" }}</td>
@@ -650,14 +678,21 @@
           </tbody>
         </table>
       </div>
+      {% if recent_bookings|length > 6 %}
+      <div id="recent-bookings-pagination" style="display:flex; justify-content:space-between; align-items:center; margin-top:12px;">
+        <span id="rb-page-info" style="color:#617682; font-size:0.85rem; font-weight:700;"></span>
+        <div style="display:flex; gap:6px;">
+          <button id="rb-prev" class="trend-switch-btn" style="min-height:32px;" disabled><i class="bi bi-chevron-left"></i></button>
+          <button id="rb-next" class="trend-switch-btn" style="min-height:32px;"><i class="bi bi-chevron-right"></i></button>
+        </div>
+      </div>
+      {% endif %}
       {% else %}
       <p class="dash-panel-copy">No bookings are available yet.</p>
       {% endif %}
       <div class="section-actions">
         <a href="{% url 'admin:app_booking_changelist' %}">Open bookings</a>
       </div>
-    </div>
-
   </section>
 
   <section>
@@ -778,6 +813,66 @@
     });
 
     updateTrend("package");
+
+    // Top Products Pagination
+    const tpRows = Array.from(document.querySelectorAll(".tp-row"));
+    const tpPrev = document.getElementById("tp-prev");
+    const tpNext = document.getElementById("tp-next");
+    const tpInfo = document.getElementById("tp-page-info");
+    const tpLimit = 6;
+    let tpPage = 1;
+
+    function renderTpPagination() {
+      if(!tpRows.length) return;
+      const totalPages = Math.ceil(tpRows.length / tpLimit);
+      
+      tpRows.forEach(function(row, index) {
+        const rowPage = Math.floor(index / tpLimit) + 1;
+        row.style.display = (rowPage === tpPage) ? "" : "none";
+      });
+
+      if(tpInfo) {
+        tpInfo.textContent = "Page " + tpPage + " of " + totalPages;
+      }
+      if(tpPrev) tpPrev.disabled = (tpPage === 1);
+      if(tpNext) tpNext.disabled = (tpPage === totalPages);
+    }
+
+    if(tpPrev && tpNext) {
+      tpPrev.addEventListener("click", function() { if(tpPage > 1) { tpPage--; renderTpPagination(); } });
+      tpNext.addEventListener("click", function() { if(tpPage < Math.ceil(tpRows.length / tpLimit)) { tpPage++; renderTpPagination(); } });
+      renderTpPagination();
+    }
+
+    // Recent Bookings Pagination
+    const rbRows = Array.from(document.querySelectorAll(".rb-row"));
+    const rbPrev = document.getElementById("rb-prev");
+    const rbNext = document.getElementById("rb-next");
+    const rbInfo = document.getElementById("rb-page-info");
+    const rbLimit = 6;
+    let rbPage = 1;
+
+    function renderRbPagination() {
+      if(!rbRows.length) return;
+      const totalPages = Math.ceil(rbRows.length / rbLimit);
+      
+      rbRows.forEach(function(row, index) {
+        const rowPage = Math.floor(index / rbLimit) + 1;
+        row.style.display = (rowPage === rbPage) ? "" : "none";
+      });
+
+      if(rbInfo) {
+        rbInfo.textContent = "Page " + rbPage + " of " + totalPages;
+      }
+      if(rbPrev) rbPrev.disabled = (rbPage === 1);
+      if(rbNext) rbNext.disabled = (rbPage === totalPages);
+    }
+
+    if(rbPrev && rbNext) {
+      rbPrev.addEventListener("click", function() { if(rbPage > 1) { rbPage--; renderRbPagination(); } });
+      rbNext.addEventListener("click", function() { if(rbPage < Math.ceil(rbRows.length / rbLimit)) { rbPage++; renderRbPagination(); } });
+      renderRbPagination();
+    }
   });
 </script>
 {% endblock %}

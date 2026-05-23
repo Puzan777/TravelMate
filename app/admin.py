@@ -22,16 +22,27 @@ def export_as_csv(modeladmin, request, queryset):
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = f'attachment; filename={opts.verbose_name_plural}.csv'
     writer = csv.writer(response)
-    fields = [field.name for field in opts.get_fields() if not field.many_to_many and not field.one_to_many]
+    
+    # Use only concrete fields to avoid reverse relations raising exceptions
+    fields = [field.name for field in opts.concrete_fields]
     writer.writerow(fields)
     for obj in queryset:
-        writer.writerow([getattr(obj, field) for field in fields])
+        row = []
+        for field in fields:
+            val = getattr(obj, field, '')
+            if callable(val):
+                val = val()
+            row.append(str(val))
+        writer.writerow(row)
     return response
 
 _original_changelist_view = admin.ModelAdmin.changelist_view
 
 def _custom_changelist_view(self, request, extra_context=None):
     if request.GET.get('export', '').lower() == 'csv':
+        # Remove 'export' parameter so Django doesn't treat it as an invalid model filter
+        request.GET = request.GET.copy()
+        request.GET.pop('export', None)
         try:
             cl = self.get_changelist_instance(request)
             queryset = cl.get_queryset(request)

@@ -60,7 +60,7 @@
   <div class="container">
     <div class="tm-section-header">
       <div class="tm-section-label"><i class="bi bi-lightning-fill"></i> Activities</div>
-      <h2 class="tm-section-title">Activities & Experiences</h2>
+      <h2 class="tm-section-title">{{ title }}</h2>
       <p class="tm-section-subtitle">From cultural tours to adrenaline adventures</p>
     </div>
 
@@ -85,6 +85,7 @@
 
         <select name="sort" class="tm-filter-select">
           <option value="">Sort by</option>
+          <option value="featured"{% if sort_by == 'featured' %} selected{% endif %}>Featured Only</option>
           <option value="rating"{% if sort_by == 'rating' %} selected{% endif %}>Top Rated</option>
           <option value="price_low"{% if sort_by == 'price_low' %} selected{% endif %}>Price: Low → High</option>
           <option value="price_high"{% if sort_by == 'price_high' %} selected{% endif %}>Price: High → Low</option>
@@ -92,6 +93,11 @@
         </select>
 
         <button type="submit" class="tm-filter-btn"><i class="bi bi-search"></i> Search</button>
+        {% if search_q or selected_category or selected_difficulty or sort_by %}
+        <a href="{% url 'activity_list' %}" class="tm-filter-btn" style="background:#b91c1c; text-decoration:none; color:#fff; display:inline-flex; align-items:center; gap:6px;">
+          <i class="bi bi-x-circle"></i> Remove Filter
+        </a>
+        {% endif %}
       </form>
     </div>
 
@@ -110,6 +116,7 @@
       </div>
       {% endfor %}
     </div>
+    {% include 'includes/pagination.html' %}
     {% endif %}
   </div>
 </section>

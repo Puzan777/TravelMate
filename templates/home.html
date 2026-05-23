@@ -139,13 +139,6 @@
 
       <form class="tm-search-box" action="{% url 'search' %}" method="GET">
         <input type="text" name="q" class="tm-search-input" placeholder="Where do you want to go?" autocomplete="off">
-        <select name="category" class="tm-search-select">
-          <option value="">All Categories</option>
-          <option value="STANDARD">Standard Package</option>
-          <option value="LUXURY">Luxury</option>
-          <option value="TREKKING">Trekking</option>
-          <option value="HELI">Heli Tours</option>
-        </select>
         <button type="submit" class="tm-search-btn"><i class="bi bi-search"></i> Search</button>
       </form>
 
@@ -175,9 +168,9 @@
 <section class="tm-section">
   <div class="container">
     <div class="tm-section-header">
-      <div class="tm-section-label"><i class="bi bi-star-fill"></i> Featured Tours</div>
-      <h2 class="tm-section-title">Our Best Tour Packages</h2>
-      <p class="tm-section-subtitle">Hand-picked travel experiences from top-rated vendors across Nepal</p>
+      <div class="tm-section-label"><i class="bi bi-star-fill"></i> Best Sellers</div>
+      <h2 class="tm-section-title">Best Selling Packages</h2>
+      <p class="tm-section-subtitle">Our most booked travel experiences from top-rated vendors</p>
     </div>
 
     {% if featured_packages %}
@@ -189,7 +182,7 @@
       {% endfor %}
     </div>
     <div class="text-center mt-4">
-      <a href="{% url 'packages_luxury' %}" class="tm-view-all">View All Packages <i class="bi bi-arrow-right"></i></a>
+      <a href="{% url 'packages_all' %}?sort=featured" class="tm-view-all">View More Featured <i class="bi bi-arrow-right"></i></a>
     </div>
     {% else %}
     <p class="text-center" style="color:var(--tm-text-muted);">No packages available yet.</p>
@@ -256,7 +249,7 @@
       {% endfor %}
     </div>
     <div class="text-center mt-4">
-      <a href="{% url 'activity_list' %}" class="tm-view-all">View All Activities <i class="bi bi-arrow-right"></i></a>
+      <a href="{% url 'activity_list' %}?sort=featured" class="tm-view-all">View More Featured <i class="bi bi-arrow-right"></i></a>
     </div>
     {% else %}
     <p class="text-center" style="color:var(--tm-text-muted);">No activities available yet.</p>

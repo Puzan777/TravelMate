@@ -1,6 +1,38 @@
 {% extends "base.html" %}
 {% block title %}{% if query %}Search: {{ query }}{% else %}Search{% endif %} — TravelMate{% endblock %}
 
+{% block extrastyle %}
+<style>
+  .tm-search-tabs {
+    display: flex; gap: 24px; justify-content: flex-start; flex-wrap: wrap; margin-bottom: 32px;
+    border-bottom: 1px solid var(--tm-line); padding-bottom: 0px;
+  }
+  .tm-search-tab {
+    padding: 12px 0px; 
+    font-weight: 700; font-size: 1.05rem; text-decoration: none;
+    color: var(--tm-text-muted); 
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: -1px;
+  }
+  .tm-search-tab:hover { color: var(--tm-ocean); }
+  .tm-search-tab.active { 
+    color: var(--tm-ocean); 
+    border-bottom: 3px solid var(--tm-ocean);
+  }
+  .tm-search-tab-count {
+    display: inline-flex; align-items: center; justify-content: center;
+    background: #f1f5f9; color: var(--tm-text-muted);
+    font-size: 0.75rem; font-weight: 800;
+    padding: 2px 8px; border-radius: 999px;
+  }
+  .tm-search-tab.active .tm-search-tab-count {
+    background: rgba(24,144,255,0.1); color: var(--tm-ocean);
+  }
+</style>
+{% endblock %}
+
 {% block content %}
 <div style="padding-top: 100px;"></div>
 
@@ -10,64 +42,50 @@
     <!-- Search Bar -->
     <div style="background:var(--tm-white); border-radius:var(--tm-radius-lg); padding:28px 32px; box-shadow:var(--tm-shadow); margin-bottom:40px;">
       <form action="{% url 'search' %}" method="GET" style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
-        <input type="text" name="q" value="{{ query }}" placeholder="Search packages, activities, destinations..." 
+        <input type="text" name="q" value="{{ request.GET.q }}" placeholder="Search packages, activities, destinations..." 
                style="flex:1; min-width:200px; padding:12px 20px; border:1px solid var(--tm-line); border-radius:999px; font-size:.95rem; outline:none;">
-        <select name="category" style="padding:12px 18px; border:1px solid var(--tm-line); border-radius:999px; font-size:.88rem; background:var(--tm-white); cursor:pointer;">
-          <option value="">All Categories</option>
-          <option value="STANDARD"{% if category == 'STANDARD' %} selected{% endif %}>Standard Package</option>
-          <option value="LUXURY"{% if category == 'LUXURY' %} selected{% endif %}>Luxury</option>
-          <option value="TREKKING"{% if category == 'TREKKING' %} selected{% endif %}>Trekking</option>
-          <option value="HELI"{% if category == 'HELI' %} selected{% endif %}>Heli Tours</option>
-        </select>
-        <select name="type" style="padding:12px 18px; border:1px solid var(--tm-line); border-radius:999px; font-size:.88rem; background:var(--tm-white); cursor:pointer;">
-          <option value="all"{% if search_type == 'all' %} selected{% endif %}>All</option>
-          <option value="packages"{% if search_type == 'packages' %} selected{% endif %}>Packages Only</option>
-          <option value="activities"{% if search_type == 'activities' %} selected{% endif %}>Activities Only</option>
-        </select>
+        <input type="hidden" name="type" value="{{ search_type }}">
         <button type="submit" style="padding:12px 28px; border:none; border-radius:999px; background:var(--tm-ocean); color:#fff; font-weight:700; font-size:.9rem; cursor:pointer;">
           <i class="bi bi-search"></i> Search
         </button>
       </form>
     </div>
 
-    {% if query or category %}
+    <!-- Search Tabs -->
+    <div class="tm-search-tabs">
+      <a href="?q={{ request.GET.q|urlencode }}&type=packages{% if request.GET.vendor %}&vendor={{ request.GET.vendor }}{% endif %}" class="tm-search-tab {% if search_type == 'packages' %}active{% endif %}">
+        Tour Packages <span class="tm-search-tab-count">{{ packages_count }}</span>
+      </a>
+      <a href="?q={{ request.GET.q|urlencode }}&type=activities{% if request.GET.vendor %}&vendor={{ request.GET.vendor }}{% endif %}" class="tm-search-tab {% if search_type == 'activities' %}active{% endif %}">
+        Day Activities <span class="tm-search-tab-count">{{ activities_count }}</span>
+      </a>
+    </div>
+
+    {% if query %}
     <p style="color:var(--tm-text-muted); margin-bottom:24px;">
-      <strong>{{ total_results }}</strong> result{{ total_results|pluralize }} found
-      {% if query %}for "<strong>{{ query }}</strong>"{% endif %}
-      {% if category %} in <strong>{{ category }}</strong>{% endif %}
+      <strong>{{ total_count }}</strong> result{{ total_count|pluralize }} found
+      for "<strong>{{ query }}</strong>"
     </p>
     {% endif %}
 
-    <!-- Package Results -->
-    {% if packages %}
-    <h3 style="font-family:'Inter',sans-serif; font-size:1.1rem; font-weight:700; margin-bottom:20px; color:var(--tm-text);">
-      <i class="bi bi-box-seam" style="color:var(--tm-ocean);"></i> Packages
-    </h3>
+    <!-- Combined Results -->
+    {% if results %}
     <div class="row g-4 mb-5">
-      {% for package in packages %}
+      {% for item in results %}
       <div class="col-sm-6 col-lg-4">
-        {% include 'includes/package_card.html' with item=package %}
+        {% if item.is_package %}
+          {% include 'includes/package_card.html' with item=item %}
+        {% elif item.is_activity %}
+          {% include 'includes/activity_card.html' with item=item %}
+        {% endif %}
       </div>
       {% endfor %}
     </div>
+    {% include 'includes/pagination.html' %}
     {% endif %}
 
-    <!-- Activity Results -->
-    {% if activities %}
-    <h3 style="font-family:'Inter',sans-serif; font-size:1.1rem; font-weight:700; margin-bottom:20px; color:var(--tm-text);">
-      <i class="bi bi-lightning" style="color:var(--tm-ocean);"></i> Activities
-    </h3>
-    <div class="row g-4">
-      {% for activity in activities %}
-      <div class="col-sm-6 col-lg-4">
-        {% include 'includes/activity_card.html' with item=activity %}
-      </div>
-      {% endfor %}
-    </div>
-    {% endif %}
-
-    {% if not packages and not activities %}
-    {% if query or category %}
+    {% if not results %}
+    {% if query %}
     <div style="text-align:center; padding:60px 20px;">
       <i class="bi bi-search" style="font-size:3rem; color:var(--tm-text-light); display:block; margin-bottom:16px;"></i>
       <h3 style="color:var(--tm-text); margin-bottom:8px;">No results found</h3>

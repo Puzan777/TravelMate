@@ -64,18 +64,18 @@
     <div style="margin-bottom:32px;">
       <div class="pd-carousel" id="pdCarousel">
         <div class="pd-carousel-track" id="pdTrack">
-          {% if destination.display_image %}
-          <div class="pd-carousel-slide"><img src="{{ destination.display_image.url }}" alt="{{ destination.name }}"></div>
-          {% endif %}
-          {% for img in destination.images.all %}
-          <div class="pd-carousel-slide"><img src="{{ img.image.url }}" alt="{{ destination.name }} - {{ forloop.counter }}"></div>
-          {% endfor %}
-          {% if not destination.display_image and not destination.images.all %}
-          <div class="pd-carousel-slide">
-            <div style="height:500px; background:linear-gradient(135deg,var(--tm-ocean-light),#dbeafe); display:flex; align-items:center; justify-content:center;">
-              <i class="bi bi-geo-alt" style="font-size:4rem; color:var(--tm-ocean);"></i>
+          {% if destination.images.all %}
+            {% for img in destination.images.all %}
+            <div class="pd-carousel-slide"><img src="{{ img.image.url }}" alt="{{ destination.name }} - {{ forloop.counter }}"></div>
+            {% endfor %}
+          {% elif destination.hero_image %}
+            <div class="pd-carousel-slide"><img src="{{ destination.hero_image.url }}" alt="{{ destination.name }}"></div>
+          {% else %}
+            <div class="pd-carousel-slide">
+              <div style="height:500px; background:linear-gradient(135deg,var(--tm-ocean-light),#dbeafe); display:flex; align-items:center; justify-content:center;">
+                <i class="bi bi-geo-alt" style="font-size:4rem; color:var(--tm-ocean);"></i>
+              </div>
             </div>
-          </div>
           {% endif %}
         </div>
         <button class="pd-carousel-btn prev" onclick="slideCarousel(-1)" aria-label="Previous"><i class="bi bi-chevron-left"></i></button>

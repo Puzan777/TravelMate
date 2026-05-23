@@ -178,7 +178,7 @@
                 <td>{{ item.vendor }}</td>
                 <td>{{ item.submitted|date:"M d, Y H:i" }}</td>
                 <td class="actions-col">
-                    <a href="{{ item.admin_url }}?next={{ request.get_full_path|urlencode }}" target="_blank" class="btn btn-view">View details</a>
+                    <a href="{{ item.admin_url }}?next={{ request.get_full_path|urlencode }}" class="btn btn-view">View details</a>
                 </td>
             </tr>
             {% endfor %}

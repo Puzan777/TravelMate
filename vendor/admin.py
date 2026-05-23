@@ -223,6 +223,23 @@ class VendorProfileAdmin(admin.ModelAdmin):
 			return qs.filter(verification_status=status_filter)
 		return qs.filter(verification_status=VendorProfile.VerificationStatus.APPROVED)
 
+	def get_list_display(self, request):
+		status_filter = (request.GET.get('verification_status__exact') or '').strip().upper()
+		if status_filter == VendorProfile.VerificationStatus.PENDING:
+			return (
+				'vendor_identity',
+				'business_contact',
+				'registered_on',
+				'view_details',
+			)
+		return self.list_display
+
+	def get_list_filter(self, request):
+		status_filter = (request.GET.get('verification_status__exact') or '').strip().upper()
+		if status_filter == VendorProfile.VerificationStatus.PENDING:
+			return ()
+		return self.list_filter
+
 	def get_actions(self, request):
 		actions = super().get_actions(request)
 		status_filter = (request.GET.get('verification_status__exact') or '').strip().upper()
@@ -401,7 +418,7 @@ class VendorProfileAdmin(admin.ModelAdmin):
 	@admin.display(description='Details')
 	def view_details(self, obj):
 		url = reverse('admin:vendor_vendorprofile_change', args=[obj.pk])
-		return format_html('<a class="button" href="{}" target="_blank">View details</a>', url)
+		return format_html('<a class="button" href="{}">View details</a>', url)
 
 	@admin.display(description='Certificate Preview')
 	def business_certificate_preview(self, obj):

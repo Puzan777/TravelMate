@@ -45,7 +45,7 @@
             </p>
             {% endif %}
 
-            <a href="{% url 'search' %}?q={{ vendor.company_name|urlencode }}" class="tm-card-btn" style="margin-top:0;">
+            <a href="{% url 'search' %}?vendor={{ vendor.pk }}" class="tm-card-btn" style="margin-top:0;">
               View Offerings <i class="bi bi-arrow-right"></i>
             </a>
           </div>

@@ -330,11 +330,17 @@
     {% block object-tools %}
       <ul class="object-tools">
         {% block object-tools-items %}
+          {% if '/admin/app/activitycategory/' in request.path or '/admin/app/activity/' in request.path or '/admin/app/package/' in request.path or '/admin/app/destination/' in request.path or '/admin/app/hotsale/' in request.path or '/admin/pending-approvals/' in request.path %}
+            {# Hide export button #}
+          {% elif '/admin/vendor/vendorprofile/' in request.path and 'verification_status__exact=PENDING' in request.get_full_path %}
+            {# Hide export button #}
+          {% else %}
           <li>
             <a class="tm-export-btn" href="{{ request.get_full_path }}{% if '?' in request.get_full_path %}&{% else %}?{% endif %}export=csv" style="background:var(--vd-success);">
               <i class="bi bi-file-earmark-spreadsheet" style="margin-right:6px;"></i> Export to CSV
             </a>
           </li>
+          {% endif %}
           {% change_list_object_tools %}
         {% endblock %}
       </ul>
